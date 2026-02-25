@@ -49,7 +49,28 @@ class CalendarEventsSerializer(serializers.ModelSerializer):
         model = CalendarEvents
         fields = "__all__"
 
+        # Validate event dates
+        def validate(self, data):
+            start = data.get("start_date")
+            end = data.get("end_date")
+
+            if start and end and start > end:
+                raise serializers.ValidationError("Start date must be before end date.")
+
+            return data
+
 class EventApprovalsSerializer(serializers.ModelSerializer):
     class Meta:
         model = EventApprovals
         fields = "__all__"
+
+    def validate(self, data):
+        event = data.get("event")
+        user = data.get("user")
+
+        # Only check on create
+        if self.instance is None and event and user:
+            if EventApprovals.objects.filter(event=event, user=user).exists():
+                raise serializers.ValidationError("Approval already exists for this user and event.")
+
+        return data
