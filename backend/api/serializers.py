@@ -23,15 +23,15 @@ class UserSerializer(serializers.ModelSerializer):
             'last_name',
         ]
 
-class LivingPreferenceSerializer(serializers.ModelSerializer):
+class LivingPreferencesSerializer(serializers.ModelSerializer):
     class Meta:
-        model = LivingPreference
+        model = LivingPreferences
         fields = "__all__"
 
 
-class NotificationsSerializer(serializers.ModelSerializer):
+class NotificationPreferencesSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Notifications
+        model = NotificationPreferences
         fields = "__all__"
 
 class ItemsSerializer(serializers.ModelSerializer):
