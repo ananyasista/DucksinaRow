@@ -12,8 +12,8 @@ class UserAdmin(DjangoUserAdmin):
     def household_code(self, obj):
         return obj.household.join_code if obj.household else ""
 
-    list_display = ("email", "first_name", "last_name", "household_code", "is_staff")
-    ordering = ("email",)
+    list_display = ("household_code", "email", "first_name", "last_name", "is_staff")
+    ordering = ("household__join_code",)
     search_fields = ("email", "first_name", "last_name", "household__join_code")
 
     fieldsets = DjangoUserAdmin.fieldsets + (
@@ -23,6 +23,6 @@ class UserAdmin(DjangoUserAdmin):
     add_fieldsets = (
         (None, {
             "classes": ("wide",),
-            "fields": ("email", "username", "first_name", "last_name", "household", "password1", "password2"),
+            "fields": ("household", "email", "username", "first_name", "last_name", "password1", "password2"),
         }),
     )
