@@ -57,7 +57,7 @@ class User(AbstractUser):
 
     # Use email as login field
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ["username"]  # username is still required
+    REQUIRED_FIELDS = []  
 
     def __str__(self):
         return self.email
