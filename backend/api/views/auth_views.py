@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 
-from api.serializers.auth import SignupSerializer, MeSerializer
+from api.serializers.auth_serializers import SignupSerializer, MeSerializer
 
 User = get_user_model()
 
