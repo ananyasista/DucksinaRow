@@ -27,12 +27,7 @@ def signup(request):
     return Response(
     {
         "token": token.key,
-        "user": {
-            "id": str(user.id),
-            "email": user.email,
-            "first_name": user.first_name,
-            "last_name": user.last_name,
-        },
+        "user": MeSerializer(user).data
     },
     status=status.HTTP_201_CREATED,
 )

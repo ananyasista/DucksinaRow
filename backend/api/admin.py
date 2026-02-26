@@ -6,12 +6,16 @@ User = get_user_model()
 
 @admin.register(User)
 class UserAdmin(DjangoUserAdmin):
-    # What columns show in the Users list
-    list_display = ("id", "household", "first_name", "last_name", "email", "password")
-    ordering = ("email",)
-    search_fields = ("email", "first_name", "last_name")
+    
+    # Admin column to show the 5-char join code
+    @admin.display(description="Household Code")
+    def household_code(self, obj):
+        return obj.household.join_code if obj.household else ""
 
-    # Make admin use email as the login/identifier
+    list_display = ("email", "first_name", "last_name", "household_code", "is_staff")
+    ordering = ("email",)
+    search_fields = ("email", "first_name", "last_name", "household__join_code")
+
     fieldsets = DjangoUserAdmin.fieldsets + (
         ("Household", {"fields": ("household",)}),
     )
