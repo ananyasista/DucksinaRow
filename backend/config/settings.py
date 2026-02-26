@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     "rest_framework",
     "corsheaders",
-    "api",
+    "api", # APP NAME
 ]
 
 MIDDLEWARE = [
@@ -82,6 +82,9 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+# AUTH USER MODEL - FOR CUSTOM USERS
+AUTH_USER_MODEL = "api.User"
 
 
 # Password validation
