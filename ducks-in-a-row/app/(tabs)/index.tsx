@@ -1,98 +1,179 @@
 import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import {StyleSheet, View, Text } from 'react-native';
 
-import { HelloWave } from '@/components/hello-wave';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { Link } from 'expo-router';
 
+import PendingTile from '@/components/pending-tile';
+import CheckboxTile from '@/components/checkbox-tile';
+
+
+type UserData = {
+  needApprovals?: number
+  giveApprovals?: number
+  pendingNum?: number
+  groupName: string
+  chores: Chore[]
+}
+
+type Chore = {
+  key: number
+  title: string
+  complete: boolean
+}
+
+const mockData: UserData = {
+  groupName: "Area 52",
+  needApprovals: 10,
+  giveApprovals: 4,
+  pendingNum: 6,
+  chores: [
+    {
+      key: 1,
+      title: "Take out trash",
+      complete: false
+    },
+    {
+      key: 2,
+      title: "Empty Dishwasher",
+      complete: true
+    }
+  ]
+}
+
 export default function HomeScreen() {
+  const groupName = mockData.groupName;
+  const pendingNum = mockData.pendingNum;
+  const needApproval = mockData.needApprovals ?? 0;
+  const giveApproval = mockData.giveApprovals ?? 0;
+  const choreList = mockData.chores;
+
+  const tilesToShow = [
+    needApproval >= 1 && {
+      key: 'need',
+      num: needApproval,
+      title: 'Your approvals needed:',
+    },
+    giveApproval >= 1 && {
+      key: 'give',
+      num: giveApproval,
+      title: 'Your events missing approvals:',
+    },
+  ].filter(
+    (tile): tile is { key: string; num: number; title: string } => Boolean(tile)
+  );
+
+
+
+
   return (
     <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
+      headerBackgroundColor={{ light: '#00664F', dark: '#00664F' }}
       headerImage={
         <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
+          source={null}
         />
       }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
+      <View style={styles.fullLayout}>
+
+        <Text style={styles.title}>Welcome Back, {groupName}!</Text>
+
+        {/* // rendering for pending events section */}
+        <View style={styles.section}>
+            {pendingNum && pendingNum >= 1 && (
+            <>
+            <Text style={styles.subtitle}>Pending Events ({pendingNum}):</Text>
+              <View style={styles.pendingArea}>
+                {tilesToShow.map((tile) => (
+                  <View key={tile.key} style={styles.tileWrapper}>
+                    <PendingTile
+                      numEvents={tile.num}
+                      title={tile.title}
+                    />
+                  </View>
+                ))}
+              </View>
+            </>
+          )}
+        </View>
+        
+
+        {/* // rendering for chores section */}
+        <View style={styles.section}>
+          <Text style={styles.subtitle}>Quick To-Do List:</Text>
+          {choreList.length >= 1 ? (
+            <>
+              {choreList.map((chore) => (
+                <CheckboxTile
+                  title={chore.title}
+                  complete={chore.complete}
+                ></CheckboxTile>
+              ))}
+            </>
+          ) : (
+            <Text style={styles.subtitle2}>Your to-do list is empty!</Text>
+          )}
+        </View>
+        
+        {/* Rendering for Upcoming events section; TILE NOT MADE YET */}
+        <View style={styles.section}>
+          <Text style={styles.subtitle}>Upcoming Week Events:</Text>
+          <Text style={styles.subtitle2}>Events Coming Up</Text>
+          {/* {choreList.length >= 1 ? (
+            <>
+              {choreList.map((chore) => (
+                <CheckboxTile
+                  title={chore.title}
+                  complete={chore.complete}
+                ></CheckboxTile>
+              ))}
+            </>
+          ) : (
+            <Text style={styles.subtitle2}>Your to-do list is empty!</Text>
+          )} */}
+        </View>
+
+
+      </View>    
+      
     </ParallaxScrollView>
   );
 }
-
+ 
 const styles = StyleSheet.create({
   titleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  pendingArea: {
+    flexDirection: 'row',
+    flex: 1,
+    gap: 40
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  tileWrapper: {
+    flex: 1
   },
+  subtitle: {
+    fontSize: 24,
+    fontWeight: 700
+  },
+  subtitle2: {
+    fontSize: 16,
+    fontWeight: 600
+  },
+  title: {
+    fontSize: 40,
+    fontWeight: 700
+  },
+  fullLayout: {
+    flexDirection: 'column',
+    gap: 30
+  },
+  section: {
+    gap: 15
+  }
+
+  
 });
