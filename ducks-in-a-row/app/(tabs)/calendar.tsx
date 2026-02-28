@@ -1,5 +1,5 @@
 import { Calendar, Mode } from 'react-native-big-calendar'
-import { StyleSheet, Dimensions, TouchableOpacity, Modal} from 'react-native';
+import { StyleSheet, Dimensions, TouchableOpacity, Modal, Switch} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useState } from 'react';
 // import { View } from 'react-native-reanimated/lib/typescript/Animated';
@@ -8,6 +8,10 @@ import { Button, Header } from '@react-navigation/elements';
 import Octicons from "@expo/vector-icons/Octicons";
 import ModalForm from '@/components/modal-form';
 import { ThemedText } from '@/components/themed-text';
+import {ThemedTextInput} from '@/components/text-input';
+import { ThemedSwitch } from '@/components/themed-switch';
+import DateTimePicker from '@react-native-community/datetimepicker';
+
 const {height: SCREEN_HEIGHT} = Dimensions.get('window');
 const events = [
   {
@@ -45,6 +49,7 @@ export default function CalendarPage() {
     const[currentMonth, setCurrentMonth] = useState(abbrMonth[currentDate.getMonth()]);
     const[currentMode, setCurrentMode] = useState<Mode>('week');
     const[addVisible, setAddVisible] = useState(false);
+    
     function changeView(date: Date, switchView: Boolean) {
         if(switchView === true) {
             setCurrentMode(currentMode==='week'? 'month' : 'week' );
@@ -98,7 +103,17 @@ export default function CalendarPage() {
 
         {/*Create Event Modal*/}
         <ModalForm title ="Create Event">
-          
+          <ThemedText type="boldText" >Event Title</ThemedText>
+          <ThemedTextInput placeholder="Item Name"/>
+          <ThemedText type="boldText">Description</ThemedText>
+          <ThemedTextInput size="large" multiline={true} placeholder="Add Details"/>
+          <ThemedSwitch label="All-Day"/>
+          <ThemedText type="boldText">Start Time</ThemedText>
+          <ThemedText type="boldText">End Time</ThemedText>
+          <ThemedText type="boldText">Location</ThemedText>
+          <ThemedTextInput placeholder='Living Room'/>
+          <ThemedSwitch label="Needs Roommates Approval?"/>
+          <ThemedText type='text'>Notify all roommates to approve this event</ThemedText>
         </ModalForm>
     </SafeAreaView>
   )
