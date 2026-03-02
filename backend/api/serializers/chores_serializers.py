@@ -1,10 +1,24 @@
 from rest_framework import serializers
+from django.utils import timezone
 from .models import Chore
+
+class ChoreListSerializer(serializers.ModelSerializer):
+    assignee_name = serializers.CharField(source='assigned_roommate.name', read_only=True)
+
+    class Meta:
+        model = Chore
+        fields = [
+            'id',
+            'title',
+            'completed',
+            'due_date',
+            'assignee_name'
+        ]
 
 class ChoreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Chore
-        field = "__all__"
+        fields = "__all__"
         read_only_fields = ("id", "household")
 
     def validate(self, data):
@@ -13,14 +27,14 @@ class ChoreSerializer(serializers.ModelSerializer):
 
         # Ensures chore belongs to the user's household
         if household != user.household:
-            raise serializer.ValidationError(
+            raise serializers.ValidationError(
                 "You cannot create chores for another household."
             )
         
         # Ensures assigned roommated belongs to same household
         assigned = data.get("assigned_roommate")
         if assigned and assigned.household != user.household:
-                raise serializer.ValidationError(
+                raise serializers.ValidationError(
                     "Assigned roommate must belong to your household."
                 )
         
@@ -44,33 +58,9 @@ class ChoreSerializer(serializers.ModelSerializer):
         instance = super().update(instance, validated_data)
 
         # was complete
-        if not was_complete and instance.compeleted:
+        if not was_complete and instance.completed:
                 # Rotate only if deadline has passed
                 if instance.date <= timezone.now().date():
                     instance.rotate()
         
         return instance
-
-# Rotation HELPER method
-def rotate_chore(self):
-    # Moves chore to next assignee in rotation
-
-    if not self.is_rotating:
-        return
-    
-    roommate = list(self.roommates_involved.all())
-    if not roommates:
-        return
-    
-    if self.assigned_roommate in roommates:
-        index = roommate.index(self.assigned_roommate)
-        next_index = (index + 1) % len(roommates)
-        self.assigned_roommate = roommates[next_index]
-    else:
-        self.assigned_roommate = roommates[0]
-    
-    self.completed = False
-    self.save()
-
-# Attach rotation method
-Chores.rotate = rotate_chore
