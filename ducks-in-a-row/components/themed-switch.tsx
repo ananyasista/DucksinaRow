@@ -12,9 +12,9 @@ export function ThemedSwitch({label=""}:ThemedSwitchProps) {
     <View style={styles.toggleRow}>
         <ThemedText type='boldText'>{label}</ThemedText>
         <Switch
-                trackColor={{false: '#767577', true: 'rgba(255, 118, 72, 1)'}}
-                thumbColor={isEnabled ? 'rgba(255, 118, 72, 1)' : '#f4f4f3'}
-                ios_backgroundColor="#3e3e3e"
+                trackColor={{false: '#f4f4f3', true: 'rgba(255, 118, 72, 1)'}}
+                thumbColor={isEnabled ? '#f4f4f3': 'rgba(255, 118, 72, 1)'}
+                ios_backgroundColor="#f4f4f3"
                 onValueChange={toggleSwitch}
                 value={isEnabled}
         />

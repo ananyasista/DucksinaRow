@@ -15,13 +15,11 @@ export default function ModalForm(props: ModalProps) {
     const[addVisible, setAddVisible] = useState(false);
 
   return (
-    <SafeAreaView style={{ flex: 1}}>
-        {/*Floating Add Button*/}
-        <View style = {modalTheme.addButton}>
-            <TouchableOpacity onPress={() => setAddVisible(true)}>
-                <Octicons name='plus' size = {30} color='#fff'/> 
-            </TouchableOpacity>
-        </View>
+    <View style = {modalTheme.addButton}>
+        <TouchableOpacity onPress={() => setAddVisible(true)}>
+            <Octicons name='plus' size = {30} color='#fff'/> 
+        </TouchableOpacity>
+
 
         <Modal 
             animationType="slide"
@@ -43,7 +41,7 @@ export default function ModalForm(props: ModalProps) {
                 {props.children}
             </View>
         </Modal>
-    </SafeAreaView>
+    </View>
   )
 }
 

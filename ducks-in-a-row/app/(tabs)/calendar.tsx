@@ -1,18 +1,14 @@
 import { Calendar, Mode } from 'react-native-big-calendar'
-import { StyleSheet, Dimensions, TouchableOpacity, Modal, Switch} from 'react-native';
+import { StyleSheet, Dimensions, TouchableOpacity, Modal, Switch, ScrollView, LayoutChangeEvent, Button} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useState } from 'react';
-// import { View } from 'react-native-reanimated/lib/typescript/Animated';
 import { View, Text } from 'react-native';
-import { Button, Header } from '@react-navigation/elements';
-import Octicons from "@expo/vector-icons/Octicons";
 import ModalForm from '@/components/modal-form';
 import { ThemedText } from '@/components/themed-text';
 import {ThemedTextInput} from '@/components/text-input';
 import { ThemedSwitch } from '@/components/themed-switch';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker, { DateTimePickerEvent, Event } from '@react-native-community/datetimepicker';
 
-const {height: SCREEN_HEIGHT} = Dimensions.get('window');
 const events = [
   {
     title: 'Meeting',
@@ -36,8 +32,8 @@ const events = [
   },
   {
     title: 'Coffee break',
-    start: new Date(2020, 1, 11, 15, 45),
-    end: new Date(2020, 1, 11, 16, 30),
+    start: new Date(2026, 2, 31, 15, 45),
+    end: new Date(2026, 2, 31, 16, 30),
   },
   
 ]
@@ -48,8 +44,16 @@ export default function CalendarPage() {
     const[currentDate, setCurrentDate] = useState(new Date());
     const[currentMonth, setCurrentMonth] = useState(abbrMonth[currentDate.getMonth()]);
     const[currentMode, setCurrentMode] = useState<Mode>('week');
-    const[addVisible, setAddVisible] = useState(false);
-    
+    const[calendarHeight, setCalendarHeight] = useState(0);
+    const[startDate, setStartDate] = useState(new Date());
+    const[endDate, setEndDate] = useState(new Date());
+
+    const[show, setShow] = useState(false);
+
+    const calendarLayout = (e:LayoutChangeEvent) => {
+      const{height} = e.nativeEvent.layout;
+      setCalendarHeight(height);
+    }
     function changeView(date: Date, switchView: Boolean) {
         if(switchView === true) {
             setCurrentMode(currentMode==='week'? 'month' : 'week' );
@@ -57,10 +61,33 @@ export default function CalendarPage() {
         setCurrentDate(date);
         setCurrentMonth(abbrMonth[date.getMonth()]);
     } 
-
+    function changeToSchedule()
+    {
+      setCurrentMode('schedule');
+    }
+    
+   const onChangeStartDate = (event: DateTimePickerEvent, selectedDate: Date) => {
+    const currentDate = selectedDate;
+    setStartDate(currentDate);
+  };
+  const onChangeStartTime = (event: DateTimePickerEvent, selectedTime: Date) => {
+    setStartDate(selectedTime);
+  };
+  const onChangeEndDate = (event: DateTimePickerEvent, selectedDate: Date) => {
+    const currentDate = selectedDate;
+    setEndDate(currentDate);
+  };
+  const onChangeEndTime = (event: DateTimePickerEvent, selectedTime: Date) => {
+    setEndDate(selectedTime);
+  };
+  
+  const showMode = () => {
+    setShow(true);
+  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.background}}>
+      
         {/*Date and Today Button*/}
         <View style={calendarTheme.header}>
             <View style = {calendarTheme.dateContainer}>
@@ -84,32 +111,82 @@ export default function CalendarPage() {
                 </TouchableOpacity>
             </View>
         </View>
+        
+        
         {/*Calendar & Events Tabs */}
         <View style={calendarTheme.tabs}>
             <Text style={calendarTheme.tabsText} onPress={() => setCurrentMode('week')}>Calendar</Text>
-            <Text style={calendarTheme.tabsText} onPress={() => setCurrentMode('schedule')}>Events</Text>
+            <Text style={calendarTheme.tabsText} onPress={() => changeToSchedule()}>Events</Text>
         </View>
+        
         {/*Calendar*/}
-        <Calendar
-            events={events}
-            height={SCREEN_HEIGHT}
-            date = {currentDate}
-            eventCellStyle = {calendarTheme.eventStyle}
-            mode={currentMode}
-            onPressDateHeader={(date:Date) =>changeView(date, true)}
-            onSwipeEnd = {(date:Date) => changeView(date, false)}
-            theme = {theme.calendar}
-        />
-
-        {/*Create Event Modal*/}
-        <ModalForm title ="Create Event">
+        <View
+          style={{ flex: 1 }}
+          onLayout={calendarLayout}
+        >
+          <Calendar
+              events={events}
+              height={calendarHeight}
+              date = {currentDate}
+              eventCellStyle = {calendarTheme.eventStyle}
+              mode={currentMode}
+              onPressDateHeader={(date:Date) =>changeView(date, true)}
+              onSwipeEnd = {(date:Date) => changeView(date, false)}
+              theme = {theme.calendar}
+          />
+        </View>
+        {/* Create Event Modal */}
+        <ModalForm title ="Create Event" >
           <ThemedText type="boldText" >Event Title</ThemedText>
           <ThemedTextInput placeholder="Item Name"/>
           <ThemedText type="boldText">Description</ThemedText>
           <ThemedTextInput size="large" multiline={true} placeholder="Add Details"/>
-          <ThemedSwitch label="All-Day"/>
-          <ThemedText type="boldText">Start Time</ThemedText>
+          <ThemedSwitch label="All-Day" />
+          <ThemedText type="boldText" onLayout={showMode}>Start Date</ThemedText>
+          {/* <Text>Start selected: {startDate.toLocaleString()}</Text>
+                    <Text>End Selected: {endDate.toLocaleString()}</Text> */}
+
+          <View style={calendarTheme.dateTimePicker}>
+            {show && (
+              <DateTimePicker
+                testID="dateTimePicker"
+                value={startDate}
+                mode={'date'}
+                is24Hour={true}
+                onChange={onChangeStartDate}
+              />
+            ) }
+            {show && (
+              <DateTimePicker
+                testID="dateTimePicker"
+                value={endDate}
+                mode={'time'}
+                is24Hour={true}
+                onChange={onChangeStartTime}
+              />
+          ) }
+          </View>
           <ThemedText type="boldText">End Time</ThemedText>
+          <View style={calendarTheme.dateTimePicker}>
+            {show && (
+              <DateTimePicker
+                testID="dateTimePicker"
+                value={endDate}
+                mode={'date'}
+                is24Hour={true}
+                onChange={onChangeEndDate}
+              />
+            ) }
+            {show && (
+              <DateTimePicker
+                testID="dateTimePicker"
+                value={endDate}
+                mode={'time'}
+                is24Hour={true}
+                onChange={onChangeEndTime}
+              />
+          ) }
+          </View>
           <ThemedText type="boldText">Location</ThemedText>
           <ThemedTextInput placeholder='Living Room'/>
           <ThemedSwitch label="Needs Roommates Approval?"/>
@@ -189,5 +266,10 @@ const calendarTheme = StyleSheet.create({
   },
   eventStyle: {
     backgroundColor: '#4DC591',
+  },
+  dateTimePicker: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
 });
