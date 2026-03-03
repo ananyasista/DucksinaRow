@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { Link, router } from "expo-router";
 import { signup, me } from "../api/auth"
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function SignupScreen() {
   const [firstName, setFirstName] = useState(""); // Optional
@@ -55,7 +56,10 @@ export default function SignupScreen() {
         join_code: joinCode.trim() || undefined,
       });
 
-      const profile = await me(token);
+      // Stores user's token in AsyncStorage
+      await AsyncStorage.setItem("token", token);
+
+      const profile = await me();
       console.log("ME:", profile);
 
       setMsg(`SUCCESS: Account created for ${user.email}`);

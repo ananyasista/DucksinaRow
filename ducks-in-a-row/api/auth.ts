@@ -1,4 +1,5 @@
 import { api } from "./client";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Sign up
 export async function signup(data: {
@@ -19,9 +20,24 @@ export async function login(data: { email: string; password: string }) {
 }
 
 // User's profile
-export async function me(token: string) {
-  const res = await api.get("/auth/me/", {
-    headers: { Authorization: `Token ${token}` },
+export type MeResponse = {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  username?: string;
+  household_join_code?: string | null;
+};
+
+export async function me(): Promise<MeResponse> {
+  const token = await AsyncStorage.getItem("accessToken");
+  if (!token) throw new Error("No access token found.");
+
+  const res = await api.get("/auth/profile/", {
+    headers: {
+      Authorization: `Token ${token}`,
+    },
   });
+
   return res.data;
 }

@@ -5,5 +5,5 @@ from .views.auth_views import signup, login, me
 urlpatterns = [
     path("auth/signup/", signup),
     path("auth/login/", login),
-    path("auth/me/", me),
+    path("auth/profile/", me),
 ]

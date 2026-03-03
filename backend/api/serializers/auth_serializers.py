@@ -57,7 +57,7 @@ class SignupSerializer(serializers.ModelSerializer):
         user.save()
         return user
 
-class MeSerializer(serializers.ModelSerializer):
+class ProfileSerializer(serializers.ModelSerializer):
     household_join_code = serializers.SerializerMethodField()
 
     class Meta:

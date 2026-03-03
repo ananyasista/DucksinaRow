@@ -4,8 +4,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.authtoken.models import Token
-
-from api.serializers.auth_serializers import SignupSerializer, MeSerializer
+from api.serializers.auth_serializers import ProfileSerializer, SignupSerializer
 
 User = get_user_model()
 
@@ -27,7 +26,7 @@ def signup(request):
     return Response(
     {
         "token": token.key,
-        "user": MeSerializer(user).data
+        "user": ProfileSerializer(user).data
     },
     status=status.HTTP_201_CREATED,
 )
@@ -61,4 +60,4 @@ def login(request):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def me(request):
-    return Response(MeSerializer(request.user).data)
+    return Response(ProfileSerializer(request.user).data)
