@@ -57,7 +57,8 @@ class SignupSerializer(serializers.ModelSerializer):
         user.save()
         return user
 
-class MeSerializer(serializers.ModelSerializer):
+# Display user profile information
+class ProfileSerializer(serializers.ModelSerializer):
     household_join_code = serializers.SerializerMethodField()
 
     class Meta:
@@ -66,3 +67,21 @@ class MeSerializer(serializers.ModelSerializer):
 
     def get_household_join_code(self, obj):
         return obj.household.join_code if obj.household else None
+    
+# Allow user to edit profile 
+class UpdateProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ("username", "first_name", "last_name", "email")
+
+    def validate_email(self, value):
+        value = value.strip().lower()
+        # if user is changing email, ensure unique
+        if User.objects.filter(email=value).exclude(pk=self.instance.pk).exists():
+            raise serializers.ValidationError("Email already in use.")
+        return value
+
+# Allow user to change password
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField()
+    new_password = serializers.CharField(min_length=8)
