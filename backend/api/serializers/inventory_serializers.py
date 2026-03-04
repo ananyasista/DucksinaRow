@@ -11,7 +11,7 @@ class InventoryListSerializer(serializers.ModelSerializer):
             'id',
             'household',
             'name',
-            'restocked_needed',
+            'restock_needed',
             'quantity',
             'last_purchased_by',
             'location'
