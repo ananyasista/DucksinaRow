@@ -218,6 +218,27 @@ class Chores(models.Model):
 
     def __str__(self):
         return self.title
+
+    # Rotation HELPER method
+    def rotate_chore(self):
+        # Moves chore to next assignee in rotation
+
+        if not self.is_rotating:
+            return
+        
+        roommates = list(self.roommates_involved.all())
+        if not roommates:
+            return
+        
+        if self.assigned_roommate in roommates:
+            index = roommates.index(self.assigned_roommate)
+            next_index = (index + 1) % len(roommates)
+            self.assigned_roommate = roommates[next_index]
+        else:
+            self.assigned_roommate = roommates[0]
+        
+        self.completed = False
+        self.save()
     
 
 # Calendar Events Table
