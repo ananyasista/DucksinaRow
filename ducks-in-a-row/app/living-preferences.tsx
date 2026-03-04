@@ -104,12 +104,14 @@ export default function LivingPreferencesScreen() {
   const handleSave = async () => {
     const err = validate();
     if (err) {
-      Alert.alert("Fix this first", err);
-      return;
-    }
+    Alert.alert("Saved", "Preferences updated!", [
+      { text: "Go to Profile", onPress: () => router.replace("/profile") },
+    ]);
+    return;
+  }
 
-    try {
-      setSaving(true);
+  try {
+    setSaving(true);
 
       // PATCH only the model fields (no user id)
       const payload: LivingPrefs = {

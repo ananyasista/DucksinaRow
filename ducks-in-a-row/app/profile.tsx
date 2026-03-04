@@ -102,6 +102,9 @@ return (
               <Text style={{ color: "#666" }}>No preferences found.</Text>
             )}
           </View>
+          <Pressable style={styles.btnOutline} onPress={() => router.push("/living-preferences")}>
+        <Text style={styles.btnOutlineText}>Edit Living Preferences</Text>
+      </Pressable>
 
           <Pressable style={styles.btnOutline} onPress={loadProfile}>
             <Text style={styles.btnOutlineText}>Refresh</Text>
