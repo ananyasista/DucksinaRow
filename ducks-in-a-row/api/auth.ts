@@ -20,16 +20,30 @@ export async function login(data: { email: string; password: string }) {
 }
 
 // User's profile
-export type MeResponse = {
+export type ProfileResponse = {
   id: string;
   email: string;
   first_name: string;
   last_name: string;
   username?: string;
   household_join_code?: string | null;
+  living_preferences?: LivingPreferences | null;
 };
 
-export async function me(): Promise<MeResponse> {
+export type LivingPreferences = {
+  cleanliness: number | null;
+  clean_up_your_space: boolean;
+  cook: boolean;
+  sharing_items: boolean;
+  pets: boolean;
+  guests: boolean;
+  personality_type: string;
+  sleep_schedule: string;
+  smoking: boolean;
+  drinking_alcohol: boolean;
+};
+
+export async function me(): Promise<ProfileResponse> {
   const token = await AsyncStorage.getItem("accessToken");
   if (!token) throw new Error("No access token found.");
 

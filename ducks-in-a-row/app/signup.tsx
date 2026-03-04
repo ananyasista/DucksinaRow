@@ -57,14 +57,14 @@ export default function SignupScreen() {
       });
 
       // Stores user's token in AsyncStorage
-      await AsyncStorage.setItem("token", token);
+      await AsyncStorage.setItem("accessToken", token);
 
       const profile = await me();
       console.log("ME:", profile);
 
       setMsg(`SUCCESS: Account created for ${user.email}`);
 
-      // router.replace("/(tabs)"); reroute to home 
+      router.replace("/living-preferences");
     } catch (e: any) {
       console.log("SIGNUP ERROR:", e?.response?.data || e.message);
 

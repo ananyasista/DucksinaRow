@@ -3,28 +3,46 @@ import { View, Text, Pressable, ActivityIndicator, StyleSheet } from "react-nati
 import { useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
-import { me, MeResponse } from "../api/auth";
+import { me, ProfileResponse } from "../api/auth";
+import { getLivingPreferences } from "../api/preferences";
 
-const TestUser: MeResponse = {
+const TestUser: ProfileResponse = {
   id: "demo",
   email: "demo@example.com",
   first_name: "Demo",
   last_name: "User",
   username: "demo-user",
   household_join_code: null,
+  living_preferences: {
+    cleanliness: 3,
+    clean_up_your_space: false,
+    cook: false,
+    sharing_items: true,
+    pets: false,
+    guests: true,
+    personality_type: "TEST",
+    sleep_schedule: "",
+    smoking: false,
+    drinking_alcohol: false,
+  },
 };
 
 export default function ProfileScreen() {
-  const [profile, setProfile] = useState<MeResponse>(TestUser);
+  const [profile, setProfile] = useState<ProfileResponse>(TestUser);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [livingPrefs, setLivingPrefs] = useState<any>(null);
 
   const loadProfile = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
+      // Fetch backend info
       const data = await me();
+      const prefs = await getLivingPreferences();
       setProfile(data);
+      setLivingPrefs(prefs);
+
     } catch (e: any) {
       console.log("PROFILE LOAD ERROR:", e?.message || e);
       setError("Couldn’t load profile. Showing demo data.");
@@ -46,7 +64,9 @@ export default function ProfileScreen() {
     router.replace("/login");
   };
 
-  return (
+  const prefs = profile.living_preferences;
+
+return (
     <View style={styles.container}>
       <Text style={styles.h1}>
         Hello, {profile.first_name || profile.username || "Roommate"}!
@@ -63,7 +83,24 @@ export default function ProfileScreen() {
 
             <Row label="Name" value={`${profile.first_name} ${profile.last_name}`} />
             <Row label="Email" value={profile.email} />
-            <Text>Join Code: {profile.household_join_code ?? "N/A"}</Text>
+            <Row label="Join Code" value={profile.household_join_code ?? "N/A"} />
+          </View>
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Living Preferences</Text>
+
+            {livingPrefs ? (
+              <>
+                <Row label="Cleanliness" value={livingPrefs.cleanliness?.toString() ?? "N/A"} />
+                <Row label="Pets" value={livingPrefs.pets ? "Yes" : "No"} />
+                <Row label="Guests" value={livingPrefs.guests ? "Yes" : "No"} />
+                <Row label="Cooks" value={livingPrefs.cook ? "Yes" : "No"} />
+                <Row label="Sleep" value={livingPrefs.sleep_schedule || "N/A"} />
+                <Row label="Smoking" value={livingPrefs.smoking ? "Yes" : "No"} />
+                <Row label="Drinking" value={livingPrefs.drinking_alcohol ? "Yes" : "No"} />
+              </>
+            ) : (
+              <Text style={{ color: "#666" }}>No preferences found.</Text>
+            )}
           </View>
 
           <Pressable style={styles.btnOutline} onPress={loadProfile}>
@@ -77,6 +114,10 @@ export default function ProfileScreen() {
       )}
     </View>
   );
+}
+
+function yesNo(v: boolean) {
+  return v ? "Yes" : "No";
 }
 
 function Row({ label, value }: { label: string; value: string }) {
