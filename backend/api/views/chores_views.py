@@ -11,21 +11,16 @@ from ..models import Chores
 
 class ChoreViewSet(viewsets.ModelViewSet):
     # serializer_class = ChoreSerializer
-    # permission_classes = [IsAuthenticated]
-
     # queryset = Chores.objects.all()
 
-    # def get_serializer_class(self):
-    #     if self.action == 'list':
-    #         return ChoreListSerializer
-    #     return ChoreDetailSerializer
-    
+    @permission_classes([IsAuthenticated])
     def get_serializer_class(self):
         if self.action == "list":
             return ChoreListSerializer
         return ChoreSerializer
     
     # READ
+    @permission_classes([IsAuthenticated])
     def get_queryset(self):
         user = self.request.user
         if user.is_superuser:
@@ -67,15 +62,18 @@ class ChoreViewSet(viewsets.ModelViewSet):
 
         return queryset
 
+    @permission_classes([IsAuthenticated])
     def perform_create(self, serializer):
         serializer.save(household=self.request.user.household)
 
+    @permission_classes([IsAuthenticated])
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
     
     @action(detail=False, methods=["get"], url_path="filters")
+    @permission_classes([IsAuthenticated])
     def filters(self, request):
         user = request.user
 
