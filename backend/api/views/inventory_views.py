@@ -6,7 +6,7 @@ from rest_framework import status
 from rest_framework.authtoken.models import Token
 
 from rest_framework import viewsets
-from ..serializers.inventory_serializer import InventoryListSerializer, InventorySerializer
+from ..serializers.inventory_serializers import InventoryListSerializer, InventorySerializer
 from ..models import Items
 
 class InventoryViewSet(viewsets.ModelViewSet):

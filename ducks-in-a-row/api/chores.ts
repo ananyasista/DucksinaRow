@@ -67,7 +67,7 @@ export const deleteChore = async (token: string, id: string) => {
   });
 };
 
-export const getFilterOptions = async () => {
+export const getChoreFilterOptions = async () => {
   const response = await api.get("/chores/filter-options/");
   return response.data;
 };
