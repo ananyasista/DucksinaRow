@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F6F4F4C4',
   },
   small: {
-    height: 32,
+    height: 40,
   },
   large: {
     height:102,
