@@ -7,7 +7,7 @@ from rest_framework.authtoken.models import Token
 
 from rest_framework import viewsets
 from ..serializers.inventory_serializers import InventoryListSerializer, InventorySerializer
-from ..models import Items
+from ..models import Items, User
 
 class InventoryViewSet(viewsets.ModelViewSet):
     # serializer_class = ChoreSerializer
@@ -65,13 +65,13 @@ class InventoryViewSet(viewsets.ModelViewSet):
 
         # Base queryset (respect household rules)
         if user.is_superuser:
-            chores = Chore.objects.all()
+            items = Items.objects.all()
         else:
-            chores = Chore.objects.filter(household=user.household)
+            items = Items.objects.filter(household=user.household)
 
         # Unique locations
         locations = (
-            chores.exclude(location="")
+            items.exclude(location="")
             .values_list("location", flat=True)
             .distinct()
         )
@@ -79,7 +79,7 @@ class InventoryViewSet(viewsets.ModelViewSet):
         # Roommates in this household
         roommates = User.objects.filter(
             household=user.household
-        ).values("id", "name")
+        ).values("id", "first_name")
 
         data = {
             "locations": list(locations),

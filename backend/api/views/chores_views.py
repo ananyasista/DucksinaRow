@@ -7,7 +7,7 @@ from rest_framework.authtoken.models import Token
 
 from rest_framework import viewsets
 from ..serializers.chores_serializers import ChoreSerializer, ChoreListSerializer
-from ..models import Chores
+from ..models import Chores, User
 
 class ChoreViewSet(viewsets.ModelViewSet):
     # serializer_class = ChoreSerializer
@@ -79,9 +79,9 @@ class ChoreViewSet(viewsets.ModelViewSet):
 
         # Base queryset (respect household rules)
         if user.is_superuser:
-            chores = Chore.objects.all()
+            chores = Chores.objects.all()
         else:
-            chores = Chore.objects.filter(household=user.household)
+            chores = Chores.objects.filter(household=user.household)
 
         # Unique locations
         locations = (
@@ -93,7 +93,7 @@ class ChoreViewSet(viewsets.ModelViewSet):
         # Roommates in this household
         roommates = User.objects.filter(
             household=user.household
-        ).values("id", "name")
+        ).values("id", "first_name")
 
         data = {
             "locations": list(locations),
