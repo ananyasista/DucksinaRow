@@ -4,6 +4,7 @@ from .views.chores_views import ChoreViewSet
 from .views.auth_views import change_password, signup, login, me, update_profile
 from .views.preferences_views import my_living_preferences
 from .views.household_views import household_roommates
+from .views.inventory_views import InventoryViewSet
 
 # App routers for auth views
 urlpatterns = [
@@ -18,5 +19,6 @@ urlpatterns = [
 
 router = DefaultRouter()
 router.register(r"chores", ChoreViewSet, basename="chores")
+router.register(r"inventory", InventoryViewSet, basename="inventory")
 
 urlpatterns.extend(router.urls)
