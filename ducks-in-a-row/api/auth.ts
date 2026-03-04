@@ -55,3 +55,18 @@ export async function me(): Promise<ProfileResponse> {
 
   return res.data;
 }
+
+export async function updateProfile(patch: {
+  username?: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+}) {
+  const res = await api.patch("/auth/profile/update/", patch);
+  return res.data;
+}
+
+export async function changePassword(data: { old_password: string; new_password: string }) {
+  const res = await api.post("/auth/change-password/", data);
+  return res.data;
+}

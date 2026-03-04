@@ -1,5 +1,5 @@
 from django.urls import path
-from .views.auth_views import signup, login, me
+from .views.auth_views import change_password, signup, login, me, update_profile
 from .views.preferences_views import my_living_preferences
 from .views.household_views import household_roommates
 
@@ -8,6 +8,8 @@ urlpatterns = [
     path("auth/signup/", signup),
     path("auth/login/", login),
     path("auth/profile/", me),
+    path("auth/profile/update/", update_profile),
+    path("auth/profile/change-password/", change_password),
     path("preferences/living/", my_living_preferences),
     path("household/roommates/", household_roommates),
 ]
