@@ -16,7 +16,7 @@ export default function PendingTile(props: PendingTileProps){
                 <ThemedText style={styles.bodyText}> events</ThemedText>
             </ThemedText>
             <View style={styles.iconRow}>
-                <IconSymbol  size={36} name="chevron.right" color="#000000"></IconSymbol>
+                <IconSymbol  size={24} name="chevron.right" color="#000000"></IconSymbol>
             </View>
         </View>
         
@@ -27,19 +27,20 @@ const styles = StyleSheet.create({
     tileHeading: {
         fontSize: 24,
         fontWeight: 600,
-        paddingBottom: 40,
+        paddingBottom: 20,
         textAlign: 'center'
     },
     tile: {
         backgroundColor: "#F8DA79",
         borderRadius: 16,
-        padding: 20,
-        fontSize: 24,
-        color: "#000000",
+        padding: 20
     },
     eventNumber: {
         fontSize: 48,
-        textAlign: "center"
+        textAlign: "center",
+        margin: 0,
+        lineHeight: 50,
+        paddingBottom: 2
     },
     bodyText: {
         fontSize: 24

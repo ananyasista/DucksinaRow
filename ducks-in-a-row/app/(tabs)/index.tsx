@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
-import {StyleSheet, View, Text } from 'react-native';
+import {StyleSheet, View, Text, ScrollView,  } from 'react-native';
 
-import ParallaxScrollView from '@/components/parallax-scroll-view';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link } from 'expo-router';
 
 import PendingTile from '@/components/pending-tile';
@@ -26,7 +26,7 @@ const mockData: UserData = {
   groupName: "Area 52",
   needApprovals: 10,
   giveApprovals: 4,
-  pendingNum: 6,
+  pendingNum: 10,
   chores: [
     {
       key: 1,
@@ -67,77 +67,72 @@ export default function HomeScreen() {
 
 
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#00664F', dark: '#00664F' }}
-      headerImage={
-        <Image
-          source={null}
-        />
-      }>
+    <SafeAreaView style={{flex: 1}}>
+      <ScrollView style={{flex: 1}}>
+        <View style={styles.header}></View>
+        <View style={styles.fullLayout}>
 
-      <View style={styles.fullLayout}>
+          <Text style={styles.title}>Welcome Back, {groupName}!</Text>
 
-        <Text style={styles.title}>Welcome Back, {groupName}!</Text>
+          {/* // rendering for pending events section */}
+          <View style={styles.section}>
+              {pendingNum && pendingNum >= 1 && (
+              <>
+              <Text style={styles.subtitle}>Pending Events ({pendingNum}):</Text>
+                <View style={styles.pendingArea}>
+                  {tilesToShow.map((tile) => (
+                    <View key={tile.key} style={styles.tileWrapper}>
+                      <PendingTile
+                        numEvents={tile.num}
+                        title={tile.title}
+                      />
+                    </View>
+                  ))}
+                </View>
+              </>
+            )}
+          </View>
+          
 
-        {/* // rendering for pending events section */}
-        <View style={styles.section}>
-            {pendingNum && pendingNum >= 1 && (
-            <>
-            <Text style={styles.subtitle}>Pending Events ({pendingNum}):</Text>
-              <View style={styles.pendingArea}>
-                {tilesToShow.map((tile) => (
-                  <View key={tile.key} style={styles.tileWrapper}>
-                    <PendingTile
-                      numEvents={tile.num}
-                      title={tile.title}
-                    />
-                  </View>
+          {/* // rendering for chores section */}
+          <View style={styles.section}>
+            <Text style={styles.subtitle}>Quick To-Do List:</Text>
+            {choreList.length >= 1 ? (
+              <>
+                {choreList.map((chore) => (
+                  <CheckboxTile
+                    title={chore.title}
+                    complete={chore.complete}
+                  ></CheckboxTile>
                 ))}
-              </View>
-            </>
-          )}
-        </View>
-        
-
-        {/* // rendering for chores section */}
-        <View style={styles.section}>
-          <Text style={styles.subtitle}>Quick To-Do List:</Text>
-          {choreList.length >= 1 ? (
-            <>
-              {choreList.map((chore) => (
-                <CheckboxTile
-                  title={chore.title}
-                  complete={chore.complete}
-                ></CheckboxTile>
-              ))}
-            </>
-          ) : (
-            <Text style={styles.subtitle2}>Your to-do list is empty!</Text>
-          )}
-        </View>
-        
-        {/* Rendering for Upcoming events section; TILE NOT MADE YET */}
-        <View style={styles.section}>
-          <Text style={styles.subtitle}>Upcoming Week Events:</Text>
-          <Text style={styles.subtitle2}>Events Coming Up</Text>
-          {/* {choreList.length >= 1 ? (
-            <>
-              {choreList.map((chore) => (
-                <CheckboxTile
-                  title={chore.title}
-                  complete={chore.complete}
-                ></CheckboxTile>
-              ))}
-            </>
-          ) : (
-            <Text style={styles.subtitle2}>Your to-do list is empty!</Text>
-          )} */}
-        </View>
+              </>
+            ) : (
+              <Text style={styles.subtitle2}>Your to-do list is empty!</Text>
+            )}
+          </View>
+          
+          {/* Rendering for Upcoming events section; TILE NOT MADE YET */}
+          <View style={styles.section}>
+            <Text style={styles.subtitle}>Upcoming Week Events:</Text>
+            <Text style={styles.subtitle2}>Events Coming Up</Text>
+            {/* {choreList.length >= 1 ? (
+              <>
+                {choreList.map((chore) => (
+                  <CheckboxTile
+                    title={chore.title}
+                    complete={chore.complete}
+                  ></CheckboxTile>
+                ))}
+              </>
+            ) : (
+              <Text style={styles.subtitle2}>Your to-do list is empty!</Text>
+            )} */}
+          </View>
 
 
-      </View>    
-      
-    </ParallaxScrollView>
+        </View>    
+      </ScrollView>
+    </SafeAreaView>
   );
 }
  
@@ -147,32 +142,46 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
+  
   pendingArea: {
     flexDirection: 'row',
-    flex: 1,
     gap: 40
   },
+
   tileWrapper: {
     flex: 1
   },
+
   subtitle: {
     fontSize: 24,
     fontWeight: 700
   },
+
   subtitle2: {
     fontSize: 16,
     fontWeight: 600
   },
+
   title: {
     fontSize: 40,
     fontWeight: 700
   },
+
   fullLayout: {
     flexDirection: 'column',
-    gap: 30
+    gap: 30,
+    margin: 20,
+    flex: 3
   },
+
   section: {
     gap: 15
+  },
+
+  header: {
+    backgroundColor: '#00664F',
+    flex: 2,
+    aspectRatio: 2.5
   }
 
   
