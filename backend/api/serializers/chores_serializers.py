@@ -1,23 +1,24 @@
 from rest_framework import serializers
 from django.utils import timezone
-from .models import Chore
+from ..models import Chores
 
 class ChoreListSerializer(serializers.ModelSerializer):
     assignee_name = serializers.CharField(source='assigned_roommate.name', read_only=True)
 
     class Meta:
-        model = Chore
+        model = Chores
         fields = [
             'id',
+            'household',
             'title',
             'completed',
-            'due_date',
+            'date',
             'assignee_name'
         ]
 
 class ChoreSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Chore
+        model = Chores
         fields = "__all__"
         read_only_fields = ("id", "household")
 

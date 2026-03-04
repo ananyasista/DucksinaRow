@@ -6,24 +6,31 @@ from rest_framework import status
 from rest_framework.authtoken.models import Token
 
 from rest_framework import viewsets
-from .serializers import ChoreSerializer, ChoreListSerializer
-from .models import Chore
+from ..serializers.chores_serializers import ChoreSerializer, ChoreListSerializer
+from ..models import Chores
 
 class ChoreViewSet(viewsets.ModelViewSet):
-    serializer_class = ChoreSerializer
-    permission_classes = [IsAuthenticated]
+    # serializer_class = ChoreSerializer
+    # permission_classes = [IsAuthenticated]
 
-    queryset = Chore.objects.all()
+    # queryset = Chores.objects.all()
 
+    # def get_serializer_class(self):
+    #     if self.action == 'list':
+    #         return ChoreListSerializer
+    #     return ChoreDetailSerializer
+    
     def get_serializer_class(self):
-        if self.action == 'list':
+        if self.action == "list":
             return ChoreListSerializer
-        return ChoreDetailSerializer
+        return ChoreSerializer
     
     # READ
     def get_queryset(self):
         user = self.request.user
-        queryset = Chore.objects.filter(household=user.household)
+        if user.is_superuser:
+            return Chores.objects.all()  # all chores in the table
+        queryset = Chores.objects.filter(household=user.household)
 
         # Filter: my chores
         if self.request.query_params.get("my") == "true":
