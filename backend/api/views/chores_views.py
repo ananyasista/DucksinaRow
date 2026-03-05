@@ -4,23 +4,24 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.authtoken.models import Token
+from django.utils import timezone
 
 from rest_framework import viewsets
 from ..serializers.chores_serializers import ChoreSerializer, ChoreListSerializer
 from ..models import Chores, User
 
 class ChoreViewSet(viewsets.ModelViewSet):
-    # serializer_class = ChoreSerializer
-    # queryset = Chores.objects.all()
+    serializer_class = ChoreSerializer
+    queryset = Chores.objects.all()
+    permission_classes = [IsAuthenticated]
 
-    @permission_classes([IsAuthenticated])
+
     def get_serializer_class(self):
         if self.action == "list":
             return ChoreListSerializer
         return ChoreSerializer
     
     # READ
-    @permission_classes([IsAuthenticated])
     def get_queryset(self):
         user = self.request.user
         if user.is_superuser:
@@ -62,18 +63,15 @@ class ChoreViewSet(viewsets.ModelViewSet):
 
         return queryset
 
-    @permission_classes([IsAuthenticated])
     def perform_create(self, serializer):
         serializer.save(household=self.request.user.household)
 
-    @permission_classes([IsAuthenticated])
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
     
     @action(detail=False, methods=["get"], url_path="filters")
-    @permission_classes([IsAuthenticated])
     def filters(self, request):
         user = request.user
 
@@ -105,3 +103,14 @@ class ChoreViewSet(viewsets.ModelViewSet):
         }
 
         return Response(data)
+    
+    def perform_update(self, serializer):
+        instance = self.get_object()
+        was_complete = instance.completed
+
+        updated_instance = serializer.save()
+
+        # If chore was just completed
+        if not was_complete and updated_instance.completed:
+            if updated_instance.date and updated_instance.date <= timezone.now().date():
+                updated_instance.rotate()
