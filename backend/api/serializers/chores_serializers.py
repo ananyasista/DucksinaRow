@@ -24,21 +24,6 @@ class ChoreSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         user = self.context["request"].user
-        household = data.get("household")
-
-        # Ensures chore belongs to the user's household
-        if household != user.household:
-            raise serializers.ValidationError(
-                "You cannot create chores for another household."
-            )
-        
-        # Ensures assigned roommated belongs to same household
-        assigned = data.get("assigned_roommate")
-        if assigned and assigned.household != user.household:
-                raise serializers.ValidationError(
-                    "Assigned roommate must belong to your household."
-                )
-        
         # Rotation Logic
         if data.get("is_rotating") and not data.get("roommates_involved"):
             raise serializers.ValidationError(
@@ -54,14 +39,11 @@ class ChoreSerializer(serializers.ModelSerializer):
         return data
 
     def update(self, instance, validated_data):
-        # Handles updating chores
         was_complete = instance.completed
         instance = super().update(instance, validated_data)
 
-        # was complete
         if not was_complete and instance.completed:
-                # Rotate only if deadline has passed
-                if instance.date <= timezone.now().date():
-                    instance.rotate()
-        
+            if instance.date and instance.date <= timezone.now().date():
+                instance.rotate()
+
         return instance
