@@ -14,6 +14,7 @@ import { ThemedSwitch } from './themed-switch';
 import DateTimePicker, { DateTimePickerEvent, Event } from '@react-native-community/datetimepicker';
 import RNDateTimePicker from '@react-native-community/datetimepicker';
 import { IconSymbol } from './ui/icon-symbol';
+import ModalCalendarForm from './modal-calendar-form';
 
 type EventModalProps = PropsWithChildren<{
     event?: CalendarEvent|null;
@@ -26,17 +27,31 @@ export interface CalendarEvent extends ICalendarEventBase {
 }
 
 export default function EventModal({event, ...props}:EventModalProps) {
-    const[addVisible, setAddVisible] = useState(true);
-    
+    const[approvalModalVisible, setApprovalModalVisible] = useState(true);
+    const[editModal, setEditModal] = useState(false);
+
     function close() {
-        setAddVisible(false);
+        setApprovalModalVisible(false);
         props.onClose();
     }
+    function showModal(approval: boolean, edit: boolean)
+    {
+        setApprovalModalVisible(approval);
+        setEditModal(edit);
+    }
+    function notifyRoommate() 
+    {
+        //TODO: Add in reminding roommate of event apporval
+    }
+    function deleteEvent() 
+    {
+        //TODO: Add in deletion functionality
+    }
   return (
-    <View >
+    <View>
         <Modal 
             animationType="slide"
-            visible={addVisible}
+            visible={approvalModalVisible}
             presentationStyle='formSheet'
             allowSwipeDismissal = {true}
             onRequestClose = {() => close()} 
@@ -44,13 +59,13 @@ export default function EventModal({event, ...props}:EventModalProps) {
             <View style ={modalTheme.container}>
             <View style={modalTheme.rowSpace}>
                 <TouchableOpacity onPress={() => close()}>
-                    <Octicons name='x' size = {40} color='#000000'/> 
+                    <Octicons name='x-circle' size = {30} color='#000000'/> 
                 </TouchableOpacity>
                 <View style={modalTheme.rowEnd}>
-                    <TouchableOpacity >
+                    <TouchableOpacity onPress={() => deleteEvent()}>
                         <Octicons name='trash' size = {30} color='#000000' style={{margin:5}}/> 
                     </TouchableOpacity>
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={() => showModal(false, true)}>
                         <Octicons name='pencil' size = {30} color='#000000' style={{margin:5}}/> 
                     </TouchableOpacity>
                 </View>
@@ -76,15 +91,22 @@ export default function EventModal({event, ...props}:EventModalProps) {
             <ThemedText type='subtitle'># of # roommates have approved</ThemedText>
             {
                 event?.needsApproval.map((e: string) =>  {
-                    return  <View style={modalTheme.rowStart}>
-                                <IconSymbol size={40} name="circle.fill" color='rgba(86, 182, 100, 1)' />
-                                <ThemedText type='boldText'>{e}</ThemedText>
-                                <IconSymbol size={40} name='bell' color='black'/>
+                    return  <View style={[modalTheme.rowSpace, modalTheme.rowPadding]}>
+                                <View  style={modalTheme.rowStart}>
+                                    <IconSymbol size={40} name="circle.fill" color='rgba(86, 182, 100, 1)' />
+                                    <ThemedText type='boldText'>{e}</ThemedText>
+                                </View>
+                                <TouchableOpacity  style={modalTheme.rowEnd} onPress={() => notifyRoommate()}>
+                                    <Octicons size={30} name='check-circle' color='black'/>
+                                </TouchableOpacity>
                             </View>;
                 })
             }
             </View>
         </Modal>
+        {editModal && (
+            <ModalCalendarForm formTitle="Edit Event" edit={true} event={event} onClose={() => showModal(true, false)}/>
+        )}
     </View>
   )
 }
@@ -117,6 +139,10 @@ const modalTheme = StyleSheet.create({
         display: "flex",
         flexDirection: "row",
         alignItems: "center",
+    },
+    rowPadding: {
+        marginTop:10,
+        marginBottom:10,
     },
     headerText: {
         fontSize: 24,

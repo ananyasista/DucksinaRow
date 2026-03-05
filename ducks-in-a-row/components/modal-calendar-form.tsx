@@ -33,7 +33,11 @@ export default function ModalCalendarForm({edit = false, onClose, ...props}: Mod
     const [mode, setMode] = useState(undefined);
     const [showStart, setShowStart] = useState(false);
     const [showEnd, setShowEnd] = useState(false);
-    
+    const [eventTitleError, setEventTitleError] = useState(false);
+    const [startDateError, setStartDateError] = useState(false);
+    const [endDateBeforeStartError, setEndDateBeforeStartError] = useState(false);
+    const [endDateError, setEndDateError] = useState(false);
+
     const onChangeStart = (event:DateTimePickerEvent, selectedDate?:Date) => {
       const currentDate = selectedDate ? selectedDate : new Date();
       setStartDate(currentDate);
@@ -53,6 +57,8 @@ export default function ModalCalendarForm({edit = false, onClose, ...props}: Mod
     };
     
     const close = () => {
+        var errors = checkErrors();
+        if(!errors){return;}
         setAddVisible(false);
         onClose();
     }
@@ -65,10 +71,25 @@ export default function ModalCalendarForm({edit = false, onClose, ...props}: Mod
         showMode('time');
     };
     
+    function checkErrors() {
+        if(startDate > endDate)
+        {
+            setEndDateBeforeStartError(true);
+            return false;
+        }
+        return true;
+    }
+    function open() {
+        setEventTitleError(false);
+        setStartDateError(false);
+        setEndDateError(false);
+        setEndDateBeforeStartError(false);
+        setAddVisible(true);
+    }
   return (
-    <View>
+    <View >
         {!edit && (
-            <TouchableOpacity  style = {modalTheme.addButton} onPress={() => setAddVisible(true)}>
+            <TouchableOpacity  style = {modalTheme.addButton} onPress={() => open()}>
                 <Octicons name='plus' size = {30} color='#fff'/> 
             </TouchableOpacity>
         )}       
@@ -90,13 +111,17 @@ export default function ModalCalendarForm({edit = false, onClose, ...props}: Mod
                 </TouchableOpacity>
             </View>
             <View style= {{flex: 1, padding: 16}}>
-                <ThemedText type="boldText" >Event Title</ThemedText>
+                {eventTitleError && (<ThemedText type='errorText'>Event title is required</ThemedText>)}
+                <ThemedText type="boldText" >Event Title:</ThemedText>
                 <ThemedTextInput placeholder="Item Name" defaultValue={props.event?.title}/>
-                <ThemedText type="boldText">Description</ThemedText>
+                <ThemedText type="boldText">Description:</ThemedText>
                 <ThemedTextInput size="large" multiline={true} placeholder="Add Details" defaultValue={props.event?.description}/>
                 <ThemedSwitch label="All-Day" />
                 
                 <View onLayout={showDatepicker}>
+                {startDateError && (<ThemedText type='errorText'>Start date is required</ThemedText>)}
+                {endDateBeforeStartError && (<ThemedText type='errorText'>End date must be AFTER start date</ThemedText>)}
+
                 <ThemedText type='boldText'>Start Date:</ThemedText>
 
                 {showStart && (
@@ -104,7 +129,7 @@ export default function ModalCalendarForm({edit = false, onClose, ...props}: Mod
                         <View style={modalTheme.rowStart}>
                             <IconSymbol size={20} name="calendar" color='black'/>
                             <DateTimePicker
-                                testID="dateTimePicker"
+                                testID="startDate"
                                 value={startDate}
                                 mode={'date'}
                                 display='default'
@@ -115,7 +140,7 @@ export default function ModalCalendarForm({edit = false, onClose, ...props}: Mod
                         <View style={modalTheme.rowStart}>
                             <IconSymbol size={20} name="clock" color='black'/>
                             <DateTimePicker
-                                testID="dateTimePicker"
+                                testID="startTime"
                                 value={startDate}
                                 mode={'time'}
                                 is24Hour={true}
@@ -125,14 +150,14 @@ export default function ModalCalendarForm({edit = false, onClose, ...props}: Mod
                         </View>
                     </View>
                 )}
-
+                {endDateError && (<ThemedText type='errorText'>End date is required</ThemedText>)}
                 <ThemedText type='boldText'>End Date:</ThemedText>
                     {showEnd && (
                     <View style={modalTheme.rowSpace}>
                         <View style={modalTheme.rowStart}>
                             <IconSymbol size={20} name="calendar" color='black'/>
                             <DateTimePicker
-                                testID="dateTimePicker"
+                                testID="endDate"
                                 value={endDate}
                                 mode={'date'}
                                 is24Hour={true}
@@ -143,7 +168,7 @@ export default function ModalCalendarForm({edit = false, onClose, ...props}: Mod
                         <View style={modalTheme.rowStart}>
                             <IconSymbol size={20} name="clock" color='black'/>
                             <DateTimePicker
-                                testID="dateTimePicker"
+                                testID="endTime"
                                 value={endDate}
                                 mode={'time'}
                                 is24Hour={true}
@@ -154,7 +179,7 @@ export default function ModalCalendarForm({edit = false, onClose, ...props}: Mod
                     </View>
                 )}
                 </View>
-                <ThemedText type="boldText">Location</ThemedText>
+                <ThemedText type="boldText">Location:</ThemedText>
                 <ThemedTextInput placeholder='Living Room'/>
                 <ThemedSwitch label="Needs Roommates Approval?"/>
                 <ThemedText type='text'>Notify all roommates to approve this event</ThemedText>
