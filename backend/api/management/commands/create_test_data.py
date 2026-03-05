@@ -2,6 +2,7 @@ import random
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from datetime import timedelta
+from django.contrib.auth.hashers import make_password
 from api.models import (
     Household,
     User,
@@ -49,7 +50,7 @@ class Command(BaseCommand):
                 last_name=last_names[i],
                 email=f"{first_names[i].lower()}@example.com",
                 username=f"user{i+1}",
-                password="password123",
+                password=make_password("password123"),
                 household=households[0]
             )
             users.append(user)

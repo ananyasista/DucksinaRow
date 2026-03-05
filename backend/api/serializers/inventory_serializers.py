@@ -26,12 +26,6 @@ class InventorySerializer(serializers.ModelSerializer):
     def validate(self, data):
         user = self.context["request"].user
         household = data.get("household")
-
-        # Ensures chore belongs to the user's household
-        if household != user.household:
-            raise serializers.ValidationError(
-                "You cannot create items for another household."
-            )
         
         # Ensures assigned roommated belongs to same household
         last_purchased_by = data.get("last_purchased_by")
@@ -41,10 +35,3 @@ class InventorySerializer(serializers.ModelSerializer):
                 )
 
         return data
-
-    def update(self, instance, validated_data):
-        # Handles updating chores
-        was_restock_needed = instance.restock_needed
-        instance = super().update(instance, validated_data)
-
-        return instance

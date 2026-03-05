@@ -4,23 +4,23 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.authtoken.models import Token
+from django.utils import timezone
 
 from rest_framework import viewsets
 from ..serializers.inventory_serializers import InventoryListSerializer, InventorySerializer
 from ..models import Items, User
 
 class InventoryViewSet(viewsets.ModelViewSet):
-    # serializer_class = ChoreSerializer
-    # queryset = Chores.objects.all()
+    queryset = Items.objects.all()
+    serializer_class = InventorySerializer
+    permission_classes = [IsAuthenticated]
 
-    @permission_classes([IsAuthenticated])
     def get_serializer_class(self):
         if self.action == "list":
             return InventoryListSerializer
         return InventorySerializer
     
     # READ
-    @permission_classes([IsAuthenticated])
     def get_queryset(self):
         user = self.request.user
         if user.is_superuser:
@@ -48,18 +48,15 @@ class InventoryViewSet(viewsets.ModelViewSet):
 
         return queryset
 
-    @permission_classes([IsAuthenticated])
     def perform_create(self, serializer):
         serializer.save(household=self.request.user.household)
 
-    @permission_classes([IsAuthenticated])
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
     
     @action(detail=False, methods=["get"], url_path="filters")
-    @permission_classes([IsAuthenticated])
     def filters(self, request):
         user = request.user
 
@@ -84,10 +81,22 @@ class InventoryViewSet(viewsets.ModelViewSet):
         data = {
             "locations": list(locations),
             "restock": [
-                {"value": True, "label": "Restock"},
+                {"value": True, "label": "Need Restock"},
                 {"value": False, "label": "Stocked"},
             ],
-            "purchase_by": list(roommates),
+            "purchased_by": list(roommates),
         }
 
         return Response(data)
+    
+    def perform_update(self, serializer):
+        instance = self.get_object()
+        was_restock_needed = instance.restock_needed
+
+        updated_instance = serializer.save()
+
+        # If item was restocked
+        if was_restock_needed and not updated_instance.restock_needed:
+            updated_instance.last_purchase_date = timezone.now()
+            updated_instance.last_purchased_by = self.request.user
+            updated_instance.save(update_fields=["last_purchase_date", "last_purchased_by"])
