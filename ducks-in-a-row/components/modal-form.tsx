@@ -1,5 +1,5 @@
-import { Calendar, Mode } from 'react-native-big-calendar'
-import { StyleSheet, Dimensions, TouchableOpacity, Modal} from 'react-native';
+import { Calendar, ICalendarEventBase, Mode } from 'react-native-big-calendar'
+import { StyleSheet, Dimensions, TouchableOpacity, Modal, Platform} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useState } from 'react';
 // import { View } from 'react-native-reanimated/lib/typescript/Animated';
@@ -7,38 +7,157 @@ import { View, Text } from 'react-native';
 import { Button, Header } from '@react-navigation/elements';
 import Octicons from "@expo/vector-icons/Octicons";
 import { PropsWithChildren } from 'react';
+import { ThemedText } from './themed-text';
+import { ThemedTextInput } from './text-input';
+import { ThemedSwitch } from './themed-switch';
+// import { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import DateTimePicker, { DateTimePickerEvent, Event } from '@react-native-community/datetimepicker';
+import RNDateTimePicker from '@react-native-community/datetimepicker';
+import { IconSymbol } from './ui/icon-symbol';
 
 type ModalProps = PropsWithChildren<{
-    title:string;
+    formTitle:string;
+    edit?: boolean;
+    event?: CalendarEvent | null;
+    onClose?: any;
 }>;
-export default function ModalForm(props: ModalProps) {
-    const[addVisible, setAddVisible] = useState(false);
 
+export interface CalendarEvent extends ICalendarEventBase {
+  description: string;
+  needsApproval:any;
+}
+export default function ModalForm({edit = false, onClose, ...props}: ModalProps) {
+    const [addVisible, setAddVisible] = useState(edit);
+    const [startDate, setStartDate] = useState(new Date());
+    const [endDate, setEndDate] = useState(new Date());
+    const [mode, setMode] = useState(undefined);
+    const [showStart, setShowStart] = useState(false);
+    const [showEnd, setShowEnd] = useState(false);
+    
+    const onChangeStart = (event:DateTimePickerEvent, selectedDate?:Date) => {
+      const currentDate = selectedDate ? selectedDate : new Date();
+      setStartDate(currentDate);
+    };
+    const onChangeEnd = (event:DateTimePickerEvent, selectedDate?:Date) => {
+      const currentDate = selectedDate ? selectedDate : new Date();
+      setEndDate(currentDate);
+    }
+    
+    const showMode = (currentMode: any) => {
+      setShowStart(true);
+      setStartDate(props.event?.start ?? new Date());
+      setShowEnd(true);
+      setEndDate(props.event?.end ?? new Date(startDate.getTime() + 3600*1000));
+      setMode(currentMode);
+      endDate.setHours(endDate.getHours()+1);
+    };
+    
+    const close = () => {
+        setAddVisible(false);
+        onClose();
+    }
+    
+    const showDatepicker = () => {
+        showMode('date');
+    };
+
+    const showTimepicker = () => {
+        showMode('time');
+    };
+    
   return (
-    <View style = {modalTheme.addButton}>
-        <TouchableOpacity onPress={() => setAddVisible(true)}>
-            <Octicons name='plus' size = {30} color='#fff'/> 
-        </TouchableOpacity>
-
+    <View>
+        {!edit && (
+            <TouchableOpacity  style = {modalTheme.addButton} onPress={() => setAddVisible(true)}>
+                <Octicons name='plus' size = {30} color='#fff'/> 
+            </TouchableOpacity>
+        )}       
 
         <Modal 
             animationType="slide"
             visible={addVisible}
             presentationStyle='formSheet'
             allowSwipeDismissal = {true}
-            onRequestClose = {() => setAddVisible(false)} 
+            onRequestClose = {() => close()} 
         >
             <View style={modalTheme.header}>
                 <TouchableOpacity style={modalTheme.cancelButton} onPress={() => setAddVisible(false)}>
                     <Text style={modalTheme.cancelText}>Cancel</Text>
                 </TouchableOpacity>
-                <Text style={modalTheme.headerText}>{props.title}</Text>
+                <Text style={modalTheme.headerText}>{props.formTitle}</Text>
                 <TouchableOpacity style={modalTheme.saveButton} onPress={() => setAddVisible(false)}>
                     <Text style={modalTheme.saveText}>Save</Text>
                 </TouchableOpacity>
             </View>
             <View style= {{flex: 1, padding: 16}}>
-                {props.children}
+                <ThemedText type="boldText" >Event Title</ThemedText>
+                <ThemedTextInput placeholder="Item Name" defaultValue={props.event?.title}/>
+                <ThemedText type="boldText">Description</ThemedText>
+                <ThemedTextInput size="large" multiline={true} placeholder="Add Details" defaultValue={props.event?.description}/>
+                <ThemedSwitch label="All-Day" />
+                
+                <View onLayout={showDatepicker}>
+                <ThemedText type='boldText'>Start Date:</ThemedText>
+
+                {showStart && (
+                    <View style={modalTheme.rowSpace}>
+                        <View style={modalTheme.rowStart}>
+                            <IconSymbol size={20} name="calendar" color='black'/>
+                            <DateTimePicker
+                                testID="dateTimePicker"
+                                value={startDate}
+                                mode={'date'}
+                                display='default'
+                                onChange={onChangeStart}
+                                themeVariant='light'
+                            />
+                        </View>
+                        <View style={modalTheme.rowStart}>
+                            <IconSymbol size={20} name="clock" color='black'/>
+                            <DateTimePicker
+                                testID="dateTimePicker"
+                                value={startDate}
+                                mode={'time'}
+                                is24Hour={true}
+                                onChange={onChangeStart}
+                                themeVariant='light'
+                            />
+                        </View>
+                    </View>
+                )}
+
+                <ThemedText type='boldText'>End Date:</ThemedText>
+                    {showEnd && (
+                    <View style={modalTheme.rowSpace}>
+                        <View style={modalTheme.rowStart}>
+                            <IconSymbol size={20} name="calendar" color='black'/>
+                            <DateTimePicker
+                                testID="dateTimePicker"
+                                value={endDate}
+                                mode={'date'}
+                                is24Hour={true}
+                                onChange={onChangeEnd}
+                                themeVariant='light'
+                            />
+                        </View>
+                        <View style={modalTheme.rowStart}>
+                            <IconSymbol size={20} name="clock" color='black'/>
+                            <DateTimePicker
+                                testID="dateTimePicker"
+                                value={endDate}
+                                mode={'time'}
+                                is24Hour={true}
+                                onChange={onChangeEnd}
+                                themeVariant='light'
+                            />
+                        </View>
+                    </View>
+                )}
+                </View>
+                <ThemedText type="boldText">Location</ThemedText>
+                <ThemedTextInput placeholder='Living Room'/>
+                <ThemedSwitch label="Needs Roommates Approval?"/>
+                <ThemedText type='text'>Notify all roommates to approve this event</ThemedText>
             </View>
         </Modal>
     </View>
@@ -53,12 +172,24 @@ const modalTheme = StyleSheet.create({
         alignItems: "center",
         padding: 12
     },
+    rowSpace: {
+        justifyContent:"space-between",
+        display: "flex",
+        flexDirection: "row",
+        alignItems: "center",
+    },
+    rowStart: {
+        justifyContent:"flex-start",
+        display: "flex",
+        flexDirection: "row",
+        alignItems: "center",
+    },
     headerText: {
         fontSize: 24,
         fontWeight: 600
     },
     addButton: {
-        backgroundColor: '#4DC591',
+        backgroundColor: '#087d4b',
         width: 50,
         height: 50,
         borderRadius: 30,
