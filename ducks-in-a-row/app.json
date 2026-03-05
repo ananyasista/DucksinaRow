@@ -6,17 +6,19 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "ducksinarow",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "userInterfaceStyle": "light"
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "monochromeImage": "./assets/images/android-icon-monochrome.png",
+        "userInterfaceStyle": "light"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
