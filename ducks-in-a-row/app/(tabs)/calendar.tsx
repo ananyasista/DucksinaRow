@@ -3,9 +3,9 @@ import { StyleSheet, TouchableOpacity, ScrollView, LayoutChangeEvent, Button, Pl
 import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useState } from 'react';
 import { View, Text } from 'react-native';
-import ModalForm from '@/components/modal-form';
 import { ThemedText } from '@/components/themed-text';
 import { EventTile } from '@/components/event-tile';
+import ModalCalendarForm from '@/components/modal-calendar-form';
 
 const events = [
   {
@@ -18,7 +18,7 @@ const events = [
   {
     title: 'Twerk',
     start: new Date(2026, 1, 19, 8, 0),
-    end: new Date(2026, 1, 19, 12, 30),
+    end: new Date(2026, 1, 19, 14, 30),
     description: "b",
     needsApproval: ['me'],
   },
@@ -48,7 +48,7 @@ const events = [
     start: new Date(2026, 2, 2, 15, 45),
     end: new Date(2026, 2, 31, 16, 30),
     description: 'what is up', 
-    needsApproval: ['me'],
+    needsApproval: ['me', 'you'],
   },
 ]
 export interface CalendarEvent extends ICalendarEventBase {
@@ -120,10 +120,6 @@ export default function CalendarPage() {
                 </TouchableOpacity>
             </View>
         </View>
-        {
-          editModal && 
-          <Text>SHOW</Text>
-        }
         
         {/*Calendar & Events Tabs */}
         <View style={calendarTheme.tabs}>
@@ -160,7 +156,7 @@ export default function CalendarPage() {
                 events.map((event) =>  {
                   if(event.needsApproval.includes('me'))
                   {
-                    return  <EventTile title={event.title} start={event.start} end={event.end} description ={event.description} needsApproval= {event.needsApproval} approval={true}/>;
+                    return  <EventTile title={event.title} start={event.start} end={event.end} description ={event.description} needsApproval= {event.needsApproval} />;
                   }
                 })
               }
@@ -169,7 +165,7 @@ export default function CalendarPage() {
                 events.map((event) =>  {
                   if(!event.needsApproval.includes('me'))
                   {
-                    return  <EventTile title={event.title} start={event.start} end={event.end} description ={event.description} needsApproval= {event.needsApproval} approval={false}/>;
+                    return  <EventTile title={event.title} start={event.start} end={event.end} description ={event.description} needsApproval= {event.needsApproval}/>;
                   }
                 })
               }
@@ -178,10 +174,10 @@ export default function CalendarPage() {
           
         </View>
         {/* Create Event Modal */}
-        <ModalForm formTitle ="Create Event" edit={false} onClose={() => setEditModal(false)} />
+        <ModalCalendarForm formTitle ="Create Event" edit={false} onClose={() => setEditModal(false)} />
 
         {editModal && (
-          <ModalForm formTitle="Edit Event" edit={true} event={event} onClose={() => setEditModal(false)}/>
+          <ModalCalendarForm formTitle="Edit Event" edit={true} event={event} onClose={() => setEditModal(false)}/>
           )}
     </SafeAreaView>
   )
@@ -257,6 +253,8 @@ const calendarTheme = StyleSheet.create({
   },
   eventStyle: {
     backgroundColor: '#4DC591',
+    borderColor: '#12935b',
+    borderWidth: 1,
   },
   dateTimePicker: {
     flexDirection: 'row',

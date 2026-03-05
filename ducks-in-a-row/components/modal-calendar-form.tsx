@@ -26,7 +26,7 @@ export interface CalendarEvent extends ICalendarEventBase {
   description: string;
   needsApproval:any;
 }
-export default function ModalForm({edit = false, onClose, ...props}: ModalProps) {
+export default function ModalCalendarForm({edit = false, onClose, ...props}: ModalProps) {
     const [addVisible, setAddVisible] = useState(edit);
     const [startDate, setStartDate] = useState(new Date());
     const [endDate, setEndDate] = useState(new Date());
@@ -81,11 +81,11 @@ export default function ModalForm({edit = false, onClose, ...props}: ModalProps)
             onRequestClose = {() => close()} 
         >
             <View style={modalTheme.header}>
-                <TouchableOpacity style={modalTheme.cancelButton} onPress={() => setAddVisible(false)}>
+                <TouchableOpacity style={modalTheme.cancelButton} onPress={() => close()}>
                     <Text style={modalTheme.cancelText}>Cancel</Text>
                 </TouchableOpacity>
                 <Text style={modalTheme.headerText}>{props.formTitle}</Text>
-                <TouchableOpacity style={modalTheme.saveButton} onPress={() => setAddVisible(false)}>
+                <TouchableOpacity style={modalTheme.saveButton} onPress={() => close()}>
                     <Text style={modalTheme.saveText}>Save</Text>
                 </TouchableOpacity>
             </View>
