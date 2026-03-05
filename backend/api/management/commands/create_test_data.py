@@ -87,6 +87,10 @@ class Command(BaseCommand):
 
         # --- Create Items ---
         for hh in households:
+            members = list(hh.members.all())
+            if not members:
+                self.stdout.write(self.style.WARNING(f"No members in household {hh.household_name}, skipping events"))
+                continue
             for item_name in ["Milk", "Eggs", "Bread", "Soap"]:
                 Items.objects.get_or_create(
                     household=hh,
@@ -102,6 +106,10 @@ class Command(BaseCommand):
 
         # --- Create Chores ---
         for hh in households:
+            members = list(hh.members.all())
+            if not members:
+                self.stdout.write(self.style.WARNING(f"No members in household {hh.household_name}, skipping events"))
+                continue
             for chore_name in ["Vacuum", "Dishes", "Laundry"]:
                 chore, created = Chores.objects.get_or_create(
                     household=hh,
@@ -123,10 +131,16 @@ class Command(BaseCommand):
 
         # --- Create Calendar Events ---
         for hh in households:
-            for event_name in ["House Meeting", "Dinner Party"]:
-                owner = random.choice(users)
+            members = list(hh.members.all())
+            if not members:
+                self.stdout.write(self.style.WARNING(f"No members in household {hh.household_name}, skipping events"))
+                continue
 
-                event, created = CalendarEvents.objects.get_or_create(
+            for event_name in ["House Meeting", "Dinner Party"]:
+                owner = random.choice(members)  # pick from household members
+
+                # create the event
+                event = CalendarEvents.objects.create(
                     household=hh,
                     title=event_name,
                     details=f"{event_name} at {hh.household_name}",
@@ -143,14 +157,17 @@ class Command(BaseCommand):
 
                 # Create approvals if required
                 if event.requires_approval:
-                    for member in hh.members.exclude(id=owner.id):
-                        EventApprovals.objects.get_or_create(
+                    for member in members:
+                        if member.id == owner.id:
+                            continue
+                        EventApprovals.objects.create(
                             event=event,
                             user=member,
                             approved=random.choice([True, False]),
                             response_time=timezone.now()
                         )
-                        self.stdout.write(self.style.SUCCESS(f"Created event approval: {event.title}"))
-                self.stdout.write(self.style.SUCCESS(f"Created Event: {event.title}"))
+                        self.stdout.write(self.style.SUCCESS(f"Created event approval: {event.title} for {member.first_name}"))
+
+                self.stdout.write(self.style.SUCCESS(f"Created Event: {event.title} (Owner: {owner.first_name})"))
 
         self.stdout.write(self.style.SUCCESS("Dummy data created successfully!"))

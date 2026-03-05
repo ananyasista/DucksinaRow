@@ -7,25 +7,20 @@ from rest_framework.authtoken.models import Token
 
 from rest_framework import viewsets
 from ..serializers.chores_serializers import ChoreSerializer, ChoreListSerializer
-from ..models import Chores
+from ..models import Chores, User
 
 class ChoreViewSet(viewsets.ModelViewSet):
     # serializer_class = ChoreSerializer
-    # permission_classes = [IsAuthenticated]
-
     # queryset = Chores.objects.all()
 
-    # def get_serializer_class(self):
-    #     if self.action == 'list':
-    #         return ChoreListSerializer
-    #     return ChoreDetailSerializer
-    
+    @permission_classes([IsAuthenticated])
     def get_serializer_class(self):
         if self.action == "list":
             return ChoreListSerializer
         return ChoreSerializer
     
     # READ
+    @permission_classes([IsAuthenticated])
     def get_queryset(self):
         user = self.request.user
         if user.is_superuser:
@@ -67,23 +62,26 @@ class ChoreViewSet(viewsets.ModelViewSet):
 
         return queryset
 
+    @permission_classes([IsAuthenticated])
     def perform_create(self, serializer):
         serializer.save(household=self.request.user.household)
 
+    @permission_classes([IsAuthenticated])
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
     
     @action(detail=False, methods=["get"], url_path="filters")
+    @permission_classes([IsAuthenticated])
     def filters(self, request):
         user = request.user
 
         # Base queryset (respect household rules)
         if user.is_superuser:
-            chores = Chore.objects.all()
+            chores = Chores.objects.all()
         else:
-            chores = Chore.objects.filter(household=user.household)
+            chores = Chores.objects.filter(household=user.household)
 
         # Unique locations
         locations = (
@@ -95,7 +93,7 @@ class ChoreViewSet(viewsets.ModelViewSet):
         # Roommates in this household
         roommates = User.objects.filter(
             household=user.household
-        ).values("id", "name")
+        ).values("id", "first_name")
 
         data = {
             "locations": list(locations),

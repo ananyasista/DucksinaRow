@@ -50,7 +50,7 @@ export const deleteChore = async (id: string) => {
   await api.delete(`/chores/${id}/`);
 };
 
-export const getFilterOptions = async () => {
-  const response = await api.get("/chores/filters/");
+export const getChoreFilterOptions = async () => {
+  const response = await api.get("/chores/filter/");
   return response.data;
 };
