@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 
-from api.serializers.auth_serializers import SignupSerializer, MeSerializer
+from api.serializers.auth_serializers import ChangePasswordSerializer, ProfileSerializer, SignupSerializer, UpdateProfileSerializer
 
 User = get_user_model()
 
@@ -27,7 +27,7 @@ def signup(request):
     return Response(
     {
         "token": token.key,
-        "user": MeSerializer(user).data
+        "user": ProfileSerializer(user).data
     },
     status=status.HTTP_201_CREATED,
 )
@@ -61,4 +61,30 @@ def login(request):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def me(request):
-    return Response(MeSerializer(request.user).data)
+    return Response(ProfileSerializer(request.user).data)
+
+# Allow user to edit profile
+@api_view(["PATCH"])
+@permission_classes([IsAuthenticated])
+def update_profile(request):
+    serializer = UpdateProfileSerializer(request.user, data=request.data, partial=True)
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
+    return Response(ProfileSerializer(request.user).data)
+
+# Allow user to change password
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def change_password(request):
+    serializer = ChangePasswordSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+
+    old_pw = serializer.validated_data["old_password"]
+    new_pw = serializer.validated_data["new_password"]
+
+    if not request.user.check_password(old_pw):
+        return Response({"old_password": "Incorrect password."}, status=400)
+
+    request.user.set_password(new_pw)
+    request.user.save()
+    return Response({"detail": "Password updated."})

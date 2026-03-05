@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { Link, router } from "expo-router";
 import { login, me } from "../api/auth";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -22,7 +23,7 @@ export default function LoginScreen() {
   const onLogin = async () => {
     setMsg("");
 
-    // basic client-side validation
+    // client-side validation
     if (!email.trim()) return setMsg("Email is required.");
     if (!password) return setMsg("Password is required.");
 
@@ -33,17 +34,14 @@ export default function LoginScreen() {
         email: email.trim().toLowerCase(),
         password,
       });
-
-      // verify token works
-      const profile = await me(token);
-      console.log("LOGIN OK user:", user);
-      console.log("ME:", profile);
-
+      console.log("LOGIN OK user:", user); // verify token works
       setMsg(`Logged in as ${user.email}`);
 
-      // router.replace("/(tabs)"); replace to home 
+      // Store user's token 
+      await AsyncStorage.setItem("accessToken", token);
+
+      router.replace("/profile");
     } catch (e: any) {
-      console.log("LOGIN ERROR:", e?.response?.data || e.message);
 
       // show DRF error if present
       const detail = e?.response?.data?.detail;

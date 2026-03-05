@@ -5,7 +5,7 @@ import { useThemeColor } from '@/hooks/use-theme-color';
 export type ThemedTextProps = TextProps & {
   lightColor?: string;
   darkColor?: string;
-  type?: 'default' | 'title' | 'defaultSemiBold' | 'subtitle' | 'link';
+  type?: 'default' | 'title' | 'defaultSemiBold' | 'subtitle' | 'link' | 'boldText' | 'text' | 'errorText';
 };
 
 export function ThemedText({
@@ -15,17 +15,18 @@ export function ThemedText({
   type = 'default',
   ...rest
 }: ThemedTextProps) {
-  const color = useThemeColor({ light: lightColor, dark: darkColor }, 'text');
 
   return (
     <Text
       style={[
-        { color },
         type === 'default' ? styles.default : undefined,
         type === 'title' ? styles.title : undefined,
         type === 'defaultSemiBold' ? styles.defaultSemiBold : undefined,
         type === 'subtitle' ? styles.subtitle : undefined,
         type === 'link' ? styles.link : undefined,
+        type === 'boldText' ? styles.boldText : undefined,
+        type === 'text' ? styles.text: undefined,
+        type === 'errorText' ? styles.errorText: undefined,
         style,
       ]}
       {...rest}
@@ -45,13 +46,27 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
-    lineHeight: 32,
+    fontWeight: 700,
+    lineHeight: 48,
   },
   subtitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 24,
+    fontWeight: 400,
   },
+  boldText: {
+    fontSize:16,
+    fontWeight: 600
+  },
+  text: {
+    fontSize: 12,
+    fontWeight: 300
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 12,
+    fontWeight: 300
+  },
+  
   link: {
     lineHeight: 30,
     fontSize: 16,
