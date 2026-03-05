@@ -13,7 +13,6 @@ type EventTileProps = {
 };
 export function EventTile(data:EventTileProps) {
     const abbrMonth = ["Jan","Feb","Mar","Apr","May","June","July","Aug","Sept","Oct","Nov","Dec"];
-    
     const [printDate, setPrintDate] = useState("");
 
     function getPrintDate() {
@@ -91,6 +90,8 @@ export function EventTile(data:EventTileProps) {
         }
         setPrintDate(date);
     }
+
+    //TODO: Add in Created by, Approved by #, Waiting for #, Decline/Approve functionality
   return (
     <View style={eventTileStyle.container}>
         <View style={eventTileStyle.titleContainer}>

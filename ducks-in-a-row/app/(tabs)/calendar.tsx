@@ -1,15 +1,10 @@
-import { Calendar, CalendarEvent, CalendarTouchableOpacityProps, ICalendarEventBase, Mode } from 'react-native-big-calendar'
-import { StyleSheet, Dimensions, TouchableOpacity, Modal, Switch, ScrollView, LayoutChangeEvent, Button, Platform} from 'react-native';
+import { Calendar, CalendarEvent, ICalendarEventBase, Mode } from 'react-native-big-calendar'
+import { StyleSheet, TouchableOpacity, ScrollView, LayoutChangeEvent, Button, Platform} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useState } from 'react';
 import { View, Text } from 'react-native';
 import ModalForm from '@/components/modal-form';
 import { ThemedText } from '@/components/themed-text';
-import {ThemedTextInput} from '@/components/text-input';
-import { ThemedSwitch } from '@/components/themed-switch';
-import DateTimePicker, { DateTimePickerEvent, Event } from '@react-native-community/datetimepicker';
-import RNDateTimePicker from '@react-native-community/datetimepicker';
-import { IconSymbol } from '@/components/ui/icon-symbol';
 import { EventTile } from '@/components/event-tile';
 
 const events = [
@@ -69,15 +64,10 @@ export default function CalendarPage() {
     const[currentMonth, setCurrentMonth] = useState(abbrMonth[currentDate.getMonth()]);
     const[currentMode, setCurrentMode] = useState<Mode>('week');
     const[calendarHeight, setCalendarHeight] = useState(0);
-    const [startDate, setStartDate] = useState(new Date());
-    const [endDate, setEndDate] = useState(new Date());
-    const [mode, setMode] = useState(undefined);
-    const [showStart, setShowStart] = useState(false);
-    const [showEnd, setShowEnd] = useState(false);
     const [showCalendar, setShowCalendar] = useState(true);
     const [showEvents, setShowEvents] = useState(false);
-  
-    
+    const [editModal, setEditModal] = useState(false);
+    const [event, setEvent] = useState<CalendarEvent|null>(null);
     const calendarLayout = (e:LayoutChangeEvent) => {
       const{height} = e.nativeEvent.layout;
       setCalendarHeight(height);
@@ -97,34 +87,12 @@ export default function CalendarPage() {
       setShowCalendar(false);
       setShowEvents(true);
     }
-    function changeToSchedule()
-    {
-      setCurrentMode('schedule');
-    }
     
-    const onChangeStart = (event:DateTimePickerEvent, selectedDate:Date) => {
-      const currentDate = selectedDate;
-      setStartDate(currentDate);
-    };
-    const onChangeEnd = (event:DateTimePickerEvent, selectedDate:Date) => {
-      const currentDate = selectedDate;
-      setEndDate(currentDate);
+    function showEditModal(event:CalendarEvent|null)
+    {
+        setEditModal(!editModal);
+        setEvent(event);
     }
-
-    const showMode = (currentMode) => {
-      setShowStart(true);
-      setShowEnd(true);
-      setMode(currentMode);
-      endDate.setHours(endDate.getHours()+1);
-    };
-
-    const showDatepicker = () => {
-      showMode('date');
-    };
-
-    const showTimepicker = () => {
-      showMode('time');
-    };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.background}}>
@@ -152,7 +120,10 @@ export default function CalendarPage() {
                 </TouchableOpacity>
             </View>
         </View>
-        
+        {
+          editModal && 
+          <Text>SHOW</Text>
+        }
         
         {/*Calendar & Events Tabs */}
         <View style={calendarTheme.tabs}>
@@ -174,17 +145,16 @@ export default function CalendarPage() {
               onPressDateHeader={(date:Date) =>changeView(date, true)}
               onSwipeEnd = {(date:Date) => changeView(date, false)}
               theme = {theme.calendar}
+              onPressEvent={(event) => showEditModal( event as CalendarEvent)}
           />)
           }
           {/* Event View - Approval vs Approved*/}
           {/*
-            //TODO: Add in filters
-            //TODO: Map through events that need users approval and create button
-
+            //TODO: Need to edit "Your Events" to check user against event owner
+            //TODO: Add in filters -- Filter events by creator 
           */}
           {showEvents && (
             <ScrollView style={calendarTheme.indent}>
-              
               <ThemedText type='subtitle'>Needs Approval</ThemedText>
               {
                 events.map((event) =>  {
@@ -208,54 +178,11 @@ export default function CalendarPage() {
           
         </View>
         {/* Create Event Modal */}
-        <ModalForm title ="Create Event" >
-          <ThemedText type="boldText" >Event Title</ThemedText>
-          <ThemedTextInput placeholder="Item Name"/>
-          <ThemedText type="boldText">Description</ThemedText>
-          <ThemedTextInput size="large" multiline={true} placeholder="Add Details"/>
-          <ThemedSwitch label="All-Day" />
-          
-          <View onLayout={showDatepicker}>
-            <ThemedText type='boldText'>Start Date:</ThemedText>
-            <Text>Start selected: {startDate.toLocaleString()}</Text>
+        <ModalForm formTitle ="Create Event" edit={false} onClose={() => setEditModal(false)} />
 
-            {showStart && (
-              <DateTimePicker
-                testID="dateTimePicker"
-                value={startDate}
-                mode={mode}
-                is24Hour={true}
-                onChange={onChangeStart}
-                themeVariant='light'
-              />
-            )}
-            {showStart && (
-              <DateTimePicker
-                testID="dateTimePicker"
-                value={startDate}
-                mode={'time'}
-                is24Hour={true}
-                onChange={onChangeStart}
-                themeVariant='light'
-              />
-            )}
-            <ThemedText type='boldText'>End Date:</ThemedText>
-             {showEnd && (
-              <DateTimePicker
-                testID="dateTimePicker"
-                value={endDate}
-                mode={Platform.OS === 'ios'?'datetime':mode}
-                is24Hour={true}
-                onChange={onChangeEnd}
-                themeVariant='light'
-              />
-            )}
-          </View>
-          <ThemedText type="boldText">Location</ThemedText>
-          <ThemedTextInput placeholder='Living Room'/>
-          <ThemedSwitch label="Needs Roommates Approval?"/>
-          <ThemedText type='text'>Notify all roommates to approve this event</ThemedText>
-        </ModalForm>
+        {editModal && (
+          <ModalForm formTitle="Edit Event" edit={true} event={event} onClose={() => setEditModal(false)}/>
+          )}
     </SafeAreaView>
   )
 }

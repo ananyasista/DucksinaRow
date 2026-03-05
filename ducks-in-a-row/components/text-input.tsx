@@ -6,9 +6,10 @@ type ThemedTextInputProps = PropsWithChildren<{
     size?: 'small' | 'large';
     multiline?: boolean,
     placeholder?: string,
+    defaultValue?: string,
 }>;
 
-export function ThemedTextInput({size='small', multiline = false, placeholder= ""}: ThemedTextInputProps) {
+export function ThemedTextInput({size='small', multiline = false, placeholder= "", defaultValue =""}: ThemedTextInputProps) {
 
   return (
     <TextInput
@@ -20,6 +21,7 @@ export function ThemedTextInput({size='small', multiline = false, placeholder= "
         multiline = {multiline}
         placeholder= {placeholder}
         placeholderTextColor = 'rgba(171, 164, 164, 0.58)'
+        defaultValue={defaultValue}
     /> 
   );
 }
