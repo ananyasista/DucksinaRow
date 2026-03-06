@@ -21,7 +21,10 @@ const MAPPING = {
   'checkmark': 'check',
   'plus.circle': 'add-circle-outline',
   'slider.horizontal.3': 'tune',
-  'minus.circle': 'remove-circle-outline'
+  'minus.circle': 'remove-circle-outline',
+  'x.square': 'close',
+  'trash.fill': 'delete',
+  'pencil': 'edit'
 } as IconMapping;
 
 /**

@@ -1,25 +1,27 @@
-import {View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Pressable, Keyboard } from 'react-native'
+import {View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Pressable, Keyboard, TouchableWithoutFeedback } from 'react-native'
 import Chip from './chip';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import DropDownPicker from 'react-native-dropdown-picker'
 import DateTimePicker, { DateTimePickerEvent, Event } from '@react-native-community/datetimepicker';
 import Counter from './counter';
+import { InvItem } from '@/app/(tabs)/inventory';
 
 type ModalProps = {
     visible: boolean;
     onClose: () => void;
     title: string;
     save?: () => void;
+    item?: InvItem;
     
 }
 
 export default function InvItemModal(props: ModalProps) {
-    const [itemName, setItemName] = useState('');
-    const [itemDetails, setItemDetails] = useState('');
-    const [itemLocation, setItemLocation] = useState(null);
-    const [quantity, setQuantity] = useState(1);
-    const [owner, setOwner] = useState<string | null>(null);
+    const [itemName, setItemName] = useState(props.item ? props.item.name : '');
+    const [itemDetails, setItemDetails] = useState(props.item ? props.item.details : '');
+    const [itemLocation, setItemLocation] = useState(props.item ? props.item.location : null);
+    const [quantity, setQuantity] = useState(props.item ? props.item.quantity : 1);
+    const [owner, setOwner] = useState<string | null>(props.item ? props.item.last_purchased_by : null);
 
     const roommateList: string[] = ["Elle", "Leyna", "Sofia", "Ananya"];
     const [locations, setLocations] = useState([
@@ -62,8 +64,9 @@ export default function InvItemModal(props: ModalProps) {
                 allowSwipeDismissal={true}
                 onRequestClose={props.onClose}
             >
-                <Pressable onPress={() => {setOpenDropdown(false); Keyboard.dismiss()}}>
-                <View style={{height: 20}}></View>
+            <TouchableWithoutFeedback onPress={() => {setOpenDropdown(false);}}>
+                <View>
+                    <View style={{height: 20}}></View>
                 <View style={styles.header}>
                     <TouchableOpacity style={styles.cancelButton} onPress={props.onClose}>
                         <Text style={styles.cancelText}>Cancel</Text>
@@ -147,7 +150,10 @@ export default function InvItemModal(props: ModalProps) {
                     </View>
 
                 </SafeAreaView>
-                </Pressable>
+
+                </View>
+                
+            </TouchableWithoutFeedback>
             </Modal>
         </View>
         

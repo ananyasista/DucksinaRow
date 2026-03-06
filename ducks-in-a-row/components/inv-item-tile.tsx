@@ -1,19 +1,22 @@
-import {View, StyleSheet, Switch, Text} from 'react-native';
+import {View, StyleSheet, Switch, Text, TouchableOpacity} from 'react-native';
 import { useState } from 'react';
 import { isEnabled } from 'react-native/Libraries/Performance/Systrace';
 
 type InvItemTileProps = {
+    id: string;
     title: string;
     restock: boolean;
     category: string;
     stock?: number;
     onChange: () => void;
+    onPress: () => void;
 }
 
 export default function InvItemTile(props: InvItemTileProps){
     
     return (
-        <View style={styles.tile}>
+        <TouchableOpacity onPress={props.onPress}>
+                    <View style={styles.tile}>
             <Text style={styles.titleHeading}>{props.title}</Text>
             <Text style={styles.subheading}>Category: {props.category}</Text>
             <View style={styles.subView}>
@@ -29,6 +32,8 @@ export default function InvItemTile(props: InvItemTileProps){
                 </View>
             </View>
         </View>
+        </TouchableOpacity>
+
     )
 }
 

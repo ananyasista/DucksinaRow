@@ -9,12 +9,53 @@ import InvItemModal from '@/components/inv-item-modal';
 import Octicons from "@expo/vector-icons/Octicons";
 
 import InvItemTile from '@/components/inv-item-tile';
+import InvViewModal from '@/components/inv-view-modal';
 
+type InvItem = {
+  id: string;
+  name: string;
+  details: string;
+  last_purchased_date: Date;
+  restock_needed: boolean;
+  quantity: number;
+  location: string;
+  last_purchased_by: string;
+}
 
+const mockData: InvItem[] = [
+  {
+    id: "123",
+    name: "Paper Towels",
+    details: "Use only one at a time",
+    last_purchased_date: new Date("2026-03-09"),
+    restock_needed: false,
+    quantity: 5,
+    location: "Kitchen",
+    last_purchased_by: "Elle"
+  },
+  {
+    id: "456",
+    name: "Trash Bags",
+    details: "Double bag!",
+    last_purchased_date: new Date("2026-03-10"),
+    restock_needed: true,
+    quantity: 3,
+    location: "Kitchen",
+    last_purchased_by: "Leyna"
+  }
+]
 
 export default function InventoryScreen() {
+  const itemList = mockData;
+  
   const [addItemVisible, setAddItemVisible] = useState(false);
+  const [viewItemVisible, setViewItemVisible] = useState(false);
+  const [editItemVisible, setEditItemVisible] = useState(false);
   const [restock, setRestock] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<InvItem | null>(null);
+
+  // TODO: have to create function that triggers when restock toggle is pressed
+  
 
 
   return (
@@ -24,8 +65,20 @@ export default function InventoryScreen() {
           <Text style={styles.title}>Items</Text>
           <InvFilterModal title='Filters'/>
 
-          <View>
-            <InvItemTile title='Paper Towel' category='Kitchen' restock={restock} onChange={() => setRestock(!restock)}></InvItemTile>
+          <View style={styles.section}>
+            {itemList.map((item) => (
+              <InvItemTile
+                id={item.id}
+                title={item.name} 
+                category={item.location}
+                restock={item.restock_needed} 
+                onChange={() => setRestock(!restock)}
+                onPress={() => {
+                  setSelectedItem(item);
+                  setViewItemVisible(true);
+                }}
+              />
+            ))}
           </View>
 
 
@@ -40,6 +93,31 @@ export default function InventoryScreen() {
             onClose = {() => setAddItemVisible(false)}
             title = "Add Item"
           />
+
+          {selectedItem && (
+            <InvViewModal 
+              item = {selectedItem}
+              visible = {viewItemVisible}
+              onClose={() => setViewItemVisible(false)}
+              onEdit = {() => {
+                setViewItemVisible(false);
+                setEditItemVisible(true);
+              }}
+              onDelete={() => {
+                setViewItemVisible(false);
+                // TODO: add delete function call here
+              }}
+            />
+          )}
+
+          {selectedItem && (
+            <InvItemModal 
+            visible = {editItemVisible}
+            onClose = {() => setEditItemVisible(false)}
+            title = "Edit Item"
+            item = {selectedItem}
+          />
+          )}
 
 
           
@@ -77,3 +155,5 @@ const styles = StyleSheet.create({
 
   
 });
+
+export type {InvItem};
