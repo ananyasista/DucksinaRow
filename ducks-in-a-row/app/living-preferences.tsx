@@ -9,7 +9,7 @@ import {
   ScrollView,
 } from "react-native";
 import { getLivingPreferences, updateLivingPreferences } from "../api/preferences";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 
 type LivingPrefs = {
   cleanliness: number | null;
@@ -43,6 +43,7 @@ export default function LivingPreferencesScreen() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [prefs, setPrefs] = useState<LivingPrefs>(DEFAULT_PREFS);
+  const { mode } = useLocalSearchParams<{ mode: string }>();
 
   useEffect(() => {
     const load = async () => {
@@ -97,8 +98,13 @@ export default function LivingPreferencesScreen() {
 
       const updated = await updateLivingPreferences(payload);
       setPrefs({ ...DEFAULT_PREFS, ...updated });
-      router.replace("/profile");
 
+    // Living Preference Survey
+    if (mode === "edit") {
+        router.replace("/profile");
+    } else {
+        router.replace("/(tabs)");
+    }
     } catch (err: any) {
       console.log("SAVE ERROR:", err?.response?.data || err?.message || err);
       Alert.alert("Error", "Could not save preferences.");

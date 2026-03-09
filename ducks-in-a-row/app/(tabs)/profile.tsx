@@ -149,7 +149,7 @@ export default function ProfileScreen() {
 
           <Pressable
             style={styles.btnOutline}
-            onPress={() => router.push("/living-preferences")}
+            onPress={() => router.push("/living-preferences?mode=edit")}
           >
             <Text style={styles.btnOutlineText}>Edit Living Preferences</Text>
           </Pressable>
