@@ -30,25 +30,21 @@ class SignupSerializer(serializers.ModelSerializer):
         fields = ("id", "email", "first_name", "last_name", "password", "join_code")
 
     def create(self, validated_data):
-        validated_data["username"] = validated_data["email"]  # use email as username
+        email = validated_data["email"].strip().lower()
+        validated_data["email"] = email
+        validated_data["username"] = email
+
         join_code = validated_data.pop("join_code", "").strip()
         password = validated_data.pop("password")
 
-        # If user entered a join code → join existing
+        household = None
+
         if join_code:
             household = Household.objects.filter(join_code__iexact=join_code).first()
             if not household:
                 raise serializers.ValidationError(
                     {"join_code": "No household found with this code."}
                 )
-
-        # If blank → create new household
-        else:
-            new_code = generate_unique_join_code()
-            household = Household.objects.create(
-                household_name=f"{validated_data.get('username')}'s Household",
-                join_code=new_code
-            )
 
         # Validates password & hides
         user = User(**validated_data)
