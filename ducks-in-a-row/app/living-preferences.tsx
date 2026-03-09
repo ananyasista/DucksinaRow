@@ -1,10 +1,8 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
   Pressable,
-  Switch,
-  TextInput,
   StyleSheet,
   ActivityIndicator,
   Alert,
@@ -20,8 +18,8 @@ type LivingPrefs = {
   sharing_items: boolean;
   pets: boolean;
   guests: boolean;
-  personality_type: string;
-  sleep_schedule: string;
+  personality_type: "extrovert" | "ambivert" | "introvert" | "";
+  sleep_schedule: "morning riser" | "night owl" | "flexible" | "";
   smoking: boolean;
   drinking_alcohol: boolean;
 };
@@ -39,30 +37,24 @@ const DEFAULT_PREFS: LivingPrefs = {
   drinking_alcohol: false,
 };
 
+const SCALE_OPTIONS = [1, 2, 3, 4, 5];
+
 export default function LivingPreferencesScreen() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-
   const [prefs, setPrefs] = useState<LivingPrefs>(DEFAULT_PREFS);
 
-  // Fetch existing preferences (token user)
   useEffect(() => {
     const load = async () => {
       try {
         const data = await getLivingPreferences();
 
-        // merge to be safe if backend returns partial/nullable fields
         setPrefs({
           ...DEFAULT_PREFS,
           ...data,
-          cleanliness:
-            data?.cleanliness === null || data?.cleanliness === undefined
-              ? DEFAULT_PREFS.cleanliness
-              : data.cleanliness,
         });
       } catch (err) {
         console.log("FETCH PREF ERROR:", err);
-        // keep defaults so you can still test PATCH
         setPrefs(DEFAULT_PREFS);
       } finally {
         setLoading(false);
@@ -72,48 +64,24 @@ export default function LivingPreferencesScreen() {
     load();
   }, []);
 
-  const cleanlinessText = useMemo(() => {
-    const v = prefs.cleanliness;
-    if (v === null || v === undefined) return "";
-    return String(v);
-  }, [prefs.cleanliness]);
-
-  const setCleanlinessFromText = (val: string) => {
-    // allow empty input
-    if (val.trim() === "") {
-      setPrefs((p) => ({ ...p, cleanliness: null }));
-      return;
-    }
-    // clamp 1..5
-    const n = Number(val);
-    if (Number.isNaN(n)) return;
-    const clamped = Math.max(1, Math.min(5, n));
-    setPrefs((p) => ({ ...p, cleanliness: clamped }));
-  };
-
   const validate = () => {
-    // cleanliness is optional, but if present it must be 1..5
-    if (prefs.cleanliness !== null) {
-      if (prefs.cleanliness < 1 || prefs.cleanliness > 5) {
-        return "Cleanliness must be between 1 and 5.";
-      }
+    if (prefs.cleanliness !== null && (prefs.cleanliness < 1 || prefs.cleanliness > 5)) {
+      return "Cleanliness must be between 1 and 5.";
     }
+
     return "";
   };
 
   const handleSave = async () => {
     const err = validate();
     if (err) {
-    Alert.alert("Saved", "Preferences updated!", [
-      { text: "Go to Profile", onPress: () => router.replace("/profile") },
-    ]);
-    return;
-  }
+      Alert.alert("Invalid Input", err);
+      return;
+    }
 
-  try {
-    setSaving(true);
+    try {
+      setSaving(true);
 
-      // PATCH only the model fields (no user id)
       const payload: LivingPrefs = {
         cleanliness: prefs.cleanliness,
         clean_up_your_space: prefs.clean_up_your_space,
@@ -129,13 +97,11 @@ export default function LivingPreferencesScreen() {
 
       const updated = await updateLivingPreferences(payload);
       setPrefs({ ...DEFAULT_PREFS, ...updated });
+      router.replace("/profile");
 
-      Alert.alert("Saved", "Living preferences updated!", [
-    { text: "OK", onPress: () => router.replace("/profile") },
-  ]);
     } catch (err: any) {
       console.log("SAVE ERROR:", err?.response?.data || err?.message || err);
-      Alert.alert("Error", "Could not save preferences (check token + API).");
+      Alert.alert("Error", "Could not save preferences.");
     } finally {
       setSaving(false);
     }
@@ -149,83 +115,79 @@ export default function LivingPreferencesScreen() {
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Living Preferences Survey</Text>
       <Text style={styles.subtitle}>
-        Dummy survey to test saving + fetching preferences for the logged-in user.
+        Answer these questions so your preferences can be saved to your profile.
       </Text>
 
-      {/* Cleanliness */}
-      <Text style={styles.label}>Cleanliness (1–5)</Text>
-      <Text style={styles.helper}>How clean do you prefer shared spaces?</Text>
-      <TextInput
-        style={styles.input}
-        keyboardType="numeric"
-        value={cleanlinessText}
-        onChangeText={setCleanlinessFromText}
-        placeholder="3"
-        placeholderTextColor="#999"
+      <ScaleQuestion
+        question="1. How clean do you prefer shared living spaces to be?"
+        value={prefs.cleanliness}
+        onSelect={(value) => setPrefs((p) => ({ ...p, cleanliness: value }))}
       />
 
-      <ToggleRow
-        label="I clean up my space regularly"
+      <BooleanQuestion
+        question="2. Do you usually clean up your space after yourself?"
         value={prefs.clean_up_your_space}
-        onValueChange={(v) => setPrefs((p) => ({ ...p, clean_up_your_space: v }))}
+        onSelect={(value) => setPrefs((p) => ({ ...p, clean_up_your_space: value }))}
       />
 
-      <ToggleRow
-        label="I like to cook"
+      <BooleanQuestion
+        question="3. Do you cook at home?"
         value={prefs.cook}
-        onValueChange={(v) => setPrefs((p) => ({ ...p, cook: v }))}
+        onSelect={(value) => setPrefs((p) => ({ ...p, cook: value }))}
       />
 
-      <ToggleRow
-        label="I’m okay sharing items"
+      <BooleanQuestion
+        question="4. Are you comfortable sharing household items?"
         value={prefs.sharing_items}
-        onValueChange={(v) => setPrefs((p) => ({ ...p, sharing_items: v }))}
+        onSelect={(value) => setPrefs((p) => ({ ...p, sharing_items: value }))}
       />
 
-      <ToggleRow
-        label="I’m okay with pets"
+      <BooleanQuestion
+        question="5. Are you comfortable living with pets?"
         value={prefs.pets}
-        onValueChange={(v) => setPrefs((p) => ({ ...p, pets: v }))}
+        onSelect={(value) => setPrefs((p) => ({ ...p, pets: value }))}
       />
 
-      <ToggleRow
-        label="I’m okay with guests"
+      <BooleanQuestion
+        question="6. Are you okay with guests in the home?"
         value={prefs.guests}
-        onValueChange={(v) => setPrefs((p) => ({ ...p, guests: v }))}
+        onSelect={(value) => setPrefs((p) => ({ ...p, guests: value }))}
       />
 
-      {/* Personality */}
-      <Text style={styles.label}>Personality Type</Text>
-      <Text style={styles.helper}>Optional (e.g., Introvert/Extrovert, MBTI).</Text>
-      <TextInput
-        style={styles.input}
-        value={prefs.personality_type ?? ""}
-        onChangeText={(v) => setPrefs((p) => ({ ...p, personality_type: v }))}
-        placeholder="e.g., ENFJ"
-        placeholderTextColor="#999"
+      <ChoiceQuestion
+        question="7. How would you describe your personality?"
+        options={["extrovert", "ambivert", "introvert"]}
+        value={prefs.personality_type}
+        onSelect={(value) =>
+          setPrefs((p) => ({
+            ...p,
+            personality_type: value as LivingPrefs["personality_type"],
+          }))
+        }
       />
 
-      {/* Sleep schedule */}
-      <Text style={styles.label}>Sleep Schedule</Text>
-      <Text style={styles.helper}>Optional (e.g., Night Owl / Early Bird).</Text>
-      <TextInput
-        style={styles.input}
-        value={prefs.sleep_schedule ?? ""}
-        onChangeText={(v) => setPrefs((p) => ({ ...p, sleep_schedule: v }))}
-        placeholder="Night owl"
-        placeholderTextColor="#999"
+      <ChoiceQuestion
+        question="8. What best describes your sleep schedule?"
+        options={["morning riser", "night owl", "flexible"]}
+        value={prefs.sleep_schedule}
+        onSelect={(value) =>
+          setPrefs((p) => ({
+            ...p,
+            sleep_schedule: value as LivingPrefs["sleep_schedule"],
+          }))
+        }
       />
 
-      <ToggleRow
-        label="I smoke"
+      <BooleanQuestion
+        question="9. Do you smoke?"
         value={prefs.smoking}
-        onValueChange={(v) => setPrefs((p) => ({ ...p, smoking: v }))}
+        onSelect={(value) => setPrefs((p) => ({ ...p, smoking: value }))}
       />
 
-      <ToggleRow
-        label="I drink alcohol"
+      <BooleanQuestion
+        question="10. Do you drink alcohol?"
         value={prefs.drinking_alcohol}
-        onValueChange={(v) => setPrefs((p) => ({ ...p, drinking_alcohol: v }))}
+        onSelect={(value) => setPrefs((p) => ({ ...p, drinking_alcohol: value }))}
       />
 
       <Pressable
@@ -233,25 +195,110 @@ export default function LivingPreferencesScreen() {
         onPress={handleSave}
         disabled={saving}
       >
-        <Text style={styles.buttonText}>{saving ? "Saving..." : "Save Preferences"}</Text>
+        <Text style={styles.buttonText}>
+          {saving ? "Saving..." : "Save Preferences"}
+        </Text>
       </Pressable>
     </ScrollView>
   );
 }
 
-function ToggleRow({
-  label,
+function ScaleQuestion({
+  question,
   value,
-  onValueChange,
+  onSelect,
 }: {
-  label: string;
-  value: boolean;
-  onValueChange: (v: boolean) => void;
+  question: string;
+  value: number | null;
+  onSelect: (value: number) => void;
 }) {
   return (
-    <View style={styles.row}>
-      <Text style={styles.rowText}>{label}</Text>
-      <Switch value={value} onValueChange={onValueChange} />
+    <View style={styles.questionBlock}>
+      <Text style={styles.label}>{question}</Text>
+      <View style={styles.optionRow}>
+        {SCALE_OPTIONS.map((option) => {
+          const selected = value === option;
+          return (
+            <Pressable
+              key={option}
+              style={[styles.scaleChip, selected && styles.selectedChip]}
+              onPress={() => onSelect(option)}
+            >
+              <Text style={[styles.chipText, selected && styles.selectedChipText]}>
+                {option}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+function BooleanQuestion({
+  question,
+  value,
+  onSelect,
+}: {
+  question: string;
+  value: boolean;
+  onSelect: (value: boolean) => void;
+}) {
+  return (
+    <View style={styles.questionBlock}>
+      <Text style={styles.label}>{question}</Text>
+      <View style={styles.choiceContainer}>
+        {["Yes", "No"].map((option) => {
+          const boolValue = option === "Yes";
+          const selected = value === boolValue;
+
+          return (
+            <Pressable
+              key={option}
+              style={[styles.choiceChip, selected && styles.selectedChip]}
+              onPress={() => onSelect(boolValue)}
+            >
+              <Text style={[styles.chipText, selected && styles.selectedChipText]}>
+                {option}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+function ChoiceQuestion({
+  question,
+  options,
+  value,
+  onSelect,
+}: {
+  question: string;
+  options: string[];
+  value: string;
+  onSelect: (value: string) => void;
+}) {
+  return (
+    <View style={styles.questionBlock}>
+      <Text style={styles.label}>{question}</Text>
+      <View style={styles.choiceContainer}>
+        {options.map((option) => {
+          const selected = value === option;
+          return (
+            <Pressable
+              key={option}
+              style={[styles.choiceChip, selected && styles.selectedChip]}
+              onPress={() => onSelect(option)}
+            >
+              <Text style={[styles.chipText, selected && styles.selectedChipText]}>
+                {option}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
     </View>
   );
 }
@@ -262,7 +309,7 @@ const styles = StyleSheet.create({
   container: {
     padding: 20,
     backgroundColor: "#F2F2F2",
-    gap: 8,
+    paddingBottom: 40,
   },
   title: {
     fontSize: 22,
@@ -271,44 +318,63 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     color: "#666",
-    marginBottom: 10,
+    marginBottom: 16,
+  },
+  questionBlock: {
+    marginBottom: 18,
+    backgroundColor: "#fff",
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: "#E6E6E6",
   },
   label: {
     fontWeight: "700",
-    marginTop: 10,
+    fontSize: 15,
+    marginBottom: 10,
+    color: "#111",
   },
-  helper: {
-    color: "#666",
-    marginTop: 2,
-  },
-  input: {
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    padding: 10,
-    marginTop: 6,
-    borderWidth: 1,
-    borderColor: "#E6E6E6",
-  },
-  row: {
+  optionRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 10,
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: "#E6E6E6",
+    gap: 8,
   },
-  rowText: {
+  choiceContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  scaleChip: {
+    minWidth: 48,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#D9D9D9",
+    backgroundColor: "#FAFAFA",
+    alignItems: "center",
+  },
+  choiceChip: {
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "#D9D9D9",
+    backgroundColor: "#FAFAFA",
+  },
+  selectedChip: {
+    backgroundColor: PRIMARY,
+    borderColor: PRIMARY,
+  },
+  chipText: {
+    color: "#222",
     fontWeight: "600",
-    color: "#111",
-    flexShrink: 1,
-    paddingRight: 12,
+  },
+  selectedChipText: {
+    color: "#fff",
   },
   button: {
-    marginTop: 18,
+    marginTop: 8,
     backgroundColor: PRIMARY,
     padding: 14,
     borderRadius: 12,

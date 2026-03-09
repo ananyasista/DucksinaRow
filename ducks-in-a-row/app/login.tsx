@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Link, router } from "expo-router";
-import { login, me } from "../api/auth";
+import { login } from "../api/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function LoginScreen() {
@@ -40,7 +40,7 @@ export default function LoginScreen() {
       // Store user's token 
       await AsyncStorage.setItem("accessToken", token);
 
-      router.replace("/profile");
+      router.replace("/(tabs)");
     } catch (e: any) {
 
       // show DRF error if present

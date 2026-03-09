@@ -12,9 +12,9 @@ import { useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 
-import { me, ProfileResponse } from "../api/auth";
-import { getLivingPreferences } from "../api/preferences";
-import { getHouseholdRoommates, Roommate } from "../api/household";
+import { me, ProfileResponse } from "../../api/auth";
+import { getLivingPreferences } from "../../api/preferences";
+import { getHouseholdRoommates, Roommate } from "../../api/household";
 
 const TestUser: ProfileResponse = {
   id: "demo",
@@ -60,7 +60,7 @@ export default function ProfileScreen() {
       setRoommates(rms);
     } catch (e: any) {
       console.log("PROFILE LOAD ERROR:", e?.response?.data || e?.message || e);
-      setError("Couldn’t load profile. Showing demo data.");
+      setError("Couldn't load profile. Showing demo data.");
       setProfile(TestUser);
       setLivingPrefs(TestUser.living_preferences);
       setRoommates([]);
