@@ -32,10 +32,18 @@ class CalendarEventViewSet(viewsets.ViewSet):
     def get_household_users(self, user):
         return User.objects.filter(household=user.household)
 
-    # Base queryset for events in the current user's household
-    def get_queryset(self, request):
+    # Return events to the requesting user
+    def get_queryset(self):
+        user = self.request.user
+
+        if user.is_superuser:
+            return CalendarEvents.objects.all()
+
+        if not user.household:
+            return CalendarEvents.objects.none()
+
         return CalendarEvents.objects.filter(
-            household=request.user.household
+            household=user.household
         ).select_related(
             "event_owner",
             "household"
@@ -45,7 +53,7 @@ class CalendarEventViewSet(viewsets.ViewSet):
 
     # List all events for the current user's household
     def list(self, request):
-        queryset = self.get_queryset(request)
+        queryset = self.get_queryset()
 
         mine = request.query_params.get("mine")
         month = request.query_params.get("month")
