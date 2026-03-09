@@ -58,9 +58,16 @@ class CalendarEventViewSet(viewsets.ViewSet):
         mine = request.query_params.get("mine")
         month = request.query_params.get("month")
         year = request.query_params.get("year")
+        owners = request.query_params.get("owners")
 
+        # Filter just current user's events
         if mine == "true":
             queryset = queryset.filter(event_owner=request.user)
+
+        # Filter by one or more selected roommate
+        if owners:
+            owner_ids = [owner_id.strip() for owner_id in owners.split(",") if owner_id.strip()]
+            queryset = queryset.filter(event_owner__id__in=owner_ids)
 
         # Optional month/year filtering for calendar views
         if month and year:
