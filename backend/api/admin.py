@@ -111,36 +111,96 @@ class ChoresAdmin(admin.ModelAdmin):
     
     get_roommates.short_description = "Roommates"
 
+class EventApprovalInline(admin.TabularInline):
+    """
+    Show approval rows directly inside a calendar event detail page.
+    This makes it easy to inspect roommate responses for one event.
+    """
+    model = EventApprovals
+    extra = 0
+    readonly_fields = ("user", "approved", "response_time")
+
+
 @admin.register(CalendarEvents)
 class CalendarEventsAdmin(admin.ModelAdmin):
+    @admin.display(description="Household Code", ordering="household__join_code")
+    def household_code(self, obj):
+        return obj.household.join_code if obj.household else ""
+
     list_display = (
+        "household_code",
         "title",
-        "household",
         "event_owner",
         "start_date",
         "end_date",
-        "requires_approval"
+        "requires_approval",
+        "approval_summary",
     )
+    list_filter = (
+        "household",
+        "requires_approval",
+        "all_day",
+        "repeat",
+    )
+    search_fields = (
+        "title",
+        "details",
+        "location",
+        "event_owner__email",
+        "household__join_code",
+    )
+    ordering = ("household__join_code", "start_date")
+    inlines = [EventApprovalInline]
 
-    list_filter = ("requires_approval", "household")
-    search_fields = ("title", "location")
+    def approval_summary(self, obj):
+        approvals = obj.approvals.all()
+
+        if not obj.requires_approval:
+            return "approved"
+
+        if not approvals.exists():
+            return "pending"
+
+        if approvals.filter(approved=False, response_time__isnull=False).exists():
+            return "declined"
+
+        if approvals.filter(approved=False, response_time__isnull=True).exists():
+            return "pending"
+
+        return "approved"
+
+    approval_summary.short_description = "Approval Status"
+
 
 @admin.register(EventApprovals)
 class EventApprovalsAdmin(admin.ModelAdmin):
+    @admin.display(description="Household Code", ordering="event__household__join_code")
+    def household_code(self, obj):
+        return obj.event.household.join_code if obj.event and obj.event.household else ""
+
     list_display = (
+        "household_code",
         "event",
         "user",
-        "get_household",
-        "approved",
-        "response_time"
+        "approval_state",
+        "response_time",
     )
+    list_filter = (
+        "approved",
+        "event__household",
+    )
+    search_fields = (
+        "event__title",
+        "user__email",
+        "event__household__join_code",
+    )
+    ordering = ("event__household__join_code", "event__start_date")
 
-    list_filter = ("approved",)
-    search_fields = ("event__title", "user__email")
+    def approval_state(self, obj):
+        if obj.approved:
+            return "approved"
+        if obj.response_time is None:
+            return "pending"
+        return "declined"
 
-    # Custom method to show household
-    def get_household(self, obj):
-        return obj.event.household.household_name if obj.event and obj.event.household else "-"
-    
-    get_household.short_description = "Household"
-
+    approval_state.short_description = "Status"
