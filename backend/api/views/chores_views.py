@@ -107,7 +107,9 @@ class ChoreViewSet(viewsets.ModelViewSet):
                 {"value": True, "label": "Completed"},
                 {"value": False, "label": "Incomplete"},
             ],
-            "roommates": list(roommates),
+            "roommates": [
+                {"label": u["first_name"], "value": u["id"]} for u in roommates
+            ],
         }
 
         return Response(data)

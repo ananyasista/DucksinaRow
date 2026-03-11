@@ -84,7 +84,9 @@ class InventoryViewSet(viewsets.ModelViewSet):
                 {"value": True, "label": "Need Restock"},
                 {"value": False, "label": "Stocked"},
             ],
-            "purchased_by": list(roommates),
+            "purchased_by": [
+                {"label": u["first_name"], "value": u["id"]} for u in roommates
+            ],
         }
 
         return Response(data)
