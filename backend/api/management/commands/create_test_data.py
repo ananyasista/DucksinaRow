@@ -14,7 +14,9 @@ from api.models import (
     CalendarEvents,
     EventApprovals,
     NotificationUnitChoices,
-    RepeatChoices
+    RepeatChoices,
+    LocationChoices,
+    PassToUnitChoices
 )
 
 class Command(BaseCommand):
@@ -119,8 +121,10 @@ class Command(BaseCommand):
                     title=chore_name,
                     details=f"{chore_name} for {hh.household_name}",
                     repeat=random.choice([r[0] for r in RepeatChoices.choices]),
+                    pass_to_next_value=random.randint(1, 5),
+                    pass_to_next_unit=random.choice([u[0] for u in PassToUnitChoices.choices]),
                     is_rotating=random.choice([True, False]),
-                    location="Living Room",
+                    location=random.choice([u[0] for u in LocationChoices.choices]),
                     notification_value=random.randint(5, 60),
                     notification_unit=random.choice([u[0] for u in NotificationUnitChoices.choices]),
                 )

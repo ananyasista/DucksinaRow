@@ -55,6 +55,12 @@ class ChoreSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "Rotating chores must include roommates."
             )
+        
+        # When to pass to the next roommate
+        if data.get("pass_to_next_unit") and not data.get("pass_to_next_value"):
+            raise serializers.ValidationError(
+                "pass_to_next_value required if unit is set."
+            )
 
         # Notification Logic
         if data.get("notification_unit") and not data.get("notification_value"):
