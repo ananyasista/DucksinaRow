@@ -7,6 +7,23 @@ import { Link } from 'expo-router';
 import PendingTile from '@/components/pending-tile';
 import CheckboxTile from '@/components/checkbox-tile';
 
+import { CalendarEvent, listMyEvents, listNeedsApproval, listHouseholdEvents } from '@/api/calendar';
+import { getHouseholdName } from '@/api/household';
+import { useEffect, useState } from 'react';
+
+type ApprovalEvent = {
+  id: string;
+  event: {
+    id: string;
+    title: string;
+    start_date: string;
+    end_date?: string | null;
+    location?: string;
+    requires_approval: boolean;
+  };
+  approved: boolean;
+  response_time?: string | null;
+};
 
 type UserData = {
   needApprovals?: number
@@ -42,7 +59,8 @@ const mockData: UserData = {
 }
 
 export default function HomeScreen() {
-  const groupName = mockData.groupName;
+  const [groupName, setGroupName] = useState('Household');
+
   const pendingNum = mockData.pendingNum;
   const needApproval = mockData.needApprovals ?? 0;
   const giveApproval = mockData.giveApprovals ?? 0;
@@ -62,6 +80,19 @@ export default function HomeScreen() {
   ].filter(
     (tile): tile is { key: string; num: number; title: string } => Boolean(tile)
   );
+
+    const loadHomeData = async () => {
+      try {
+        const householdData = await getHouseholdName();
+        setGroupName(householdData.household_name || 'Household');
+      } catch (e: any) {
+        console.log('Home page error:', e?.response?.data || e.message);
+      }
+    };
+  
+  useEffect(() => {
+    loadHomeData();
+  }, []);
 
 
 
