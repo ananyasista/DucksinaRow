@@ -9,7 +9,8 @@ from api.models import (
     LivingPreferences,
     NotificationPreferences,
     Items,
-    Chores,
+    Chore,
+    ChoreAssignment,
     CalendarEvents,
     EventApprovals,
     NotificationUnitChoices,
@@ -23,7 +24,7 @@ class Command(BaseCommand):
         self.stdout.write("Deleting previous test data...")
         EventApprovals.objects.all().delete()
         CalendarEvents.objects.all().delete()
-        Chores.objects.all().delete()
+        Chore.objects.all().delete()
         Items.objects.all().delete()
         Household.objects.all().delete()
         User.objects.exclude(is_superuser=True).delete()
@@ -97,7 +98,7 @@ class Command(BaseCommand):
                     household=hh,
                     name=item_name,
                     details=f"{item_name} for {hh.household_name}",
-                    last_purchased_date=timezone.now().date() - timedelta(days=random.randint(0, 10)),
+                    last_purchased_date=timezone.now() - timedelta(days=random.randint(0, 5)),
                     last_purchased_by=random.choice(users),
                     restock_needed=random.choice([True, False]),
                     location="Kitchen",
@@ -112,21 +113,33 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.WARNING(f"No members in household {hh.household_name}, skipping events"))
                 continue
             for chore_name in ["Vacuum", "Dishes", "Laundry"]:
-                chore, created = Chores.objects.get_or_create(
+                # Create the chore definition
+                chore, created = Chore.objects.get_or_create(
                     household=hh,
                     title=chore_name,
                     details=f"{chore_name} for {hh.household_name}",
-                    all_day=False,
-                    date=timezone.now().date() + timedelta(days=random.randint(0, 7)),
                     repeat=random.choice([r[0] for r in RepeatChoices.choices]),
-                    assigned_roommate=random.choice(users),
                     is_rotating=random.choice([True, False]),
                     location="Living Room",
                     notification_value=random.randint(5, 60),
                     notification_unit=random.choice([u[0] for u in NotificationUnitChoices.choices]),
                 )
-                # Add roommates involved
-                chore.roommates_involved.set(random.sample(users, k=2))
+
+                # Add roommates involved for rotation
+                roommates_for_chore = random.sample(members, k=min(2, len(members)))
+                chore.roommates_involved.set(roommates_for_chore)
+
+                # Create the first assignment
+                initial_assignee = random.choice(roommates_for_chore)
+                due_date = timezone.now().date() + timedelta(days=random.randint(0, 7))
+
+                ChoreAssignment.objects.create(
+                    chore=chore,
+                    assignee=initial_assignee,
+                    due_date=due_date,
+                    all_day=False,
+                    completed=False
+                )
                 self.stdout.write(self.style.SUCCESS(f"Created chore: {chore.title}"))
 
 

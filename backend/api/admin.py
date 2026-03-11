@@ -7,7 +7,8 @@ from .models import (
     LivingPreferences,
     NotificationPreferences,
     Items,
-    Chores,
+    Chore,
+    ChoreAssignment,
     CalendarEvents,
     EventApprovals
 )
@@ -117,27 +118,27 @@ class ItemsAdmin(admin.ModelAdmin):
     list_filter = ("household", "restock_needed")
     search_fields = ("name", "location")
 
-@admin.register(Chores)
-class ChoresAdmin(admin.ModelAdmin):
-    list_display = (
-        "title",
-        "household",
-        "assigned_roommate",
-        "date",
-        "repeat",
-        "completed",
-        "is_rotating",
-        "get_roommates"
-    )
+class ChoreAssignmentInline(admin.TabularInline):
+    model = ChoreAssignment
+    extra = 0  # do not show empty rows
+    fields = ("assignee", "due_date", "completed", "all_day")
+    readonly_fields = ()
+    ordering = ("due_date",)
 
-    list_filter = ("completed", "repeat", "household")
-    search_fields = ("title", "location")
+@admin.register(Chore)
+class ChoreAdmin(admin.ModelAdmin):
+    list_display = ("title", "household", "repeat", "is_rotating", "location")
+    search_fields = ("title", "location", "household__household_name")
+    list_filter = ("repeat", "is_rotating", "location")
+    inlines = [ChoreAssignmentInline]  # optional, see assignments inline
+    filter_horizontal = ("roommates_involved",)
 
-     # Custom method to show roommates
-    def get_roommates(self, obj):
-        return ", ".join([user.email for user in obj.roommates_involved.all()])
-    
-    get_roommates.short_description = "Roommates"
+@admin.register(ChoreAssignment)
+class ChoreAssignmentAdmin(admin.ModelAdmin):
+    list_display = ("chore", "assignee", "due_date", "completed", "all_day")
+    list_filter = ("completed", "due_date", "all_day", "chore__household")
+    search_fields = ("chore__title", "assignee__first_name", "assignee__last_name")
+    ordering = ("due_date",)
 
 class EventApprovalInline(admin.TabularInline):
     """
