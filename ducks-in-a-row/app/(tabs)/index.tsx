@@ -11,6 +11,22 @@ import {CalendarEvent, listHouseholdEvents, listMyEvents, listNeedsApproval} fro
 import { ThemedText } from '@/components/themed-text';
 import { Calendar} from 'react-native-big-calendar';
 
+import { getHouseholdName } from '@/api/household';
+
+type ApprovalEvent = {
+  id: string;
+  event: {
+    id: string;
+    title: string;
+    start_date: string;
+    end_date?: string | null;
+    location?: string;
+    requires_approval: boolean;
+  };
+  approved: boolean;
+  response_time?: string | null;
+};
+
 type UserData = {
   needApprovals?: number
   giveApprovals?: number
@@ -45,12 +61,13 @@ const mockData: UserData = {
 }
 
 export default function HomeScreen() {
-  const groupName = mockData.groupName;
   const [pendingNum, setPendingNum] = useState(0);
   const [upcomingEvents, setUpcomingEvents] = useState<CalendarEvent[]>([]);
   const [needsApproval, setNeedsApproval] = useState(0);
   const [giveApproval, setGiveApproval] = useState(0);
   const [calendarHeight, setCalendarHeight] = useState(0);
+  const [groupName, setGroupName] = useState('Household');
+
   const choreList = mockData.chores;
 
   const tilesToShow = [
@@ -108,6 +125,19 @@ export default function HomeScreen() {
     onScreenLoad();
   }, [])
 
+
+    const loadHomeData = async () => {
+      try {
+        const householdData = await getHouseholdName();
+        setGroupName(householdData.household_name || 'Household');
+      } catch (e: any) {
+        console.log('Home page error:', e?.response?.data || e.message);
+      }
+    };
+  
+  useEffect(() => {
+    loadHomeData();
+  }, []);
 
 
 
