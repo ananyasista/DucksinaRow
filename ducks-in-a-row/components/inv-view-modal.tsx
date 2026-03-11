@@ -34,7 +34,7 @@ export default function InvViewModal(props: ModalProps) {
                     <View style={{height: 20}}></View>
                     <View style={styles.header}>
                         <TouchableOpacity onPress={props.onClose}>
-                            <IconSymbol size={30} name="x.square" color="#000"/>
+                            <IconSymbol size={30} name="multiply" color="#000"/>
                         </TouchableOpacity>
                         <View style={{flexDirection: 'row', gap: 20}}>
                             <TouchableOpacity onPress={props.onDelete}>
@@ -50,13 +50,16 @@ export default function InvViewModal(props: ModalProps) {
                 <SafeAreaView style={styles.modalContent}>
                     <Text style={styles.title}>{props.item.name}</Text>
                     <Text style={styles.text}>{props.item.details}</Text>
-                    <Text style={styles.subHeading}>Location: {props.item.location}</Text>
-                    <Text style={styles.subHeading}>Last Purchased By: {props.item.last_purchased_by}</Text>
-                    <Text style={styles.subHeading}>Purchase Date: {props.item.last_purchased_date.toString()}</Text>
+                    <Text style={styles.subHeading}>Location: <Text style={styles.text}>{props.item.location}</Text></Text>
+                    <Text style={styles.subHeading}>Last Purchased By: <Text style={styles.text}>{props.item.last_purchased_by}</Text></Text>
+                    <Text style={styles.subHeading}>Purchase Date: <Text style={styles.text}>{props.item.last_purchased_date.toDateString()}</Text></Text>
                     <View>
                         <View style={{flexDirection: 'row', gap: 12}}>
                             <Text style={styles.subHeading}>Restock Needed?</Text>
-                            <Switch />
+                            <Switch 
+                                trackColor={{false: 'red', true: 'green'}}
+                                thumbColor={'white'}
+                            />
                         </View>
                         <Text style={styles.subtitle}>Toggle when this item needs to be restocked</Text>
                     </View>
@@ -78,7 +81,7 @@ const styles = StyleSheet.create({
 
     title: {
         fontSize: 48,
-        fontWeight: 600
+        fontWeight: 700
     },
 
     subHeading: {
@@ -86,7 +89,7 @@ const styles = StyleSheet.create({
         fontWeight: 600
     },
     
-    header: {
+    header: { 
         justifyContent: "space-between",
         flexDirection: 'row',
         alignItems: 'flex-end',
@@ -94,7 +97,8 @@ const styles = StyleSheet.create({
     },
 
     text: {
-        fontSize: 24
+        fontSize: 24,
+        fontWeight: 400
     },
 
     subtitle: {

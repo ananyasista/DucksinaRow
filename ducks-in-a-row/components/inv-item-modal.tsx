@@ -68,7 +68,17 @@ export default function InvItemModal(props: ModalProps) {
                 <View>
                     <View style={{height: 20}}></View>
                 <View style={styles.header}>
-                    <TouchableOpacity style={styles.cancelButton} onPress={props.onClose}>
+                    <TouchableOpacity style={styles.cancelButton} 
+                        onPress={() => {
+                            setItemName('')
+                            setItemDetails('')
+                            setItemLocation(null)
+                            setQuantity(1)
+                            setOwner(null)
+                            setDate(new Date())
+                            props.onClose()
+                        }}
+                    >
                         <Text style={styles.cancelText}>Cancel</Text>
                     </TouchableOpacity>
                     <Text style={styles.title}>{props.title}</Text>

@@ -11,12 +11,13 @@ type ModalProps = PropsWithChildren<{
 export default function InvFilterModal(props: ModalProps) {
     const [visible, setVisible] = useState(false);
     const locationList: string[] = ["Kitchen", "Living Room"];
-    const stockList: string[] = ["Recently Added", "Needs Restock"];
+    const stockList: string[] = ["Needs Restock"];
     const purchaseList: string[] = ["Last Month", "Last Week"];
 
-    var locationFilterList: string[] = [];
-    var stockFilterList: string[] = [];
-    var purchaseFilterList: string[];
+    const [stockFilter, setStockFilter] = useState(false);
+    const [locationFilterList, setLocationFilterList] = useState<string[]>([]);
+    const [purchaseFilterList, setPurchaseFilterList] = useState<string[]>([]);
+
 
     
 
@@ -48,7 +49,18 @@ export default function InvFilterModal(props: ModalProps) {
                     <Text style={styles.subHeading}>Location</Text>
                     <View style={styles.chipView}>
                         {locationList.map((name => (
-                            <Chip title={name} />
+                            <Chip 
+                                title={name} 
+                                onPress={() => {
+                                    setLocationFilterList(prev => {
+                                        if(prev.includes(name)) {
+                                            return prev.filter(item => item !== name);
+                                        } else {
+                                            return [...prev, name];
+                                        }
+                                    })                                }}
+                                selected = {locationFilterList.includes(name)}
+                            />
                         )))}
 
                     </View>
@@ -56,7 +68,13 @@ export default function InvFilterModal(props: ModalProps) {
                     <Text style={styles.subHeading}>Stock</Text>
                     <View style={styles.chipView}>
                         {stockList.map((name => (
-                            <Chip title={name} />
+                            <Chip 
+                                title={name} 
+                                onPress={() => {
+                                    setStockFilter(!stockFilter);
+                                }}
+                                selected = {stockFilter}
+                                />
                         )))}
 
                     </View>
@@ -64,7 +82,19 @@ export default function InvFilterModal(props: ModalProps) {
                     <Text style={styles.subHeading}>Last Purchased By</Text>
                     <View style={styles.chipView}>
                         {purchaseList.map((name => (
-                            <Chip title={name} />
+                            <Chip 
+                                title={name} 
+                                onPress={() => {
+                                    setPurchaseFilterList(prev => {
+                                        if(prev.includes(name)) {
+                                            return prev.filter(item => item !== name);
+                                        } else {
+                                            return [...prev, name];
+                                        }
+                                    })                                }}
+                                selected = {purchaseFilterList.includes(name)}
+                            
+                            />
                         )))}
 
                     </View>
@@ -104,7 +134,7 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         flexDirection: 'row',
         alignItems: 'flex-end',
-        padding: 12
+        padding: 20
     },
 
     cancelButton: {

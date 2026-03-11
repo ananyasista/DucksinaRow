@@ -1,4 +1,4 @@
-import {StyleSheet, View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import {StyleSheet, View, Text, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { useState } from 'react';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -53,6 +53,7 @@ export default function InventoryScreen() {
   const [editItemVisible, setEditItemVisible] = useState(false);
   const [restock, setRestock] = useState(false);
   const [selectedItem, setSelectedItem] = useState<InvItem | null>(null);
+  const [searchText, setSearchText] = useState('');
 
   // TODO: have to create function that triggers when restock toggle is pressed
   
@@ -63,22 +64,38 @@ export default function InventoryScreen() {
       <ScrollView>
         <View style={styles.fullLayout}>
           <Text style={styles.title}>Items</Text>
-          <InvFilterModal title='Filters'/>
+          <View style={{flexDirection: 'row', gap: 13}}>
+            <InvFilterModal title='Filters'/>
+            <TextInput 
+                style={styles.input}
+                onChangeText={setSearchText}
+                value={searchText}
+                placeholder='Search'
+                placeholderTextColor='#ABA4A461'
+            />
+          </View>
+          
 
           <View style={styles.section}>
-            {itemList.map((item) => (
-              <InvItemTile
-                id={item.id}
-                title={item.name} 
-                category={item.location}
-                restock={item.restock_needed} 
-                onChange={() => setRestock(!restock)}
-                onPress={() => {
-                  setSelectedItem(item);
-                  setViewItemVisible(true);
-                }}
-              />
-            ))}
+            {itemList
+                .filter(item => {
+                  if(!searchText) return true;
+                  return item.name.toLowerCase().startsWith(searchText.toLowerCase());
+                })
+                .map((item) => (
+                <InvItemTile
+                  id={item.id}
+                  title={item.name} 
+                  category={item.location}
+                  restock={item.restock_needed} 
+                  onChange={() => setRestock(!restock)}
+                  onPress={() => {
+                    setSelectedItem(item);
+                    setViewItemVisible(true);
+                  }}
+                />
+              ))
+            }
           </View>
 
 
@@ -151,7 +168,17 @@ const styles = StyleSheet.create({
         borderRadius: 30,
         justifyContent: 'center',
         alignItems: 'center'
-    }
+    },
+  
+  input: {
+    borderWidth: 2,
+    padding: 5,
+    borderColor: '#ABA4A461',
+    backgroundColor: '#F6F4F4C4',
+    borderRadius: 13,
+    fontSize: 16,
+    flex: 2
+  }
 
   
 });

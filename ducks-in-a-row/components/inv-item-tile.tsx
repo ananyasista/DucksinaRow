@@ -16,7 +16,10 @@ export default function InvItemTile(props: InvItemTileProps){
     
     return (
         <TouchableOpacity onPress={props.onPress}>
-                    <View style={styles.tile}>
+        <View 
+            style={[styles.tile, props.restock && styles.restockTile]}
+            
+        >
             <Text style={styles.titleHeading}>{props.title}</Text>
             <Text style={styles.subheading}>Category: {props.category}</Text>
             <View style={styles.subView}>
@@ -43,7 +46,17 @@ const styles = StyleSheet.create({
         fontWeight: 600
     },
     tile: {
-        backgroundColor: "##F6F6F5",
+        backgroundColor: "#F6F6F5",
+        borderRadius: 16,
+        padding: 20,
+        fontSize: 24,
+        color: "#000000",
+        borderWidth: 2,
+        gap: 5
+    },
+
+    restockTile: {
+        backgroundColor: "#f8c3b2",
         borderRadius: 16,
         padding: 20,
         fontSize: 24,
