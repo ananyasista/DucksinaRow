@@ -9,9 +9,17 @@ export const api = axios.create({
 // Attach token to every request by user, every api call gets authenticated 
 api.interceptors.request.use(async (config) => {
   const token = await AsyncStorage.getItem("accessToken");
-  if (token) {
-    config.headers = config.headers ?? {};
-    config.headers.Authorization = `Token ${token}`; 
+
+  const url = config.url || "";
+
+  const isAuthRoute =
+    url.includes("/auth/login/") || url.includes("/auth/signup/");
+
+  if (!isAuthRoute && token) {
+    config.headers.Authorization = `Token ${token}`;
+  } else if (config.headers?.Authorization) {
+    delete config.headers.Authorization;
   }
+
   return config;
 });

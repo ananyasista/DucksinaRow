@@ -42,6 +42,18 @@ def household_roommates(request):
     members = User.objects.filter(household=household).select_related("living_preferences")
     return Response(RoommateSerializer(members, many=True).data)
 
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_household_name(request):
+    if not request.user.household:
+        return Response(
+            {"detail": "User is not in a household."},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    serializer = HouseholdSerializer(request.user.household)
+    return Response(serializer.data)
+
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])  
 def create_household(request):
