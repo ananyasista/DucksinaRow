@@ -1,0 +1,238 @@
+import {View, Text, StyleSheet, Dimensions, TouchableOpacity, Modal, Switch } from 'react-native'
+import React, { useState, PropsWithChildren } from 'react'
+import { Button, Header } from '@react-navigation/elements'
+import Chip from './chip';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { ThemedSwitch } from './themed-switch';
+import { IconSymbol } from './ui/icon-symbol';
+import DateTimePicker, { DateTimePickerEvent, Event } from '@react-native-community/datetimepicker';
+
+type ModalProps = PropsWithChildren<{
+    title: string;
+}>;
+
+export default function ChoreFilterModal(props: ModalProps) {
+    const [visible, setVisible] = useState(false);
+    const locationList: string[] = ["Kitchen", "Living Room"];
+    const roommateList: string[] = ["Ananya", "Elle", "Sofia", "Leyna"];
+
+    const [locationFilterList, setLocationFilterList] = useState<string[]>([]);
+    const [roommateFilterList, setRoommateFilterList] = useState<string[]>([]);
+    const [showCompleted, setShowCompleted] = useState(true);
+
+    const [startDate, setStartDate] = useState(new Date());
+    const [endDate, setEndDate] = useState(new Date());
+    
+    const onChangeStartDate = (event: DateTimePickerEvent, selectedDate?: Date) => {
+        const currentDate = selectedDate ? selectedDate : new Date();
+        setStartDate(currentDate);
+    };
+
+    const onChangeEndDate = (event: DateTimePickerEvent, selectedDate?: Date) => {
+        const currentDate = selectedDate ? selectedDate : new Date();
+        setEndDate(currentDate);
+    };
+
+    const onClear = () => {
+        setLocationFilterList([]);
+        setRoommateFilterList([]);
+        setShowCompleted(true);
+        setStartDate(new Date());
+        setEndDate(new Date());
+    }
+
+    return (
+        <View>
+            <Chip 
+            title="Filter" 
+            iconName='slider.horizontal.3'
+            onPress={() => setVisible(true)}
+            selected = {true}
+            />
+
+            <Modal
+                animationType='slide'
+                visible={visible}
+                presentationStyle='formSheet'
+                allowSwipeDismissal={true}
+                onRequestClose={() => setVisible(false)}
+            >
+                <View style={styles.header}>
+                    <Text style={styles.title}>{props.title}</Text>
+                    <TouchableOpacity style={styles.cancelButton} onPress={() => setVisible(false)}>
+                        <Text style={styles.cancelText}>Close</Text>
+                    </TouchableOpacity>
+                </View>
+
+
+                <SafeAreaView style={styles.modalContent}>
+                    <View style={{gap: 10}}>
+                    <Text style={styles.subHeading}>Assignee</Text>
+                    <View style={styles.chipView}>
+                        {roommateList.map((name => (
+                            <Chip 
+                                title={name} 
+                                onPress={() => {
+                                    setRoommateFilterList(prev => {
+                                        if(prev.includes(name)) {
+                                            return prev.filter(item => item !== name);
+                                        } else {
+                                            return [...prev, name];
+                                        }
+                                    })                                }}
+                                selected = {roommateFilterList.includes(name)}
+                            
+                            />
+                        )))}
+
+                    </View>
+
+                    <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+                        <Text style={styles.subHeading}>Show Completed</Text>
+                        <Switch onValueChange={() => setShowCompleted(!showCompleted)} value={showCompleted}/>
+                    </View>
+
+                    <View>
+                        <Text style={[styles.subHeading, {paddingBottom: 5}]}>Due Date Range</Text>
+                        <View style={{flexDirection: 'row', justifyContent: 'space-around'}}>
+                            <View style={{justifyContent: 'center', gap: 7}}>
+                                <Text style={styles.dateHeader}>Start Date</Text>
+                                <View style={{flexDirection: 'row'}}>
+                                    <IconSymbol name='calendar' size={30} color="#000"/>
+                                    <DateTimePicker
+                                        testID="dateTimePicker"
+                                        value={startDate}
+                                        is24Hour={true}
+                                        onChange={onChangeStartDate}
+                                        mode={'date'}
+                                        display = 'default'
+                                        themeVariant='light'
+                                    />
+                                </View>
+                            </View>
+                            <View style={{justifyContent: 'center', gap: 7}}>
+                                <Text style={styles.dateHeader}>End Date</Text>
+                                <View style={{flexDirection: 'row'}}>
+                                    <IconSymbol name='calendar' size={30} color="#000"/>
+                                    <DateTimePicker
+                                        testID="dateTimePicker"
+                                        value={endDate}
+                                        is24Hour={true}
+                                        onChange={onChangeEndDate}
+                                        mode={'date'}
+                                        display = 'default'
+                                        themeVariant='light'
+                                    />
+                                </View>
+                            </View>
+                        </View>
+                        
+                    </View>
+
+                    <Text style={styles.subHeading}>Location</Text>
+                    <View style={styles.chipView}>
+                        {locationList.map((name => (
+                            <Chip 
+                                title={name} 
+                                onPress={() => {
+                                    setLocationFilterList(prev => {
+                                        if(prev.includes(name)) {
+                                            return prev.filter(item => item !== name);
+                                        } else {
+                                            return [...prev, name];
+                                        }
+                                    })                                }}
+                                selected = {locationFilterList.includes(name)}
+                            />
+                        )))}
+
+                    </View>
+                    </View>
+                    
+
+                    <View style={{flexDirection: 'row', justifyContent: 'space-evenly'}}>
+                        <TouchableOpacity style={styles.stateButtons} onPress={() => setVisible(false)}>
+                            <Text style={styles.stateText}>Apply</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.stateButtons} onPress={() => onClear()}>
+                            <Text style={styles.stateText}>Clear</Text>
+                        </TouchableOpacity>
+                    </View>
+                    
+                    
+                </SafeAreaView>
+                
+            </Modal>
+        </View>
+        
+    )
+}
+
+const styles = StyleSheet.create({
+    modalContent: {
+        margin: 20,
+        gap: 20,
+        flex: 1,
+        justifyContent: 'space-between'
+    },
+
+    title: {
+        fontSize: 48,
+        fontWeight: 600
+    },
+
+    subHeading: {
+        fontSize: 36,
+        fontWeight: 400,
+        marginTop: 10
+    },
+
+    chipView: {
+        flexDirection: 'row',
+        gap: 12,
+        paddingTop: 10,
+        paddingBottom: 10
+    },
+    
+    header: {
+        justifyContent: "space-between",
+        flexDirection: 'row',
+        alignItems: 'flex-end',
+        padding: 30
+    },
+
+    cancelButton: {
+        backgroundColor: '#fff',
+        borderWidth: 2,
+        borderRadius: 10,
+        color: '#000',
+        justifyContent: 'center',
+        alignItems: 'center',
+        width: 100,
+        height: 50
+    },
+
+    cancelText: {
+        fontSize: 20
+    },
+
+    dateHeader: {
+        fontSize: 18,
+        textDecorationLine: 'underline'
+    },
+
+    stateButtons: {
+        backgroundColor: '#fff',
+        borderWidth: 2,
+        borderRadius: 10,
+        color: '#000',
+        justifyContent: 'center',
+        alignItems: 'center'
+    },
+
+    stateText: {
+        fontSize: 30,
+        marginVertical: 10,
+        marginHorizontal: 40
+    }
+});
