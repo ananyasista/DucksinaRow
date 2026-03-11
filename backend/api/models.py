@@ -159,21 +159,18 @@ class Items(models.Model):
     def __str__(self):
         return self.name
 
-# Chores Table
-class Chores(models.Model):
+# Chore Table
+class Chore(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     household = models.ForeignKey(
         Household,
         on_delete=models.CASCADE,
-        related_name="chores"
+        related_name="chore"
     )
 
     title = models.CharField(max_length=255)
     details = models.TextField(blank=True)
-
-    all_day = models.BooleanField(default=False)
-    date = models.DateField()
 
     repeat = models.CharField(
         max_length=20,
@@ -181,32 +178,18 @@ class Chores(models.Model):
         default=RepeatChoices.NONE
     )
 
-    assigned_roommate = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        null=True,
-        related_name="assigned_chores"
-    )
-
-    next_assignee = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="next_rotations"
-    )
-
     is_rotating = models.BooleanField(default=False)
 
     roommates_involved = models.ManyToManyField(
         User,
         blank=True,
-        related_name="chores_involved"
+        related_name="chore_involved"
     )
 
     location = models.CharField(max_length=255, blank=True)
 
     notification_value = models.IntegerField(null=True, blank=True)
+
     notification_unit = models.CharField(
         max_length=10,
         choices=NotificationUnitChoices.choices,
@@ -214,10 +197,60 @@ class Chores(models.Model):
         blank=True
     )
 
-    completed = models.BooleanField(default=False)
-
     def __str__(self):
         return self.title
+
+class ChoreAssignment(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    chore = models.ForeignKey(
+        Chore,
+        on_delete=models.CASCADE,
+        related_name="assignments"
+    )
+
+    assignee = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True
+    )
+
+    due_date = models.DateField()
+
+    completed = models.BooleanField(default=False)
+
+    completed_date = models.DateTimeField(null=True, blank=True)
+
+    all_day = models.BooleanField(default=False)
+
+    def rotate(self):
+        # Create the next assignment in the rotation, if the chore rotates.
+        chore = self.chore
+
+        if not chore.is_rotating:
+            return  # nothing to rotate
+
+        roommates = list(chore.roommates_involved.all())
+        if not roommates:
+            return  # no one to assign
+
+        # find next user
+        if self.assignee in roommates:
+            index = roommates.index(self.assignee)
+            next_user = roommates[(index + 1) % len(roommates)]
+        else:
+            next_user = roommates[0]
+
+        # determine next due date (example: add 7 days)
+        next_due_date = self.due_date + timedelta(days=7)
+
+        # create the next assignment
+        ChoreAssignment.objects.create(
+            chore=chore,
+            assignee=next_user,
+            due_date=next_due_date,
+            all_day=self.all_day
+        )
     
 
 # Calendar Events Table

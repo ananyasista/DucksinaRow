@@ -1,3 +1,4 @@
+
 // Fallback for using MaterialIcons on Android and web.
 
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
@@ -23,6 +24,7 @@ const MAPPING = {
   'slider.horizontal.3': 'tune',
   'minus.circle': 'remove-circle-outline',
   'x.': 'close',
+  'multiply': 'close',
   'trash.fill': 'delete',
   'pencil': 'edit'
 } as IconMapping;

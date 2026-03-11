@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { Link, router } from "expo-router";
 import { signup, me } from "../api/auth"
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function SignupScreen() {
   const [firstName, setFirstName] = useState(""); // Optional
@@ -55,14 +56,23 @@ export default function SignupScreen() {
         join_code: joinCode.trim() || undefined,
       });
 
-      const profile = await me(token);
+      // Stores user's token in AsyncStorage
+      await AsyncStorage.setItem("accessToken", token);
+
+      const profile = await me();
       console.log("ME:", profile);
 
       setMsg(`SUCCESS: Account created for ${user.email}`);
 
-      // router.replace("/(tabs)"); reroute to home 
-    } catch (e: any) {
-      console.log("SIGNUP ERROR:", e?.response?.data || e.message);
+      // If user joined an existing household or created a new one
+      if (joinCode.trim()) {
+        router.replace('/living-preferences?mode=onboarding');
+      } else {
+        router.replace('/create-household');
+      }
+
+  } catch (e: any) {
+    console.log("SIGNUP ERROR:", e?.response?.data || e.message);
 
       // show serializer errors nicely
       const data = e?.response?.data;

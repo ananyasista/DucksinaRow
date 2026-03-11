@@ -1,0 +1,146 @@
+import {View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Pressable, Keyboard, TouchableWithoutFeedback, Switch } from 'react-native'
+import Chip from './chip';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useState } from 'react';
+import { ChoreItem } from '@/app/(tabs)/chores';
+import { IconSymbol } from './ui/icon-symbol';
+import DateTimePicker from '@react-native-community/datetimepicker';
+
+type ModalProps = {
+    item: ChoreItem;
+    //toggleRestock: () => void;
+    visible: boolean;
+    onClose: () => void;
+    onEdit: () => void;
+    onDelete: () => void;
+
+}
+
+export default function ChoreViewModal(props: ModalProps) {
+    
+
+    return (
+            <Modal
+                animationType='slide'
+                visible={props.visible}
+                presentationStyle='formSheet'
+                allowSwipeDismissal={true}
+                onRequestClose={props.onClose}
+            >
+
+                <View style={{flex: 1}}>
+                    <View style={{height: 20}}></View>
+                    <View style={styles.header}>
+                        <TouchableOpacity onPress={props.onClose}>
+                            <IconSymbol size={30} name="multiply" color="#000"/>
+                        </TouchableOpacity>
+                        <View style={{flexDirection: 'row', gap: 20}}>
+                            <TouchableOpacity onPress={props.onDelete}>
+                                <IconSymbol size={30} name="trash.fill" color="#000"/>
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={props.onEdit}>
+                                <IconSymbol size={30} name="pencil" color="#000"/>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+
+
+                <SafeAreaView style={styles.modalContent}>
+                    <View style={{gap: 10}}>
+                        <Text style={styles.title}>{props.item.name}</Text>
+                        <Text style={styles.text}>{props.item.details}</Text>
+                        <View style={{flexDirection: 'row'}}>
+                            <IconSymbol name='calendar' size={30} color="#000"/>
+                            <DateTimePicker
+                                testID="dateTimePicker"
+                                value={props.item.date}
+                                is24Hour={true}
+                                mode={'date'}
+                                display = 'default'
+                                themeVariant='light'
+                            />
+                        </View>
+                        <Text style={styles.subHeading}>Pass chore to next roommate: <Text style={styles.text}>{props.item.repeat}</Text></Text>
+                        <Text style={styles.subHeading}>Next Up: <Text style={styles.text}>{props.item.next_assignee}</Text></Text>
+                        <View>
+                            <Text style={styles.subHeading}>Roomates Involved:</Text>
+                            <View style={styles.chipView}>
+                            {props.item.roommates.map((name) =>
+                                    <Chip 
+                                        key={name}
+                                        title={name}
+                                    />
+                                )} 
+                            </View>
+                            
+                        </View>
+                        <Text style={styles.subHeading}>Locations: <Text style={styles.text}>{props.item.location}</Text></Text>
+                        
+                    </View>
+                    
+                    <TouchableOpacity style={styles.completeButton} onPress={() => props.onClose()}>
+                        <Text style={styles.subHeading}>Mark as Complete</Text>
+                    </TouchableOpacity>
+                     
+                </SafeAreaView>
+
+                </View>
+            </Modal>
+        
+    )
+}
+
+const styles = StyleSheet.create({
+    modalContent: {
+        margin: 20,
+        gap: 20,
+        flex: 1,
+        justifyContent: 'space-between'
+    },
+
+    title: {
+        fontSize: 48,
+        fontWeight: 700
+    },
+
+    subHeading: {
+        fontSize: 24,
+        fontWeight: 600
+    },
+    
+    header: { 
+        justifyContent: "space-between",
+        flexDirection: 'row',
+        alignItems: 'flex-end',
+        padding: 12
+    },
+
+    text: {
+        fontSize: 24,
+        fontWeight: 400
+    },
+
+    subtitle: {
+        fontSize: 18,
+        fontWeight: 300
+    },
+
+    chipView: {
+        flexDirection: 'row',
+        gap: 12,
+        paddingTop: 10,
+        paddingBottom: 10
+    },
+
+    completeButton: {
+        borderWidth: 2,
+        padding: 5,
+        borderColor: '#ABA4A461',
+        backgroundColor: '#F6F4F4C4',
+        borderRadius: 13,
+        fontSize: 16,
+        justifyContent: 'center',
+        alignItems: 'center'
+    }
+
+});

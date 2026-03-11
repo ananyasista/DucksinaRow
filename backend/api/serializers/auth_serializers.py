@@ -30,25 +30,21 @@ class SignupSerializer(serializers.ModelSerializer):
         fields = ("id", "email", "first_name", "last_name", "password", "join_code")
 
     def create(self, validated_data):
-        validated_data["username"] = validated_data["email"]  # use email as username
+        email = validated_data["email"].strip().lower()
+        validated_data["email"] = email
+        validated_data["username"] = email
+
         join_code = validated_data.pop("join_code", "").strip()
         password = validated_data.pop("password")
 
-        # If user entered a join code → join existing
+        household = None
+
         if join_code:
             household = Household.objects.filter(join_code__iexact=join_code).first()
             if not household:
                 raise serializers.ValidationError(
                     {"join_code": "No household found with this code."}
                 )
-
-        # If blank → create new household
-        else:
-            new_code = generate_unique_join_code()
-            household = Household.objects.create(
-                household_name=f"{validated_data.get('username')}'s Household",
-                join_code=new_code
-            )
 
         # Validates password & hides
         user = User(**validated_data)
@@ -57,7 +53,8 @@ class SignupSerializer(serializers.ModelSerializer):
         user.save()
         return user
 
-class MeSerializer(serializers.ModelSerializer):
+# Display user profile information
+class ProfileSerializer(serializers.ModelSerializer):
     household_join_code = serializers.SerializerMethodField()
 
     class Meta:
@@ -66,3 +63,21 @@ class MeSerializer(serializers.ModelSerializer):
 
     def get_household_join_code(self, obj):
         return obj.household.join_code if obj.household else None
+    
+# Allow user to edit profile 
+class UpdateProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ("username", "first_name", "last_name", "email")
+
+    def validate_email(self, value):
+        value = value.strip().lower()
+        # if user is changing email, ensure unique
+        if User.objects.filter(email=value).exclude(pk=self.instance.pk).exists():
+            raise serializers.ValidationError("Email already in use.")
+        return value
+
+# Allow user to change password
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField()
+    new_password = serializers.CharField(min_length=8)
