@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views.chores_views import ChoreViewSet, ChoreAssignmentViewSet
 from .views.calendar_views import CalendarEventViewSet
@@ -10,6 +10,7 @@ from .views.inventory_views import InventoryViewSet
 
 # App routers for auth views
 urlpatterns = [
+    path("api-auth/", include("rest_framework.urls")),
     path("auth/signup/", signup),
     path("auth/login/", login),
     path("auth/profile/", me),
