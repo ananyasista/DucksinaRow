@@ -74,12 +74,12 @@ export default function HomeScreen() {
     needsApproval >= 1 && {
       key: 'need',
       num: needsApproval,
-      title: 'Your approvals needed:',
+      title: 'Needs Your Approval',
     },
     giveApproval >= 1 && {
       key: 'give',
       num: giveApproval,
-      title: 'Your events missing approvals:',
+      title: 'Pending Roommate Approval',
     },
   ].filter(
     (tile): tile is { key: string; num: number; title: string } => Boolean(tile)
@@ -148,17 +148,17 @@ export default function HomeScreen() {
         <View style={styles.header}></View>
         <View style={styles.fullLayout}>
 
-          <Text style={styles.title}>Welcome Back, {groupName}!</Text>
+          <ThemedText type="title">Welcome Back, {groupName}!</ThemedText>
 
           {/* // rendering for pending events section */}
+          {pendingNum >= 1  && (
           <View style={styles.section}>
-              {pendingNum && pendingNum >= 1 && (
               <>
               <Text style={styles.subtitle}>Pending Events ({pendingNum}):</Text>
                 <View style={styles.pendingArea}>
                   {tilesToShow.map((tile) => (
                     <View key={tile.key} style={styles.tileWrapper}>
-                      <TouchableOpacity onPress={()=>{router.navigate({pathname:'/(tabs)/calendar', params:{mode:'month'}})}}>
+                      <TouchableOpacity onPress={()=>{router.navigate({pathname:'/(tabs)/calendar', params:{mode:'event'}})}}>
                         <PendingTile
                           numEvents={tile.num}
                           title={tile.title}
@@ -168,9 +168,8 @@ export default function HomeScreen() {
                   ))}
                 </View>
               </>
-            )}
-          </View>
-          
+            </View>
+          )}
 
           {/* // rendering for chores section */}
           <View style={styles.section}>
@@ -193,7 +192,7 @@ export default function HomeScreen() {
           <View style={styles.section}>
             <Text style={styles.subtitle}>Upcoming Week Events:</Text>
             {upcomingEvents.length==0 && 
-            <ThemedText type='subtitle'>You week is empty!</ThemedText>}
+            <ThemedText type='secondarySubtitle'>Your week is empty!</ThemedText>}
             
           </View>
 
@@ -209,15 +208,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    
   },
   
   pendingArea: {
-    flexDirection: 'row',
-    gap: 40
+    flexDirection: 'column',
+    gap: 15,
   },
 
   tileWrapper: {
-    flex: 1
+    flex: 1,
   },
 
   subtitle: {
@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
   },
 
   section: {
-    gap: 15
+    gap: 15,
   },
 
   header: {

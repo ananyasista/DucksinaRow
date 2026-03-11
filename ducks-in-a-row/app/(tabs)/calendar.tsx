@@ -57,11 +57,10 @@ const events = [
 export interface CalendarEvent extends ICalendarEventBase {
   description: string;
   needsApproval:any;
-
 }
 
 export default function CalendarPage () {
-    const {mode:modeParam} = useLocalSearchParams();
+    const { mode } = useLocalSearchParams();
     const month = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
     const[currentDate, setCurrentDate] = useState(new Date());
     const [openDropdown, setOpenDropdown] = useState(false);
@@ -79,15 +78,16 @@ export default function CalendarPage () {
       const{height} = e.nativeEvent.layout;
       setCalendarHeight(height);
     }
-    function changeView(date: Date, switchView: Boolean) {
-      console.log("Requested change view. Currently: " + currentMode);
-        setCurrentDate(date);
-        // setCurrentMode(currentMode==='week'?'month':'week');
-        console.log("After request: " + currentMode);
-    } 
+   
+    async function changeDateMode(date: Date) {
+        await setCurrentDate(date);
+        setOpenDropdown(false);
+        setCurrentMode(currentMode === 'week'? 'month' : 'week');
+    }
     function switchToCalendar(mode?: Mode, date?: Date) {
       if(mode)
       {
+        router.setParams({mode:mode});
         setCurrentMode(mode);
       }
       if(date)
@@ -96,16 +96,19 @@ export default function CalendarPage () {
       }
       setShowCalendar(true);
       setShowEvents(false);
+      setOpenDropdown(false);
     }
     function switchToEvents() {
       setShowCalendar(false);
       setShowEvents(true);
+      setOpenDropdown(false);
     }
     
     function showEditModal(event:CalendarEvent|null)
     {
         setEditModal(!editModal);
         setEvent(event);
+        setOpenDropdown(false);
     }
     function toggleDropdown() {
         if (menuRef.current) {
@@ -119,6 +122,17 @@ export default function CalendarPage () {
          setOpenDropdown(!openDropdown);
 
       }
+    useFocusEffect(
+      React.useCallback(() => {
+        if (mode === 'event') {
+          switchToEvents();
+
+          // clear param after using it
+          router.setParams({ mode: undefined });
+        }
+      }, [mode])
+    );
+      
     
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.background}}>
@@ -127,19 +141,19 @@ export default function CalendarPage () {
         <View style={calendarTheme.header}>
             <View style={calendarTheme.dateContainer}>
               <View style={calendarTheme.dateTextStack}>
-              <ThemedText type='title'>Calendar</ThemedText>
-              {showCalendar && (<ThemedText type='secondarySubtitle'>{month[currentDate.getMonth()]} {currentDate.getFullYear()}</ThemedText>)}
+                <ThemedText type='title'>Calendar</ThemedText>
+                {showCalendar && (<ThemedText type='secondarySubtitle'>{month[currentDate.getMonth()]} {currentDate.getFullYear()}</ThemedText>)}
               </View>
             </View>
-            <TouchableOpacity ref={menuRef} onPress={toggleDropdown}>
-        <AntDesign name="menu" size={32} color="black" />
-      </TouchableOpacity>
+            <TouchableOpacity ref={menuRef} onPress={toggleDropdown} onBlur={() => setOpenDropdown(false)}>
+              <AntDesign name="menu" size={32} color="black" />
+           </TouchableOpacity>
         </View>
         {openDropdown && (
             <View style={[
                 calendarTheme.dropdown,
                 { top: dropdownPos.top, right: dropdownPos.right }
-              ]}>
+              ]} onBlur={() => setOpenDropdown(false)}>
               <TouchableOpacity style={calendarTheme.item} onPress={() => switchToCalendar(undefined, new Date())}><ThemedText type='boldText'>Today</ThemedText></TouchableOpacity>
               <TouchableOpacity style={calendarTheme.item} onPress={() => switchToCalendar('day')}><ThemedText type='boldText'>Day</ThemedText></TouchableOpacity>
               <TouchableOpacity style={calendarTheme.item} onPress={() => switchToCalendar('3days')}><ThemedText type='boldText'>3-Day</ThemedText></TouchableOpacity>
@@ -161,8 +175,9 @@ export default function CalendarPage () {
               date = {currentDate}
               eventCellStyle = {calendarTheme.eventStyle}
               mode={currentMode}
-              onPressDateHeader={(date:Date) =>changeView(date, true)}
-              onSwipeEnd = {(date:Date) => changeView(date, false)}
+              onPressCell={(date:Date) =>changeDateMode(date)}
+              onPressDateHeader={(date:Date) =>changeDateMode(date)}
+              onSwipeEnd = {(date:Date) => setCurrentDate(date)}
               theme = {theme.calendar}
               onPressEvent={(event) => showEditModal( event as CalendarEvent)}
           />)
@@ -174,7 +189,7 @@ export default function CalendarPage () {
           */}
           {showEvents && (
             <ScrollView style={calendarTheme.indent}>
-              <ThemedText type='subtitle'>Needs Approval</ThemedText>
+              <ThemedText type='secondarySubtitle'>Needs Approval</ThemedText>
               {
                 events.map((event) =>  {
                   if(event.needsApproval.includes('me'))
@@ -183,7 +198,7 @@ export default function CalendarPage () {
                   }
                 })
               }
-              <ThemedText type='subtitle'>Your Events</ThemedText>
+              <ThemedText type='secondarySubtitle'>Your Events</ThemedText>
               {
                 events.map((event) =>  {
                   if(!event.needsApproval.includes('me'))
@@ -232,10 +247,12 @@ const calendarTheme = StyleSheet.create({
     justifyContent: 'space-between',
     paddingLeft: 15,
     paddingRight: 15,
+    paddingBottom: 20
   },
   dateContainer: {
     flexDirection: 'row',
     alignContent: 'center',
+   
   },
   tabs: {
     flexDirection: 'row',
@@ -296,7 +313,7 @@ const calendarTheme = StyleSheet.create({
     width: 100
   },
   indent: {
-    marginLeft: 10
+    marginLeft: 15
   },
   dropdown: {
     position: "absolute",

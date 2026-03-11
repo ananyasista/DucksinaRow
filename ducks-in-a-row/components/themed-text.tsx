@@ -48,13 +48,14 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: 700,
-    lineHeight: 48,
+    
   },
   subtitle: {
     fontSize: 24,
     fontWeight: 400,
   },
   secondarySubtitle: {
+    marginTop: 0,
     fontSize: 20,
     fontWeight: 400,
   },
