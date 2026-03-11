@@ -55,12 +55,16 @@ export default function ModalCalendarForm({edit = false, onClose, ...props}: Mod
       setMode(currentMode);
       endDate.setHours(endDate.getHours()+1);
     };
-    
+
     const close = () => {
         var errors = checkErrors();
         if(!errors){return;}
         setAddVisible(false);
         onClose();
+    }
+    
+    const save = () => {
+        
     }
     
     const showDatepicker = () => {
@@ -106,7 +110,7 @@ export default function ModalCalendarForm({edit = false, onClose, ...props}: Mod
                     <Text style={modalTheme.cancelText}>Cancel</Text>
                 </TouchableOpacity>
                 <Text style={modalTheme.headerText}>{props.formTitle}</Text>
-                <TouchableOpacity style={modalTheme.saveButton} onPress={() => close()}>
+                <TouchableOpacity style={modalTheme.saveButton} onPress={() => save()}>
                     <Text style={modalTheme.saveText}>Save</Text>
                 </TouchableOpacity>
             </View>

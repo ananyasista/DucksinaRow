@@ -9,51 +9,9 @@ import ModalCalendarForm from '@/components/modal-calendar-form';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import AntDesign from '@expo/vector-icons/AntDesign';
+import { CalendarEvent as APICalendarEvent, listHouseholdEvents, listMyEvents } from '@/api/calendar';
 
-const events = [
-  {
-    title: 'Meeting',
-    start: new Date(2026, 1, 18, 10, 0),
-    end: new Date(2026, 1, 18, 12, 30),
-    description: "a",
-    needsApproval: ['dadf'],
-  },
-  {
-    title: 'Twerk',
-    start: new Date(2026, 1, 19, 8, 0),
-    end: new Date(2026, 1, 19, 14, 30),
-    description: "b",
-    needsApproval: ['me'],
-  },
-  {
-    title: 'lil break',
-    start: new Date(2026, 1, 19, 12, 35),
-    end: new Date(2026, 1, 19, 13, 30),
-    description: "c",
-    needsApproval: ['sd'],
-  },
-  {
-    title: 'Twerk',
-    start: new Date(2026, 1, 19, 13, 35),
-    end: new Date(2026, 1, 19, 20, 30),
-    description: "d",
-    needsApproval: [],
-  },
-  {
-    title: 'Coffee break',
-    start: new Date(2026, 2, 31, 15, 45),
-    end: new Date(2026, 2, 31, 16, 30),
-    description: 'what is up', 
-    needsApproval: ['me'],
-  },
-  {
-    title: 'Multi DAY',
-    start: new Date(2026, 2, 2, 15, 45),
-    end: new Date(2026, 2, 31, 16, 30),
-    description: 'what is up', 
-    needsApproval: ['me', 'you'],
-  },
-]
+
 export interface CalendarEvent extends ICalendarEventBase {
   description: string;
   needsApproval:any;
@@ -61,11 +19,13 @@ export interface CalendarEvent extends ICalendarEventBase {
 
 export default function CalendarPage () {
     const { mode } = useLocalSearchParams();
+    const [events, setEvents] = useState<ICalendarEventBase[]>([]);
+    const [myEvents, setMyEvents] = useState<APICalendarEvent[]>([]);
     const month = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
-    const[currentDate, setCurrentDate] = useState(new Date());
+    const [currentDate, setCurrentDate] = useState(new Date());
     const [openDropdown, setOpenDropdown] = useState(false);
-    const[currentMode, setCurrentMode] = useState<Mode>('week');
-    const[calendarHeight, setCalendarHeight] = useState(0);
+    const [currentMode, setCurrentMode] = useState<Mode>('week');
+    const [calendarHeight, setCalendarHeight] = useState(0);
     const [showCalendar, setShowCalendar] = useState(true);
     const [showEvents, setShowEvents] = useState(false);
     const [editModal, setEditModal] = useState(false);
@@ -73,6 +33,29 @@ export default function CalendarPage () {
     const memoizedEvents = React.useMemo(() => events, [events]);
     const menuRef = useRef<View>(null);    
     const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 });
+
+    
+    useEffect(() => {
+      onScreenLoad();
+    }, [])
+
+    const onScreenLoad = async () => {
+      try {
+        const allEvents = await listHouseholdEvents();
+        // const loadMyEvents = await listMyEvents();
+        const calenEvents: ICalendarEventBase[] = 
+          allEvents.map((event) => ({
+            start: new Date(event.start_date),
+            end: new Date(event.end_date ? event.end_date : new Date(event.start_date + 3600*1000).toISOString()),
+            title: event.title,
+          }));
+        setEvents(calenEvents);
+        setMyEvents([]);
+        // console.log(loadMyEvents);
+      } catch (e: any) {
+        console.log("Home page error: " + e);
+      }
+    };
 
     const calendarLayout = (e:LayoutChangeEvent) => {
       const{height} = e.nativeEvent.layout;
@@ -82,8 +65,9 @@ export default function CalendarPage () {
     async function changeDateMode(date: Date) {
         await setCurrentDate(date);
         setOpenDropdown(false);
-        setCurrentMode(currentMode === 'week'? 'month' : 'week');
+        setCurrentMode(currentMode === 'week' ? 'month' : 'week');
     }
+    
     function switchToCalendar(mode?: Mode, date?: Date) {
       if(mode)
       {
@@ -132,6 +116,7 @@ export default function CalendarPage () {
         }
       }, [mode])
     );
+
       
     
   return (
@@ -153,7 +138,7 @@ export default function CalendarPage () {
             <View style={[
                 calendarTheme.dropdown,
                 { top: dropdownPos.top, right: dropdownPos.right }
-              ]} onBlur={() => setOpenDropdown(false)}>
+              ]} >
               <TouchableOpacity style={calendarTheme.item} onPress={() => switchToCalendar(undefined, new Date())}><ThemedText type='boldText'>Today</ThemedText></TouchableOpacity>
               <TouchableOpacity style={calendarTheme.item} onPress={() => switchToCalendar('day')}><ThemedText type='boldText'>Day</ThemedText></TouchableOpacity>
               <TouchableOpacity style={calendarTheme.item} onPress={() => switchToCalendar('3days')}><ThemedText type='boldText'>3-Day</ThemedText></TouchableOpacity>
@@ -191,20 +176,21 @@ export default function CalendarPage () {
             <ScrollView style={calendarTheme.indent}>
               <ThemedText type='secondarySubtitle'>Needs Approval</ThemedText>
               {
-                events.map((event) =>  {
-                  if(event.needsApproval.includes('me'))
-                  {
-                    return  <EventTile title={event.title} start={event.start} end={event.end} description ={event.description} needsApproval= {event.needsApproval} />;
-                  }
-                })
+                
               }
               <ThemedText type='secondarySubtitle'>Your Events</ThemedText>
               {
-                events.map((event) =>  {
-                  if(!event.needsApproval.includes('me'))
-                  {
-                    return  <EventTile title={event.title} start={event.start} end={event.end} description ={event.description} needsApproval= {event.needsApproval}/>;
-                  }
+                // events.map((event) =>  {
+                //   if(!event.needsApproval.includes('me'))
+                //   {
+                //     return  <EventTile title={event.title} start={event.start} end={event.end} description ={event.description} needsApproval= {event.needsApproval}/>;
+                //   }
+                // })
+                myEvents.map((event) => {
+                    if(event.requires_approval)
+                    {
+                      return <EventTile title = {event.title} start={new Date(event.start_date)} end ={new Date(event.end_date ? event.end_date : new Date(event.start_date+3600*1000).toString())} description={event.details? event.details:""} needsApproval={true}/>
+                    }
                 })
               }
             </ScrollView>

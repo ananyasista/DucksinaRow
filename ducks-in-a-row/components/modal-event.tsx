@@ -29,11 +29,14 @@ export interface CalendarEvent extends ICalendarEventBase {
 export default function EventModal({event, ...props}:EventModalProps) {
     const[approvalModalVisible, setApprovalModalVisible] = useState(true);
     const[editModal, setEditModal] = useState(false);
+    const [title, setTitle] = useState(event?.title || '');
+
 
     function close() {
         setApprovalModalVisible(false);
         props.onClose();
     }
+
     function showModal(approval: boolean, edit: boolean)
     {
         setApprovalModalVisible(approval);
