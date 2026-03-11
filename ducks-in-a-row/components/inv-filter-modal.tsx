@@ -112,7 +112,13 @@ export default function InvFilterModal(props: ModalProps) {
                     </View>
                     
                     <View style={{flexDirection: 'row', justifyContent: 'space-evenly'}}>
-                        <TouchableOpacity style={styles.stateButtons} onPress={() => setVisible(false)}>
+                        <TouchableOpacity 
+                            style={styles.stateButtons} 
+                            onPress={() => {
+                                props.onApply();
+                                setVisible(false);
+
+                        }}>
                             <Text style={styles.stateText}>Apply</Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.stateButtons} onPress={() => onClear()}>

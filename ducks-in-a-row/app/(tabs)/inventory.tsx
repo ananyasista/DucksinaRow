@@ -1,5 +1,5 @@
 import {StyleSheet, View, Text, ScrollView, TouchableOpacity, TextInput } from 'react-native';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link } from 'expo-router';
@@ -14,46 +14,13 @@ import InvViewModal from '@/components/inv-view-modal';
 import * as invAPI from '@/api/inventory';
 
 
-// const mockData: InvItem[] = [
-//   {
-//     id: "123",
-//     name: "Paper Towels",
-//     details: "Use only one at a time",
-//     last_purchased_date: new Date("2026-03-09"),
-//     restock_needed: false,
-//     quantity: 5,
-//     location: "Kitchen",
-//     last_purchased_by: "Elle"
-//   },
-//   {
-//     id: "456",
-//     name: "Trash Bags",
-//     details: "Double bag!",
-//     last_purchased_date: new Date("2026-03-10"),
-//     restock_needed: true,
-//     quantity: 3,
-//     location: "Kitchen",
-//     last_purchased_by: "Leyna"
-//   }
-// ]
 
-const filterData  = await invAPI.getInventoryFilterOptions();
-
-const itemData = await invAPI.getInventory();
-
-const applyFilterChanges = async (
-  stockFilter: boolean, 
-  purchaseFilterList: string[], 
-  locationFilterList: string[], 
-  setItemList: React.Dispatch<React.SetStateAction<invAPI.InventoryDetails[]>>) => {
-    const data = await invAPI.getInventory({restock_needed: stockFilter, purchased_by: purchaseFilterList, location: locationFilterList});
-    setItemList(data);
-
-}
 
 export default function InventoryScreen() {
-  const [itemList, setItemList] = useState<invAPI.InventoryDetails[]>(itemData);
-  
+  const [itemList, setItemList] = useState<invAPI.InventoryDetails[]>([]);
+  const [locationList, setLocationList] = useState<string[]>([]);
+  const [purchaseList, setPurchaseList] = useState<Map<string,string>>(new Map());
+
   const [addItemVisible, setAddItemVisible] = useState(false);
   const [viewItemVisible, setViewItemVisible] = useState(false);
   const [editItemVisible, setEditItemVisible] = useState(false);
@@ -65,9 +32,25 @@ export default function InventoryScreen() {
   const [purchaseFilterList, setPurchaseFilterList] = useState<string[]>([]);
   const [stockFilter, setStockFilter] = useState<boolean>(true);
 
+  useEffect(() => {
+    const loadData = async () => {
+      const filterData = await invAPI.getInventoryFilterOptions();
+      const itemData = await invAPI.getInventory();
 
-  const locationList: string[] = filterData.locations;
-  const purchaseList: Map<string, string> = filterData.purchased_by;
+      setLocationList(filterData.locations);
+      setPurchaseList(filterData.purchased_by);
+      setItemList(itemData);
+    };
+
+    loadData();
+  }, []);
+
+  const applyFilterChanges = async () => {
+    const data = await invAPI.getInventory({restock_needed: stockFilter, purchased_by: purchaseFilterList, location: locationFilterList});
+    setItemList(data);
+
+  }
+ 
 
 
   return (
@@ -86,7 +69,7 @@ export default function InventoryScreen() {
               setStockFilter={setStockFilter}
               locationList={locationList}
               purchaseList={purchaseList}
-              onApply={() => applyFilterChanges(stockFilter, purchaseFilterList, locationFilterList, setItemList)}
+              onApply={() => applyFilterChanges()}
             />
             <TextInput 
                 style={styles.input}
