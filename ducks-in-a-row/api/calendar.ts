@@ -14,8 +14,35 @@ export interface CalendarEvent {
   notification_unit?: string | null;
 }
 
-export async function listEvents(): Promise<CalendarEvent[]> {
+export interface ApprovalEvent {
+  id: string;
+  event: {
+    id: string;
+    title: string;
+    start_date: string;
+    end_date?: string | null;
+    location?: string;
+    requires_approval: boolean;
+  };
+  approved: boolean;
+  response_time?: string | null;
+}
+
+// All events in the current user's household
+export async function listHouseholdEvents(): Promise<CalendarEvent[]> {
   const res = await api.get("/calendar/events/");
+  return res.data;
+}
+
+// All events created by the current user > "Your Events" section
+export async function listMyEvents(): Promise<CalendarEvent[]> {
+  const res = await api.get("/calendar/events/my-events/");
+  return res.data;
+}
+
+// Events that still need the current user's approval > "Needs Approval" section
+export async function listNeedsApproval(): Promise<ApprovalEvent[]> {
+  const res = await api.get("/calendar/events/needs-approval/");
   return res.data;
 }
 
@@ -29,21 +56,13 @@ export async function updateEvent(eventId: string, patch: Partial<CalendarEvent>
   return res.data;
 }
 
-export async function listEventApprovals(eventId: string) {
-  const res = await api.get(`/calendar/events/${eventId}/approvals/`);
-  return res.data;
-}
-
-export async function needsApproval(): Promise<CalendarEvent[]> {
-  const res = await api.get("/calendar/events/approvals/pending/");
-  return res.data;
-}
-
 export async function respondApproval(eventId: string, approved: boolean) {
-  const res = await api.post("/calendar/events/approvals/respond/", {
-    event_id: eventId,
-    approved,
+  const action = approved ? "approve" : "decline";
+
+  const res = await api.post(`/calendar/events/${eventId}/respond/`, {
+    action,
   });
+
   return res.data;
 }
 

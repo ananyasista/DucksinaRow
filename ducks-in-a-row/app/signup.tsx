@@ -64,9 +64,15 @@ export default function SignupScreen() {
 
       setMsg(`SUCCESS: Account created for ${user.email}`);
 
-      router.replace("/living-preferences");
-    } catch (e: any) {
-      console.log("SIGNUP ERROR:", e?.response?.data || e.message);
+      // If user joined an existing household or created a new one
+      if (joinCode.trim()) {
+        router.replace('/living-preferences?mode=onboarding');
+      } else {
+        router.replace('/create-household');
+      }
+
+  } catch (e: any) {
+    console.log("SIGNUP ERROR:", e?.response?.data || e.message);
 
       // show serializer errors nicely
       const data = e?.response?.data;
