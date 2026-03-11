@@ -11,52 +11,58 @@ import Octicons from "@expo/vector-icons/Octicons";
 import InvItemTile from '@/components/inv-item-tile';
 import InvViewModal from '@/components/inv-view-modal';
 
-type InvItem = {
-  id: string;
-  name: string;
-  details: string;
-  last_purchased_date: Date;
-  restock_needed: boolean;
-  quantity: number;
-  location: string;
-  last_purchased_by: string;
-}
+import * as invAPI from '@/api/inventory';
 
-const mockData: InvItem[] = [
-  {
-    id: "123",
-    name: "Paper Towels",
-    details: "Use only one at a time",
-    last_purchased_date: new Date("2026-03-09"),
-    restock_needed: false,
-    quantity: 5,
-    location: "Kitchen",
-    last_purchased_by: "Elle"
-  },
-  {
-    id: "456",
-    name: "Trash Bags",
-    details: "Double bag!",
-    last_purchased_date: new Date("2026-03-10"),
-    restock_needed: true,
-    quantity: 3,
-    location: "Kitchen",
-    last_purchased_by: "Leyna"
-  }
-]
+
+// const mockData: InvItem[] = [
+//   {
+//     id: "123",
+//     name: "Paper Towels",
+//     details: "Use only one at a time",
+//     last_purchased_date: new Date("2026-03-09"),
+//     restock_needed: false,
+//     quantity: 5,
+//     location: "Kitchen",
+//     last_purchased_by: "Elle"
+//   },
+//   {
+//     id: "456",
+//     name: "Trash Bags",
+//     details: "Double bag!",
+//     last_purchased_date: new Date("2026-03-10"),
+//     restock_needed: true,
+//     quantity: 3,
+//     location: "Kitchen",
+//     last_purchased_by: "Leyna"
+//   }
+// ]
+
+const filterData  = await invAPI.getInventoryFilterOptions();
+
 
 export default function InventoryScreen() {
-  const itemList = mockData;
+  const [itemList, setItemList] = useState<invAPI.InventoryDetails[]>([]);
   
   const [addItemVisible, setAddItemVisible] = useState(false);
   const [viewItemVisible, setViewItemVisible] = useState(false);
   const [editItemVisible, setEditItemVisible] = useState(false);
   const [restock, setRestock] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<InvItem | null>(null);
+  const [selectedItem, setSelectedItem] = useState<invAPI.InventoryDetails | null>(null);
   const [searchText, setSearchText] = useState('');
 
-  // TODO: have to create function that triggers when restock toggle is pressed
-  
+  const [locationFilterList, setLocationFilterList] = useState<string[]>([]);
+  const [purchaseFilterList, setPurchaseFilterList] = useState<string[]>([]);
+  const [stockFilter, setStockFilter] = useState<boolean>(true);
+
+
+  const locationList: string[] = filterData.locations;
+  const purchaseList: Map<string, string> = filterData.purchased_by;
+
+  const applyFilterChanges = async () => {
+    const data = await invAPI.getInventory({restock_needed: stockFilter, purchased_by: purchaseFilterList, location: locationFilterList});
+    setItemList(data);
+
+  }  
 
 
   return (
@@ -65,7 +71,18 @@ export default function InventoryScreen() {
         <View style={styles.fullLayout}>
           <Text style={styles.title}>Items</Text>
           <View style={{flexDirection: 'row', gap: 13}}>
-            <InvFilterModal title='Filters'/>
+            <InvFilterModal 
+              title='Filters'
+              locationFilterList={locationFilterList}
+              setLocationFilterList={setLocationFilterList}
+              purchaseFilterList={purchaseFilterList}
+              setPurchaseFilterList={setPurchaseFilterList}
+              stockFilter={stockFilter}
+              setStockFilter={setStockFilter}
+              locationList={locationList}
+              purchaseList={purchaseList}
+              onApply={applyFilterChanges}
+            />
             <TextInput 
                 style={styles.input}
                 onChangeText={setSearchText}
@@ -182,5 +199,3 @@ const styles = StyleSheet.create({
 
   
 });
-
-export type {InvItem};

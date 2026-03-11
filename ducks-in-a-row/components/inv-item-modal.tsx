@@ -5,14 +5,14 @@ import { useState } from 'react';
 import DropDownPicker from 'react-native-dropdown-picker'
 import DateTimePicker, { DateTimePickerEvent, Event } from '@react-native-community/datetimepicker';
 import Counter from './counter';
-import { InvItem } from '@/app/(tabs)/inventory';
+import { InventoryDetails } from '@/api/inventory';
 
 type ModalProps = {
     visible: boolean;
     onClose: () => void;
     title: string;
     save?: () => void;
-    item?: InvItem;
+    item?: InventoryDetails;
     
 }
 
@@ -21,7 +21,7 @@ export default function InvItemModal(props: ModalProps) {
     const [itemDetails, setItemDetails] = useState(props.item ? props.item.details : '');
     const [itemLocation, setItemLocation] = useState(props.item ? props.item.location : null);
     const [quantity, setQuantity] = useState(props.item ? props.item.quantity : 1);
-    const [owner, setOwner] = useState<string | null>(props.item ? props.item.last_purchased_by : null);
+    const [owner, setOwner] = useState<string | null>(props.item ? props.item.last_purchased_by[0].name : null);
 
     const roommateList: string[] = ["Elle", "Leyna", "Sofia", "Ananya"];
     const [locations, setLocations] = useState([

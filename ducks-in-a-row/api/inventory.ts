@@ -4,7 +4,7 @@ export interface InventoryCard {
   id: string;
   name: string;
   restock_needed: boolean;
-  quantity: string;
+  quantity: number;
   last_purchased_by: {
     id: string;
     name: string;
@@ -15,15 +15,20 @@ export interface InventoryDetails extends InventoryCard {
   details: string;
   location: string;
   created_date: string;
-  last_purchase_date: string | null;
+  last_purchase_date: Date;
 }
 
 export const getInventory = async (filters?: {
   restock_needed?: boolean;
-  purchased_by?: string;
-  location?: string;
+  purchased_by?: string[];
+  location?: string[];
 }) => {
-  const response = await api.get<InventoryCard[]>("/inventory/", {
+  const params = {
+    restock_needed: filters?.restock_needed,
+    last_purchased_by: filters?.purchased_by?.join(","),
+    location: filters?.location?.join(","),
+  };
+  const response = await api.get<InventoryDetails[]>("/inventory/", {
     params: filters,
   });
   return response.data;
