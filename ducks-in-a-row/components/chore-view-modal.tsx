@@ -74,7 +74,7 @@ export default function ChoreViewModal(props: ModalProps) {
                             </View>
                             
                         </View>
-                        <Text style={styles.subHeading}>Locations: <Text style={styles.text}>{props.item.location.join(', ')}</Text></Text>
+                        <Text style={styles.subHeading}>Locations: <Text style={styles.text}>{props.item.location}</Text></Text>
                         
                     </View>
                     

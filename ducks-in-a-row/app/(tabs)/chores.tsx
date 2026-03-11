@@ -19,7 +19,7 @@ type ChoreItem = {
   date: Date;
   completed: boolean;
   assignee: string;
-  location: string[];
+  location: string;
   next_assignee: string;
   roommates: string[];
   all_day: boolean;
@@ -33,7 +33,7 @@ const mockData: ChoreItem[] = [
     date: new Date("2026-03-09"),
     completed: false,
     assignee: "Leyna",
-    location: ["Living Room", "Kitchen"],
+    location: "Living Room",
     next_assignee: "Elle",
     repeat: 'daily',
     roommates: ["Leyna", "Elle", "Ananya", "Sofia"],
@@ -46,7 +46,7 @@ const mockData: ChoreItem[] = [
     date: new Date("2026-03-09T20:36:26.989156Z"),
     completed: true,
     assignee: "Ananya",
-    location: ["Kitchen"],
+    location: "Kitchen",
     next_assignee: "Sofia",
     repeat: 'daily',
     roommates: ["Ananya", "Sofia"],
@@ -88,7 +88,7 @@ export default function InventoryScreen() {
             {itemList
                 .filter(item => {
                   if(!searchText) return true;
-                  return item.name.toLowerCase().startsWith(searchText.toLowerCase());
+                  return item.name.toLowerCase().includes(searchText.toLowerCase());
                 })
                 .map((item) => (
                 <ChoreTile
@@ -118,7 +118,10 @@ export default function InventoryScreen() {
             <ChoreViewModal 
               item={selectedItem}
               visible={viewItemVisible}
-              onClose={() => setViewItemVisible(false)}
+              onClose={() => {
+                setViewItemVisible(false);
+                setSelectedItem(null);
+              }}
               onEdit={() => {
                 setViewItemVisible(false);
                 setEditItemVisible(true);
@@ -143,6 +146,7 @@ export default function InventoryScreen() {
               title="Edit Chore"
               item={selectedItem}
             />
+            
           )}
           
           

@@ -20,7 +20,7 @@ type ModalProps = {
 export default function ChoreItemModal(props: ModalProps) {
     const [choreName, setChoreName] = useState(props.item ? props.item.name : '');
     const [choreDetails, setChoreDetails] = useState(props.item ? props.item.details : '');
-    const [choreLocations, setChoreLocations] = useState<string[]>(props.item ? props.item.location : []);
+    const [choreLocation, setChoreLocation] = useState(props.item ? props.item.location : null);
     const [repeatDate, setRepeatDate] = useState(props.item ? props.item.repeat : null);
     const [repeatQuantity, setRepeatQuantity] = useState(1);
     const [allDay, setAllDay] = useState(props.item ? props.item.all_day : true);
@@ -80,7 +80,7 @@ export default function ChoreItemModal(props: ModalProps) {
                             ) : (
                                 setChoreName(''),
                                 setChoreDetails(''),
-                                setChoreLocations([]),
+                                setChoreLocation(null),
                                 setRepeatQuantity(1),
                                 setRoommateOwnerList([]),
                                 setRepeatDate(null),
@@ -185,18 +185,10 @@ export default function ChoreItemModal(props: ModalProps) {
                         <Text style={styles.subHeading}>Location</Text>
                         <View style={styles.chipView}>
                             {locationList.map((name => (
-                                <Chip 
-                                    title={name} 
-                                    onPress={() => {
-                                        setChoreLocations(prev => {
-                                            if(prev.includes(name)) {
-                                                return prev.filter(item => item !== name);
-                                            } else {
-                                                return [...prev, name];
-                                            }
-                                        })                                }}
-                                    selected = {choreLocations.includes(name)}
-                                
+                                <Chip
+                                    title = {name}
+                                    onPress = {() => setChoreLocation(name)}
+                                    selected = {choreLocation === name} 
                                 />
                             )))}
     
