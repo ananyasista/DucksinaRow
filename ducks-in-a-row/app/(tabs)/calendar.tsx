@@ -62,6 +62,7 @@ export interface CalendarEvent extends ICalendarEventBase {
 
 export default function CalendarPage () {
     const {mode:modeParam} = useLocalSearchParams();
+    const month = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
     const[currentDate, setCurrentDate] = useState(new Date());
     const [openDropdown, setOpenDropdown] = useState(false);
     const[currentMode, setCurrentMode] = useState<Mode>('week');
@@ -71,6 +72,9 @@ export default function CalendarPage () {
     const [editModal, setEditModal] = useState(false);
     const [event, setEvent] = useState<CalendarEvent|null>(null);
     const memoizedEvents = React.useMemo(() => events, [events]);
+    const menuRef = useRef<View>(null);    
+    const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 });
+
     const calendarLayout = (e:LayoutChangeEvent) => {
       const{height} = e.nativeEvent.layout;
       setCalendarHeight(height);
@@ -78,7 +82,7 @@ export default function CalendarPage () {
     function changeView(date: Date, switchView: Boolean) {
       console.log("Requested change view. Currently: " + currentMode);
         setCurrentDate(date);
-        setCurrentMode(currentMode==='week'?'month':'week');
+        // setCurrentMode(currentMode==='week'?'month':'week');
         console.log("After request: " + currentMode);
     } 
     function switchToCalendar(mode?: Mode, date?: Date) {
@@ -103,19 +107,39 @@ export default function CalendarPage () {
         setEditModal(!editModal);
         setEvent(event);
     }
+    function toggleDropdown() {
+        if (menuRef.current) {
+          menuRef.current.measureInWindow((x, y, width, height) => {
+            setDropdownPos({
+              top: y + height,
+              right: 20
+            });
+          });
+        }
+         setOpenDropdown(!openDropdown);
+
+      }
     
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.background}}>
       
         {/*Date and Today Button*/}
         <View style={calendarTheme.header}>
-            <ThemedText type='title'>Calendar</ThemedText>
-            <TouchableOpacity onPress={() => setOpenDropdown(!openDropdown)}>
-              <AntDesign name='menu' size={32} color='black'/>
-            </TouchableOpacity>
+            <View style={calendarTheme.dateContainer}>
+              <View style={calendarTheme.dateTextStack}>
+              <ThemedText type='title'>Calendar</ThemedText>
+              {showCalendar && (<ThemedText type='secondarySubtitle'>{month[currentDate.getMonth()]} {currentDate.getFullYear()}</ThemedText>)}
+              </View>
+            </View>
+            <TouchableOpacity ref={menuRef} onPress={toggleDropdown}>
+        <AntDesign name="menu" size={32} color="black" />
+      </TouchableOpacity>
         </View>
         {openDropdown && (
-            <View style={calendarTheme.dropdown}>
+            <View style={[
+                calendarTheme.dropdown,
+                { top: dropdownPos.top, right: dropdownPos.right }
+              ]}>
               <TouchableOpacity style={calendarTheme.item} onPress={() => switchToCalendar(undefined, new Date())}><ThemedText type='boldText'>Today</ThemedText></TouchableOpacity>
               <TouchableOpacity style={calendarTheme.item} onPress={() => switchToCalendar('day')}><ThemedText type='boldText'>Day</ThemedText></TouchableOpacity>
               <TouchableOpacity style={calendarTheme.item} onPress={() => switchToCalendar('3days')}><ThemedText type='boldText'>3-Day</ThemedText></TouchableOpacity>
