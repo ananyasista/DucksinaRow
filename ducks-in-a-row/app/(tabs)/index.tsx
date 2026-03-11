@@ -1,12 +1,15 @@
 import { Image } from 'expo-image';
-import {StyleSheet, View, Text, ScrollView,  } from 'react-native';
+import {StyleSheet, View, Text, ScrollView, LayoutChangeEvent, TouchableOpacity,  } from 'react-native';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
 
 import PendingTile from '@/components/pending-tile';
 import CheckboxTile from '@/components/checkbox-tile';
-
+import { useEffect, useState } from 'react';
+import {CalendarEvent, listHouseholdEvents, listMyEvents, listNeedsApproval} from '../../api/calendar';
+import { ThemedText } from '@/components/themed-text';
+import { Calendar} from 'react-native-big-calendar';
 
 type UserData = {
   needApprovals?: number
@@ -43,15 +46,17 @@ const mockData: UserData = {
 
 export default function HomeScreen() {
   const groupName = mockData.groupName;
-  const pendingNum = mockData.pendingNum;
-  const needApproval = mockData.needApprovals ?? 0;
-  const giveApproval = mockData.giveApprovals ?? 0;
+  const [pendingNum, setPendingNum] = useState(0);
+  const [upcomingEvents, setUpcomingEvents] = useState<CalendarEvent[]>([]);
+  const [needsApproval, setNeedsApproval] = useState(0);
+  const [giveApproval, setGiveApproval] = useState(0);
+  const [calendarHeight, setCalendarHeight] = useState(0);
   const choreList = mockData.chores;
 
   const tilesToShow = [
-    needApproval >= 1 && {
+    needsApproval >= 1 && {
       key: 'need',
-      num: needApproval,
+      num: needsApproval,
       title: 'Your approvals needed:',
     },
     giveApproval >= 1 && {
@@ -61,7 +66,48 @@ export default function HomeScreen() {
     },
   ].filter(
     (tile): tile is { key: string; num: number; title: string } => Boolean(tile)
-  );
+  )
+  const calendarLayout = (e:LayoutChangeEvent) => {
+        const{height} = e.nativeEvent.layout;
+        setCalendarHeight(height);
+      }
+  const onScreenLoad = async () => {
+    try {
+      const allEvents = await listHouseholdEvents();
+      const currNeedsApproval = await listNeedsApproval();
+      const currGiveApproval = await listMyEvents();
+
+      setNeedsApproval(currNeedsApproval.length);
+      setGiveApproval(currGiveApproval.length);
+
+      var i = 0; 
+      if(currNeedsApproval.length > 0){i++;}
+      if(currGiveApproval.length > 0){i++;}
+      setPendingNum(i);
+
+      setUpcomingEvents([]);
+      currGiveApproval.forEach((event) => {
+        if(event.end_date === undefined || event.end_date === null)
+        {
+          event.end_date = (new Date(event.start_date).getTime()+3600*1000) + " ";
+        }
+        if(new Date(event.start_date) > new Date() && new Date(event.end_date) < (new Date(new Date().getTime() + 7)))
+        {
+          var e = upcomingEvents;
+          e.push(event);
+          setUpcomingEvents(e);
+        }
+      })
+      
+    } catch (e: any) {
+      console.log("Home page error: " + e);
+    }
+  }
+
+  useEffect(() => {
+    onScreenLoad();
+  }, [])
+
 
 
 
@@ -82,10 +128,12 @@ export default function HomeScreen() {
                 <View style={styles.pendingArea}>
                   {tilesToShow.map((tile) => (
                     <View key={tile.key} style={styles.tileWrapper}>
-                      <PendingTile
-                        numEvents={tile.num}
-                        title={tile.title}
-                      />
+                      <TouchableOpacity onPress={()=>{router.navigate({pathname:'/(tabs)/calendar', params:{mode:'month'}})}}>
+                        <PendingTile
+                          numEvents={tile.num}
+                          title={tile.title}
+                        />
+                      </TouchableOpacity>
                     </View>
                   ))}
                 </View>
@@ -114,19 +162,9 @@ export default function HomeScreen() {
           {/* Rendering for Upcoming events section; TILE NOT MADE YET */}
           <View style={styles.section}>
             <Text style={styles.subtitle}>Upcoming Week Events:</Text>
-            <Text style={styles.subtitle2}>Events Coming Up</Text>
-            {/* {choreList.length >= 1 ? (
-              <>
-                {choreList.map((chore) => (
-                  <CheckboxTile
-                    title={chore.title}
-                    complete={chore.complete}
-                  ></CheckboxTile>
-                ))}
-              </>
-            ) : (
-              <Text style={styles.subtitle2}>Your to-do list is empty!</Text>
-            )} */}
+            {upcomingEvents.length==0 && 
+            <ThemedText type='subtitle'>You week is empty!</ThemedText>}
+            
           </View>
 
 

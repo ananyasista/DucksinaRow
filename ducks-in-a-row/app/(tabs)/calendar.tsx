@@ -1,11 +1,14 @@
 import { Calendar, CalendarEvent, ICalendarEventBase, Mode } from 'react-native-big-calendar'
-import { StyleSheet, TouchableOpacity, ScrollView, LayoutChangeEvent, Button, Platform} from 'react-native';
+import { StyleSheet, TouchableOpacity, ScrollView, LayoutChangeEvent, Button, Platform, TouchableWithoutFeedback, Modal} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { EventTile } from '@/components/event-tile';
 import ModalCalendarForm from '@/components/modal-calendar-form';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import AntDesign from '@expo/vector-icons/AntDesign';
 
 const events = [
   {
@@ -57,29 +60,36 @@ export interface CalendarEvent extends ICalendarEventBase {
 
 }
 
-export default function CalendarPage() {
-    const abbrMonth = ["Jan","Feb","Mar","Apr","May","June","July","Aug","Sept","Oct","Nov","Dec"];
-    const abbrDay = ["Sun", "Mon", "Tues", "Wed", "Thur", "Fri", "Sat"];
+export default function CalendarPage () {
+    const {mode:modeParam} = useLocalSearchParams();
     const[currentDate, setCurrentDate] = useState(new Date());
-    const[currentMonth, setCurrentMonth] = useState(abbrMonth[currentDate.getMonth()]);
+    const [openDropdown, setOpenDropdown] = useState(false);
     const[currentMode, setCurrentMode] = useState<Mode>('week');
     const[calendarHeight, setCalendarHeight] = useState(0);
     const [showCalendar, setShowCalendar] = useState(true);
     const [showEvents, setShowEvents] = useState(false);
     const [editModal, setEditModal] = useState(false);
     const [event, setEvent] = useState<CalendarEvent|null>(null);
+    const memoizedEvents = React.useMemo(() => events, [events]);
     const calendarLayout = (e:LayoutChangeEvent) => {
       const{height} = e.nativeEvent.layout;
       setCalendarHeight(height);
     }
     function changeView(date: Date, switchView: Boolean) {
-        if(switchView === true) {
-            setCurrentMode(currentMode==='week'? 'month' : 'week' );
-        }
+      console.log("Requested change view. Currently: " + currentMode);
         setCurrentDate(date);
-        setCurrentMonth(abbrMonth[date.getMonth()]);
+        setCurrentMode(currentMode==='week'?'month':'week');
+        console.log("After request: " + currentMode);
     } 
-    function switchToCalendar() {
+    function switchToCalendar(mode?: Mode, date?: Date) {
+      if(mode)
+      {
+        setCurrentMode(mode);
+      }
+      if(date)
+      {
+        setCurrentDate(date);
+      }
       setShowCalendar(true);
       setShowEvents(false);
     }
@@ -93,39 +103,28 @@ export default function CalendarPage() {
         setEditModal(!editModal);
         setEvent(event);
     }
-
+    
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.background}}>
       
         {/*Date and Today Button*/}
         <View style={calendarTheme.header}>
-            <View style = {calendarTheme.dateContainer}>
-                <Text style = {calendarTheme.bigDateText}>
-                    {currentDate.getDate()}
-                </Text>
-                <View style ={calendarTheme.dateTextStack}>
-                    <Text style = {calendarTheme.smallDateText}>
-                        {abbrDay[currentDate.getDay()]}
-                    </Text>
-                    <Text style = {calendarTheme.smallDateText}>
-                        {abbrMonth[currentDate.getMonth()] + " " + currentDate.getFullYear()}
-                    </Text>
-                </View>
-            </View>       
-            <View >
-                <TouchableOpacity style = {calendarTheme.todayButton} onPress={()=> changeView(new Date(), false)}>
-                    <Text style = {calendarTheme.todayButtonText}>
-                        Today
-                    </Text>
-                </TouchableOpacity>
+            <ThemedText type='title'>Calendar</ThemedText>
+            <TouchableOpacity onPress={() => setOpenDropdown(!openDropdown)}>
+              <AntDesign name='menu' size={32} color='black'/>
+            </TouchableOpacity>
+        </View>
+        {openDropdown && (
+            <View style={calendarTheme.dropdown}>
+              <TouchableOpacity style={calendarTheme.item} onPress={() => switchToCalendar(undefined, new Date())}><ThemedText type='boldText'>Today</ThemedText></TouchableOpacity>
+              <TouchableOpacity style={calendarTheme.item} onPress={() => switchToCalendar('day')}><ThemedText type='boldText'>Day</ThemedText></TouchableOpacity>
+              <TouchableOpacity style={calendarTheme.item} onPress={() => switchToCalendar('3days')}><ThemedText type='boldText'>3-Day</ThemedText></TouchableOpacity>
+              <TouchableOpacity style={calendarTheme.item} onPress={() => switchToCalendar('week')}><ThemedText type='boldText'>Week</ThemedText></TouchableOpacity>
+              <TouchableOpacity style={calendarTheme.item} onPress={() => switchToCalendar('month')}><ThemedText type='boldText'>Month</ThemedText></TouchableOpacity>
+              <TouchableOpacity style={calendarTheme.item} onPress={()=> switchToEvents()}><ThemedText type='boldText'>All Events</ThemedText></TouchableOpacity>
             </View>
-        </View>
-        
-        {/*Calendar & Events Tabs */}
-        <View style={calendarTheme.tabs}>
-            <Text style={calendarTheme.tabsText} onPress={() => switchToCalendar()}>Calendar</Text>
-            <Text style={calendarTheme.tabsText} onPress={() => switchToEvents()}>Events</Text>
-        </View>
+            
+        )}
         
         {/*Calendar*/}
         <View
@@ -133,7 +132,7 @@ export default function CalendarPage() {
           onLayout={calendarLayout}
         >
           {showCalendar && (<Calendar
-              events={events}
+              events={memoizedEvents}
               height={calendarHeight}
               date = {currentDate}
               eventCellStyle = {calendarTheme.eventStyle}
@@ -274,5 +273,24 @@ const calendarTheme = StyleSheet.create({
   },
   indent: {
     marginLeft: 10
+  },
+  dropdown: {
+    position: "absolute",
+    top: 45,
+    right: 20,
+    width: 150,
+    backgroundColor: "white",
+    borderRadius: 8,
+    elevation: 5, // Android shadow
+    shadowColor: "#000", // iOS shadow
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    zIndex: 20
+  },
+
+  item: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee"
   }
-});
+})

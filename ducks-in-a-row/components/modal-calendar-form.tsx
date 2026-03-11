@@ -24,7 +24,7 @@ type ModalProps = PropsWithChildren<{
 
 export interface CalendarEvent extends ICalendarEventBase {
   description: string;
-  needsApproval:any;
+  needsApproval?:any;
 }
 export default function ModalCalendarForm({edit = false, onClose, ...props}: ModalProps) {
     const [addVisible, setAddVisible] = useState(edit);
