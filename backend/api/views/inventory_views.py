@@ -24,7 +24,7 @@ class InventoryViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if user.is_superuser:
-            return Items.objects.all()  # all chores in the table
+            return Items.objects.all()  # all items in the table
         queryset = Items.objects.filter(household=user.household)
         
         # Filter: Restock Needed

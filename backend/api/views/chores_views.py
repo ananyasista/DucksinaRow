@@ -7,14 +7,13 @@ from rest_framework.authtoken.models import Token
 from django.utils import timezone
 
 from rest_framework import viewsets
-from ..serializers.chores_serializers import ChoreSerializer, ChoreListSerializer
-from ..models import Chores, User
+from ..serializers.chores_serializers import ChoreSerializer, ChoreListSerializer, ChoreAssignmentSerializer
+from ..models import Chore, User, ChoreAssignment
 
 class ChoreViewSet(viewsets.ModelViewSet):
     serializer_class = ChoreSerializer
-    queryset = Chores.objects.all()
+    queryset = Chore.objects.all()
     permission_classes = [IsAuthenticated]
-
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -25,20 +24,20 @@ class ChoreViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if user.is_superuser:
-            return Chores.objects.all()  # all chores in the table
-        queryset = Chores.objects.filter(household=user.household)
+            return Chore.objects.all()  # all chores in the table
+        queryset = Chore.objects.filter(household=user.household)
 
         # Filter: my chores
         if self.request.query_params.get("my") == "true":
-            queryset = queryset.filter(assigned_roommate=user)
+            queryset = queryset.filter(assignments__assignee=user).distinct()
         
         # Filter: Completed
         completed = self.request.query_params.get("completed")
         if completed is not None:
                 if completed.lower() == "true":
-                    queryset = queryset.filter(completed=True)
+                    queryset = queryset.filter(assignments__completed=(completed.lower() == "true")).distinct()
                 elif completed.lower() == "false":
-                    queryset = queryset.filter(completed=False)
+                    queryset = queryset.filter(assignments__completed=(completed.lower() == "false")).distinct()
 
         # Filter: assignee
         assignee = self.request.query_params.get("assignee")
@@ -64,7 +63,16 @@ class ChoreViewSet(viewsets.ModelViewSet):
         return queryset
 
     def perform_create(self, serializer):
-        serializer.save(household=self.request.user.household)
+        chore = serializer.save(household=self.request.user.household)
+    
+        initial_assignee = self.request.data.get("initial_assignee")
+        due_date = self.request.data.get("due_date")
+        if initial_assignee and due_date:
+            ChoreAssignment.objects.create(
+                chore=chore,
+                assignee_id=initial_assignee,
+                due_date=due_date
+            )
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -77,9 +85,9 @@ class ChoreViewSet(viewsets.ModelViewSet):
 
         # Base queryset (respect household rules)
         if user.is_superuser:
-            chores = Chores.objects.all()
+            chores = Chore.objects.all()
         else:
-            chores = Chores.objects.filter(household=user.household)
+            chores = Chore.objects.filter(household=user.household)
 
         # Unique locations
         locations = (
@@ -105,12 +113,47 @@ class ChoreViewSet(viewsets.ModelViewSet):
         return Response(data)
     
     def perform_update(self, serializer):
+
         instance = self.get_object()
         was_complete = instance.completed
 
         updated_instance = serializer.save()
 
-        # If chore was just completed
+        # IF JUST COMPLETED → CREATE NEXT ASSIGNMENT
         if not was_complete and updated_instance.completed:
-            if updated_instance.date and updated_instance.date <= timezone.now().date():
-                updated_instance.rotate()
+            updated_instance.create_next_assignment()
+
+# For Admin Purposes
+class ChoreAssignmentViewSet(viewsets.ModelViewSet):
+    queryset = ChoreAssignment.objects.all().select_related("chore", "assignee", "chore__household")
+    serializer_class = ChoreAssignmentSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = super().get_queryset()
+
+        # Superusers can see everything
+        if not user.is_superuser:
+            # Limit to assignments in user's household
+            queryset = queryset.filter(chore__household=user.household)
+
+        # Optional filters
+        assignee = self.request.query_params.get("assignee")
+        if assignee:
+            queryset = queryset.filter(assignee__id=assignee)
+
+        completed = self.request.query_params.get("completed")
+        if completed is not None:
+            queryset = queryset.filter(completed=(completed.lower() == "true"))
+
+        start = self.request.query_params.get("start")
+        end = self.request.query_params.get("end")
+        if start and end:
+            queryset = queryset.filter(due_date__range=[start, end])
+        elif start:
+            queryset = queryset.filter(due_date__gte=start)
+        elif end:
+            queryset = queryset.filter(due_date__lte=end)
+
+        return queryset

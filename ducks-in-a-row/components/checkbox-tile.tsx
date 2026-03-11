@@ -43,7 +43,7 @@ const styles = StyleSheet.create({
         transform: [{ scaleX: 2.0 }, { scaleY: 2.0 }],
     },
     testcheckbox: {
-        borderRadius: 2000,
+        borderRadius: 20,
         backgroundColor: "#FFFFFF",
         width: 25,
         height: 25
