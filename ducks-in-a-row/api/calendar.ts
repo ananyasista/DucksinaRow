@@ -10,6 +10,11 @@ export interface CalendarEvent {
   repeat: string;
   requires_approval: boolean;
   location?: string;
+  event_owner_name?: {
+    id: string;
+    full_name: string;
+    email: string;
+  };
   notification_value?: number | null;
   notification_unit?: string | null;
 }
@@ -22,6 +27,7 @@ export interface ApprovalEvent {
     start_date: string;
     end_date?: string | null;
     location?: string;
+    event_owner_name?: string;
     requires_approval: boolean;
   };
   approved: boolean;

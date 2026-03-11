@@ -1,17 +1,17 @@
-import { Image } from 'expo-image';
 import {StyleSheet, View, Text, ScrollView, LayoutChangeEvent, TouchableOpacity,  } from 'react-native';
+import type { ICalendarEventBase } from 'react-native-big-calendar';
+import { useEffect, useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link, router } from 'expo-router';
 
 import PendingTile from '@/components/pending-tile';
 import CheckboxTile from '@/components/checkbox-tile';
-import { useEffect, useState } from 'react';
-import {CalendarEvent, listHouseholdEvents, listMyEvents, listNeedsApproval} from '../../api/calendar';
 import { ThemedText } from '@/components/themed-text';
-import { Calendar} from 'react-native-big-calendar';
 
 import { getHouseholdName } from '@/api/household';
+import { listHouseholdEvents, listMyEvents, listNeedsApproval } from '../../api/calendar';
 
 type ApprovalEvent = {
   id: string;
@@ -41,6 +41,18 @@ type Chore = {
   complete: boolean
 }
 
+type HomeCalendarEvent = ICalendarEventBase & {
+  details?: string;
+  location?: string;
+  event_owner_name?: string;
+  rawId?: string;
+};
+
+const getInitial = (fullName?: string) => {
+  if (!fullName) return '?';
+  return fullName.trim().charAt(0).toUpperCase();
+};
+
 const mockData: UserData = {
   groupName: "Area 52",
   needApprovals: 10,
@@ -60,15 +72,30 @@ const mockData: UserData = {
   ]
 }
 
+
 export default function HomeScreen() {
   const [pendingNum, setPendingNum] = useState(0);
-  const [upcomingEvents, setUpcomingEvents] = useState<CalendarEvent[]>([]);
   const [needsApproval, setNeedsApproval] = useState(0);
   const [giveApproval, setGiveApproval] = useState(0);
   const [calendarHeight, setCalendarHeight] = useState(0);
   const [groupName, setGroupName] = useState('Household');
-
   const choreList = mockData.chores;
+  const [upcomingEvents, setUpcomingEvents] = useState<HomeCalendarEvent[]>([]);
+  const [loadingEvents, setLoadingEvents] = useState(true);
+
+  // Fetch Household Name
+  const loadHomeData = async () => {
+    try {
+      const householdData = await getHouseholdName();
+      setGroupName(householdData.household_name || 'Household');
+    } catch (e: any) {
+      console.log('Home page error:', e?.response?.data || e.message);
+    }
+  };
+  
+  useEffect(() => {
+    loadHomeData();
+  }, []);
 
   const tilesToShow = [
     needsApproval >= 1 && {
@@ -88,9 +115,9 @@ export default function HomeScreen() {
         const{height} = e.nativeEvent.layout;
         setCalendarHeight(height);
       }
+
   const onScreenLoad = async () => {
     try {
-      const allEvents = await listHouseholdEvents();
       const currNeedsApproval = await listNeedsApproval();
       const currGiveApproval = await listMyEvents();
 
@@ -101,20 +128,6 @@ export default function HomeScreen() {
       if(currNeedsApproval.length > 0){i++;}
       if(currGiveApproval.length > 0){i++;}
       setPendingNum(i);
-
-      setUpcomingEvents([]);
-      currGiveApproval.forEach((event) => {
-        if(event.end_date === undefined || event.end_date === null)
-        {
-          event.end_date = (new Date(event.start_date).getTime()+3600*1000) + " ";
-        }
-        if(new Date(event.start_date) > new Date() && new Date(event.end_date) < (new Date(new Date().getTime() + 7)))
-        {
-          var e = upcomingEvents;
-          e.push(event);
-          setUpcomingEvents(e);
-        }
-      })
       
     } catch (e: any) {
       console.log("Home page error: " + e);
@@ -126,21 +139,58 @@ export default function HomeScreen() {
   }, [])
 
 
-    const loadHomeData = async () => {
-      try {
-        const householdData = await getHouseholdName();
-        setGroupName(householdData.household_name || 'Household');
-      } catch (e: any) {
-        console.log('Home page error:', e?.response?.data || e.message);
-      }
-    };
-  
+    // Fetch Upcoming Week's Events
+  const loadUpcomingWeekEvents = async () => {
+  try {
+    const allEvents = await listHouseholdEvents();
+    console.log("ALL EVENTS:", allEvents);
+
+    const now = new Date();
+    const today = new Date(now);
+    today.setHours(0, 0, 0, 0);
+
+    const nextWeek = new Date(today);
+    nextWeek.setDate(today.getDate() + 7);
+    nextWeek.setHours(23, 59, 59, 999);
+
+    const mappedEvents: HomeCalendarEvent[] = allEvents
+      .map((event) => {
+        const start = new Date(event.start_date);
+        const end = event.end_date
+          ? new Date(event.end_date)
+          : new Date(start.getTime() + 60 * 60 * 1000);
+
+        return {
+          title: event.title,
+          start,
+          end,
+          details: event.details,
+          location: event.location,
+          event_owner_name:
+            typeof event.event_owner_name === 'string'
+              ? event.event_owner_name
+              : event.event_owner_name?.full_name,
+          rawId: event.id,
+        };
+      })
+      // Filters for only events in the week
+      .filter((event) => {
+        return !isNaN(event.start.getTime()) &&
+               event.start.getTime() >= today.getTime() &&
+               event.start.getTime() <= nextWeek.getTime();
+      })
+      .sort((a, b) => a.start.getTime() - b.start.getTime());
+    setUpcomingEvents(mappedEvents);
+  } catch (e: any) {
+    console.log("Upcoming events error:", e?.response?.data || e.message);
+  } finally {
+    setLoadingEvents(false);
+  }
+};
+
   useEffect(() => {
-    loadHomeData();
+    loadUpcomingWeekEvents();
   }, []);
-
-
-
 
   return (
     <SafeAreaView style={{flex: 1}}>
@@ -188,15 +238,56 @@ export default function HomeScreen() {
             )}
           </View>
           
-          {/* Rendering for Upcoming events section; TILE NOT MADE YET */}
-          <View style={styles.section}>
-            <Text style={styles.subtitle}>Upcoming Week Events:</Text>
-            {upcomingEvents.length==0 && 
-            <ThemedText type='secondarySubtitle'>Your week is empty!</ThemedText>}
-            
-          </View>
+          {/* rendering for upcoming events section*/}
+        <View style={styles.section}>
+          <Text style={styles.subtitle}>Upcoming Week Events</Text>
+          <Text style={styles.subtitle2}>Events coming up</Text>
 
+          {loadingEvents ? (
+            <Text style={styles.subtitle2}>Loading events...</Text>
+          ) : upcomingEvents.length > 0 ? (
+            <>
+          {upcomingEvents.map((event) => (
+            <TouchableOpacity
+              key={event.rawId ?? `${event.title}-${event.start.toISOString()}`}
+              style={styles.eventCard}
+              onPress={() =>
+                router.navigate({
+                  pathname: '/(tabs)/calendar',
+                  params: { mode: 'month' },
+                })
+              }
+            >
+              <Text style={styles.eventTitle}>{event.title}</Text>
 
+              {event.details ? (
+                <Text style={styles.eventDetails}>{event.details}</Text>
+              ) : null}
+
+              {event.location ? (
+                <View style={styles.eventInfoRow}>
+                  <Ionicons name="location-outline" size={16} color="#FFFFFF" />
+                  <Text style={styles.eventMeta}>{event.location}</Text>
+                </View>
+              ) : null}
+
+              <View style={styles.eventInfoRow}>
+                <View style={styles.initialCircle}>
+                  <Text style={styles.initialText}>
+                    {getInitial(event.event_owner_name)}
+                  </Text>
+                </View>
+                <Text style={styles.eventMeta}>
+                  {event.event_owner_name || 'Unknown' }
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+            </>
+          ) : (
+            <Text style={styles.subtitle2}>No events coming up this week.</Text>
+          )}
+        </View>
         </View>    
       </ScrollView>
     </SafeAreaView>
@@ -204,6 +295,7 @@ export default function HomeScreen() {
 }
  
 const styles = StyleSheet.create({
+  
   titleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -250,7 +342,51 @@ const styles = StyleSheet.create({
     backgroundColor: '#00664F',
     flex: 2,
     aspectRatio: 2.5
-  }
-
+  },
   
+  eventCard: {
+    backgroundColor: '#57C690',
+    borderRadius: 20,
+    padding: 18,
+    gap: 10,
+  },
+
+  eventTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+
+  eventDetails: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+
+  eventInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+
+  eventMeta: {
+    fontSize: 14,
+    color: '#FFFFFF',
+  },
+
+  initialCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#F6E7D8',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  initialText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#2D2D2D',
+  },
+
 });
