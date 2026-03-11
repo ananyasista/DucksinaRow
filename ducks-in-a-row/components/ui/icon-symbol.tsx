@@ -23,6 +23,7 @@ const MAPPING = {
   'plus.circle': 'add-circle-outline',
   'slider.horizontal.3': 'tune',
   'minus.circle': 'remove-circle-outline',
+  'x.': 'close',
   'multiply': 'close',
   'trash.fill': 'delete',
   'pencil': 'edit'
