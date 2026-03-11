@@ -113,19 +113,15 @@ class ChoreViewSet(viewsets.ModelViewSet):
         return Response(data)
     
     def perform_update(self, serializer):
+
         instance = self.get_object()
-        latest_assignment = instance.assignments.order_by("-due_date").first()
+        was_complete = instance.completed
 
-        # update only the latest assignment
-        data = serializer.validated_data
-        if latest_assignment:
-            was_complete = latest_assignment.completed
-            latest_assignment.completed = data.get("completed", latest_assignment.completed)
-            latest_assignment.save()
+        updated_instance = serializer.save()
 
-            # Rotate if just completed
-            if not was_complete and latest_assignment.completed:
-                latest_assignment.rotate()
+        # IF JUST COMPLETED → CREATE NEXT ASSIGNMENT
+        if not was_complete and updated_instance.completed:
+            updated_instance.create_next_assignment()
 
 # For Admin Purposes
 class ChoreAssignmentViewSet(viewsets.ModelViewSet):
