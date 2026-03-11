@@ -80,7 +80,7 @@ export default function InventoryScreen() {
             {itemList
                 .filter(item => {
                   if(!searchText) return true;
-                  return item.name.toLowerCase().startsWith(searchText.toLowerCase());
+                  return item.name.toLowerCase().includes(searchText.toLowerCase());
                 })
                 .map((item) => (
                 <InvItemTile

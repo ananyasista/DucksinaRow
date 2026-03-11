@@ -19,6 +19,11 @@ export default function InvFilterModal(props: ModalProps) {
     const [purchaseFilterList, setPurchaseFilterList] = useState<string[]>([]);
 
 
+    const onClear = () => {
+        setLocationFilterList([]);
+        setPurchaseFilterList([]);
+        setStockFilter(true);
+    }
     
 
     return (
@@ -46,57 +51,69 @@ export default function InvFilterModal(props: ModalProps) {
 
 
                 <SafeAreaView style={styles.modalContent}>
-                    <Text style={styles.subHeading}>Location</Text>
-                    <View style={styles.chipView}>
-                        {locationList.map((name => (
-                            <Chip 
-                                title={name} 
-                                onPress={() => {
-                                    setLocationFilterList(prev => {
-                                        if(prev.includes(name)) {
-                                            return prev.filter(item => item !== name);
-                                        } else {
-                                            return [...prev, name];
-                                        }
-                                    })                                }}
-                                selected = {locationFilterList.includes(name)}
-                            />
-                        )))}
-
-                    </View>
-
-                    <Text style={styles.subHeading}>Stock</Text>
-                    <View style={styles.chipView}>
-                        {stockList.map((name => (
-                            <Chip 
-                                title={name} 
-                                onPress={() => {
-                                    setStockFilter(!stockFilter);
-                                }}
-                                selected = {stockFilter}
+                    <View>
+                        <Text style={styles.subHeading}>Location</Text>
+                        <View style={styles.chipView}>
+                            {locationList.map((name => (
+                                <Chip 
+                                    title={name} 
+                                    onPress={() => {
+                                        setLocationFilterList(prev => {
+                                            if(prev.includes(name)) {
+                                                return prev.filter(item => item !== name);
+                                            } else {
+                                                return [...prev, name];
+                                            }
+                                        })                                }}
+                                    selected = {locationFilterList.includes(name)}
                                 />
-                        )))}
+                            )))}
+
+                        </View>
+
+                        <Text style={styles.subHeading}>Stock</Text>
+                        <View style={styles.chipView}>
+                            {stockList.map((name => (
+                                <Chip 
+                                    title={name} 
+                                    onPress={() => {
+                                        setStockFilter(!stockFilter);
+                                    }}
+                                    selected = {stockFilter}
+                                    />
+                            )))}
+
+                        </View>
+
+                        <Text style={styles.subHeading}>Last Purchased By</Text>
+                        <View style={styles.chipView}>
+                            {purchaseList.map((name => (
+                                <Chip 
+                                    title={name} 
+                                    onPress={() => {
+                                        setPurchaseFilterList(prev => {
+                                            if(prev.includes(name)) {
+                                                return prev.filter(item => item !== name);
+                                            } else {
+                                                return [...prev, name];
+                                            }
+                                        })                                }}
+                                    selected = {purchaseFilterList.includes(name)}
+                                
+                                />
+                            )))}
+
+                        </View>
 
                     </View>
-
-                    <Text style={styles.subHeading}>Last Purchased By</Text>
-                    <View style={styles.chipView}>
-                        {purchaseList.map((name => (
-                            <Chip 
-                                title={name} 
-                                onPress={() => {
-                                    setPurchaseFilterList(prev => {
-                                        if(prev.includes(name)) {
-                                            return prev.filter(item => item !== name);
-                                        } else {
-                                            return [...prev, name];
-                                        }
-                                    })                                }}
-                                selected = {purchaseFilterList.includes(name)}
-                            
-                            />
-                        )))}
-
+                    
+                    <View style={{flexDirection: 'row', justifyContent: 'space-evenly'}}>
+                        <TouchableOpacity style={styles.stateButtons} onPress={() => setVisible(false)}>
+                            <Text style={styles.stateText}>Apply</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.stateButtons} onPress={() => onClear()}>
+                            <Text style={styles.stateText}>Clear</Text>
+                        </TouchableOpacity>
                     </View>
 
                 </SafeAreaView>
@@ -109,7 +126,9 @@ export default function InvFilterModal(props: ModalProps) {
 
 const styles = StyleSheet.create({
     modalContent: {
-        margin: 20
+        margin: 20,
+        flex: 1,
+        justifyContent: 'space-between'
     },
 
     title: {
@@ -150,5 +169,20 @@ const styles = StyleSheet.create({
 
     cancelText: {
         fontSize: 20
+    },
+
+    stateButtons: {
+        backgroundColor: '#fff',
+        borderWidth: 2,
+        borderRadius: 10,
+        color: '#000',
+        justifyContent: 'center',
+        alignItems: 'center'
+    },
+
+    stateText: {
+        fontSize: 30,
+        marginVertical: 10,
+        marginHorizontal: 40
     }
 });
