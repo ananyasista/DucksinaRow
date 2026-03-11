@@ -39,9 +39,20 @@ import * as invAPI from '@/api/inventory';
 
 const filterData  = await invAPI.getInventoryFilterOptions();
 
+const itemData = await invAPI.getInventory();
+
+const applyFilterChanges = async (
+  stockFilter: boolean, 
+  purchaseFilterList: string[], 
+  locationFilterList: string[], 
+  setItemList: React.Dispatch<React.SetStateAction<invAPI.InventoryDetails[]>>) => {
+    const data = await invAPI.getInventory({restock_needed: stockFilter, purchased_by: purchaseFilterList, location: locationFilterList});
+    setItemList(data);
+
+}
 
 export default function InventoryScreen() {
-  const [itemList, setItemList] = useState<invAPI.InventoryDetails[]>([]);
+  const [itemList, setItemList] = useState<invAPI.InventoryDetails[]>(itemData);
   
   const [addItemVisible, setAddItemVisible] = useState(false);
   const [viewItemVisible, setViewItemVisible] = useState(false);
@@ -57,12 +68,6 @@ export default function InventoryScreen() {
 
   const locationList: string[] = filterData.locations;
   const purchaseList: Map<string, string> = filterData.purchased_by;
-
-  const applyFilterChanges = async () => {
-    const data = await invAPI.getInventory({restock_needed: stockFilter, purchased_by: purchaseFilterList, location: locationFilterList});
-    setItemList(data);
-
-  }  
 
 
   return (
@@ -81,7 +86,7 @@ export default function InventoryScreen() {
               setStockFilter={setStockFilter}
               locationList={locationList}
               purchaseList={purchaseList}
-              onApply={applyFilterChanges}
+              onApply={() => applyFilterChanges(stockFilter, purchaseFilterList, locationFilterList, setItemList)}
             />
             <TextInput 
                 style={styles.input}
