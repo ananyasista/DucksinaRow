@@ -91,7 +91,7 @@ export default function InventoryScreen() {
                 <InvItemTile
                   id={item.id}
                   title={item.name} 
-                  category={item.location}
+                  category={item.location ?? ''}
                   restock={item.restock_needed} 
                   onChange={() => setRestock(!restock)}
                   onPress={() => {
@@ -114,6 +114,20 @@ export default function InventoryScreen() {
             visible = {addItemVisible}
             onClose = {() => setAddItemVisible(false)}
             title = "Add Item"
+            save={async (item) => {
+                await invAPI.createItem({
+                  name: item.name ?? "",
+                  details: item.details ?? "",
+                  location: item.location ?? null,
+                  quantity: item.quantity ?? 1,
+                  restock_needed: false,
+                  last_purchased_by: item.last_purchased_by ?? [],
+                  created_date: new Date().toISOString(),
+                  last_purchase_date: item.last_purchase_date ?? new Date(),
+                });
+
+              applyFilterChanges();
+            }}
           />
 
           {selectedItem && (
@@ -126,8 +140,8 @@ export default function InventoryScreen() {
                 setEditItemVisible(true);
               }}
               onDelete={() => {
+                invAPI.deleteItem(selectedItem.id);
                 setViewItemVisible(false);
-                // TODO: add delete function call here
               }}
             />
           )}
@@ -138,6 +152,12 @@ export default function InventoryScreen() {
             onClose = {() => setEditItemVisible(false)}
             title = "Edit Item"
             item = {selectedItem}
+            save={async (item) => {
+              if (!selectedItem) return;
+
+              await invAPI.updateItem(selectedItem.id, item);
+              applyFilterChanges();
+            }}
           />
           )}
 

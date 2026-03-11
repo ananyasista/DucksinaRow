@@ -1,7 +1,7 @@
 import {View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Pressable, Keyboard, TouchableWithoutFeedback } from 'react-native'
 import Chip from './chip';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DropDownPicker from 'react-native-dropdown-picker'
 import DateTimePicker, { DateTimePickerEvent, Event } from '@react-native-community/datetimepicker';
 import Counter from './counter';
@@ -11,7 +11,7 @@ type ModalProps = {
     visible: boolean;
     onClose: () => void;
     title: string;
-    save?: () => void;
+    save: (item: Partial<InventoryDetails>) => void;
     item?: InventoryDetails;
     
 }
@@ -21,12 +21,11 @@ export default function InvItemModal(props: ModalProps) {
     const [itemDetails, setItemDetails] = useState(props.item ? props.item.details : '');
     const [itemLocation, setItemLocation] = useState(props.item ? props.item.location : null);
     const [quantity, setQuantity] = useState(props.item ? props.item.quantity : 1);
-    const [owner, setOwner] = useState<string | null>(props.item ? props.item.last_purchased_by[0].name : null);
 
     const roommateList: string[] = ["Elle", "Leyna", "Sofia", "Ananya"];
     const [locations, setLocations] = useState([
         {label: 'Kitchen', value: 'kitchen'},
-        {label: 'Living Room', value: 'livingroom'},
+        {label: 'Living Room', value: 'living room'},
         {label: 'Bedroom', value: 'bedroom'},
         {label: 'Bathroom', value: 'Bathroom'},
         {label: 'Other', value: 'Other'}
@@ -49,9 +48,29 @@ export default function InvItemModal(props: ModalProps) {
         setMode(currentMode);
     };
 
-    const showDatepicker = () => {
-        showMode('date')
+    const handleSave = () => {
+    const updatedItem: Partial<InventoryDetails> = {
+            id: props.item?.id,
+            name: itemName,
+            details: itemDetails,
+            location: itemLocation,
+            quantity: quantity,
+        };
+
+        props.save(updatedItem);
+        props.onClose();
     };
+
+    useEffect(() => {
+    if (props.item) {
+        setItemName(props.item.name);
+        setItemDetails(props.item.details);
+        setItemLocation(props.item.location);
+        setQuantity(props.item.quantity);
+    }
+    }, [props.item]);
+
+
 
 
     return (
@@ -74,15 +93,13 @@ export default function InvItemModal(props: ModalProps) {
                             setItemDetails('')
                             setItemLocation(null)
                             setQuantity(1)
-                            setOwner(null)
-                            setDate(new Date())
                             props.onClose()
                         }}
                     >
                         <Text style={styles.cancelText}>Cancel</Text>
                     </TouchableOpacity>
                     <Text style={styles.title}>{props.title}</Text>
-                    <TouchableOpacity style={styles.cancelButton} onPress={props.save}>
+                    <TouchableOpacity style={styles.cancelButton} onPress={handleSave}>
                         <Text style={styles.cancelText}>Save</Text>
                     </TouchableOpacity>
                 </View>
@@ -124,33 +141,6 @@ export default function InvItemModal(props: ModalProps) {
                             style={styles.input}
                             dropDownContainerStyle={styles.dropdownMenu}
                         />
-                    </View>
-
-                    <View style={styles.formField}>
-                        <Text style={styles.subHeading}>Last Purchased By</Text>
-                        <View style={styles.chipRow}>
-                            {roommateList.map((person) =>(
-                                <Chip
-                                    title = {person}
-                                    onPress = {() => setOwner(person)}
-                                    selected = {owner === person} 
-                                />
-                            ))}
-
-                        </View>
-                    </View>
-
-                    <View style={styles.formField}>
-                        <Text style={styles.subHeading}>Purchase Date</Text>
-                                <DateTimePicker
-                                    testID="dateTimePicker"
-                                    value={date}
-                                    is24Hour={true}
-                                    onChange={onChangeDate}
-                                    mode={'date'}
-                                    display = 'default'
-                                    themeVariant='light'
-                                />
                     </View>
                     
                 

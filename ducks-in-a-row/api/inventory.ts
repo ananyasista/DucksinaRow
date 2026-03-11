@@ -13,7 +13,7 @@ export interface InventoryCard {
 
 export interface InventoryDetails extends InventoryCard {
   details: string;
-  location: string;
+  location: string | null;
   created_date: string;
   last_purchase_date: Date;
 }
@@ -29,7 +29,7 @@ export const getInventory = async (filters?: {
     location: filters?.location?.join(","),
   };
   const response = await api.get<InventoryDetails[]>("/inventory/", {
-    params: filters,
+    params: params,
   });
   return response.data;
 };
@@ -39,12 +39,12 @@ export const getItemById = async (id: string) => {
   return response.data;
 };
 
-export const createItem = async (data: any) => {
+export const createItem = async (data: Omit<InventoryDetails, "id">) => {
   const response = await api.post("/inventory/", data);
   return response.data;
 };
 
-export const updateItem = async (id: string, data: any) => {
+export const updateItem = async (id: string, data: Partial<InventoryDetails>) => {
   const response = await api.patch(`/inventory/${id}/`, data);
   return response.data;
 };
