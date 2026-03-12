@@ -19,6 +19,7 @@ class NotificationUnitChoices(models.TextChoices):
     WEEKS = "weeks", "Weeks"
 
 class PassToUnitChoices(models.TextChoices):
+    NONE = "none", "None"
     DAYS = "days", "Days"
     WEEKS = "weeks", "Weeks"
     MONTHS = "months", "Months"

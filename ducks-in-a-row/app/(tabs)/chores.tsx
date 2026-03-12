@@ -122,9 +122,10 @@ export default function InventoryScreen() {
     }
   
     const getChore = async (id: string) => {
-      const item = await choreAPI.getChoreById(id);
-      item.due_date = new Date(item.due_date);
-      setSelectedItem(item);
+      const chore = await choreAPI.getChoreById(id);
+      chore.due_date = new Date(chore.due_date);
+      console.log(chore);
+      setSelectedItem(chore);
     }
 
     const getRoommates = async () => {
@@ -199,8 +200,8 @@ export default function InventoryScreen() {
                 repeat_value: chore.repeat_value ?? 1,
                 location: chore.location ?? "",
                 is_rotation: chore.is_rotation ?? false,
-                pass_to_next_unit: chore.pass_to_next_unit ?? "days",
-                pass_to_next_value: chore.pass_to_next_value ?? 1,
+                pass_to_next_unit: chore.pass_to_next_unit ?? "None",
+                pass_to_next_value: chore.pass_to_next_value ?? 0,
                 all_day: chore.all_day ?? true,
                 roommates_involved: chore.roommates_involved || [],
               })

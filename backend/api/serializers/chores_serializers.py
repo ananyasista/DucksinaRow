@@ -52,6 +52,7 @@ class ChoreSerializer(serializers.ModelSerializer):
     due_date = serializers.SerializerMethodField()
     completed = serializers.SerializerMethodField()
     roommates_involved = SimpleUserSerializer(many=True, read_only=True)
+    next_assignee = serializers.SerializerMethodField()
 
     class Meta:
         model = Chore
@@ -65,6 +66,12 @@ class ChoreSerializer(serializers.ModelSerializer):
         assignment = self.get_latest_assignment(obj)
         if assignment and assignment.assignee:
             return SimpleUserSerializer(assignment.assignee).data
+        return None
+    
+    def get_next_assignee(self, obj):
+        assignment = self.get_latest_assignment(obj)
+        if assignment and assignment.next_assignee:
+            return SimpleUserSerializer(assignment.next_assignee).data
         return None
 
     def get_due_date(self, obj):

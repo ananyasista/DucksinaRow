@@ -4,8 +4,11 @@ import { api } from "./client";
 export interface ChoreCard {
   id: string;
   title: string;
+  details: string;
+  location: string | null;
+  all_day: boolean;
   due_date: Date;
-  completed: boolean;
+  is_rotation: boolean;
   repeat_value: number;
   repeat_unit: string;
   assignee: {
@@ -15,13 +18,6 @@ export interface ChoreCard {
     last_name: string,
     name: string,
   };
-}
-
-export interface ChoreDetail extends ChoreCard {
-  details: string;
-  location: string | null;
-  is_rotation: boolean;
-  created_at: Date | undefined;
   roommates_involved: {
     email: string,
     first_name: string,
@@ -29,6 +25,16 @@ export interface ChoreDetail extends ChoreCard {
     last_name: string,
     name: string,
   }[];
+}
+
+// is_rotating = FALSE
+// roommates_involved is just the creating roommate
+// next_assignee is empty
+// pass to values are blank
+
+export interface ChoreDetail extends ChoreCard {
+  completed: boolean;
+  created_at: Date | undefined;
   next_assignee: {
     email: string,
     first_name: string,
@@ -38,7 +44,6 @@ export interface ChoreDetail extends ChoreCard {
   };
   pass_to_next_value: number;
   pass_to_next_unit: string;
-  all_day: boolean;
   completed_date: Date | null;
 }
 
@@ -66,6 +71,8 @@ export const getChores = async (filters?: {
 
 export const getChoreById = async (id: string) => {
   const response = await api.get<ChoreDetail>(`/chore/${id}/`);
+  console.log(response.data.repeat_value);
+  console.log(response.data.pass_to_next_unit)
   return response.data;
 };
 
@@ -79,7 +86,7 @@ export const createChore = async (data: ChoreCreateInput) => {
   return response.data;
 };
 
-export const updateChore = async (id: string, data: Partial<ChoreDetail>) => {
+export const updateChore = async (id: string, data: Partial<ChoreCard>) => {
   const response = await api.patch(`/chore/${id}/`, data);
   return response.data;
 };

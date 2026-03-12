@@ -116,31 +116,37 @@ class Command(BaseCommand):
                 continue
             for chore_name in ["Vacuum", "Dishes", "Laundry"]:
                 # Create the chore definition
+                is_rotating = random.choice([True, False])
                 chore, created = Chore.objects.get_or_create(
                     household=hh,
                     title=chore_name,
                     details=f"{chore_name} for {hh.household_name}",
                     repeat=random.choice([r[0] for r in RepeatChoices.choices]),
-                    pass_to_next_value=random.randint(1, 5),
-                    pass_to_next_unit=random.choice([u[0] for u in PassToUnitChoices.choices]),
                     is_rotating=random.choice([True, False]),
+                    pass_to_next_value=random.randint(1, 5) if is_rotating else 0,
+                    pass_to_next_unit=random.choice([u[0] for u in PassToUnitChoices.choices[1:]]) if is_rotating else "none",
                     location=random.choice([u[0] for u in LocationChoices.choices]),
                     notification_value=random.randint(5, 60),
                     notification_unit=random.choice([u[0] for u in NotificationUnitChoices.choices]),
                 )
 
                 # Add roommates involved for rotation
-                roommates_for_chore = random.sample(members, k=min(2, len(members)))
-                chore.roommates_involved.set(roommates_for_chore)
+                if (chore.is_rotating):
+                    roommates_for_chore = random.sample(members, k=min(2, len(members)))
+                    chore.roommates_involved.set(roommates_for_chore)
+                else:
+                    roommates_for_chore = random.sample(members, k=1)
+                    chore.roommates_involved.set(roommates_for_chore)
 
                 # Create the first assignment
                 initial_assignee = random.choice(roommates_for_chore)
-                next_assignee=random.choice(roommates_for_chore)
+                next_assignee=random.choice(roommates_for_chore) if chore.is_rotating else None
                 due_date = timezone.now().date() + timedelta(days=random.randint(0, 7))
 
                 ChoreAssignment.objects.create(
                     chore=chore,
                     assignee=initial_assignee,
+                    next_assignee=next_assignee,
                     due_date=due_date,
                     all_day=False,
                     completed=False
