@@ -93,7 +93,7 @@ export default function ChoreItemModal(props: ModalProps) {
                 pass_to_next_unit: passToNextUnit,
             };
             
-            console.log(repeatDate);
+            // console.log(repeatDate);
             // console.log(repeatInt[repeatDate]);
             props.save(updatedItem);
             props.onClose();
