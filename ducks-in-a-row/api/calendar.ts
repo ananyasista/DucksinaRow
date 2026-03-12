@@ -8,7 +8,7 @@ export interface CalendarEvent {
   start_date: string;
   end_date?: string | null;
   repeat: string;
-  requires_approval: boolean;
+  requires_approval: boolean; 
   location?: string;
   event_owner_name?: {
     id: string;
@@ -17,6 +17,23 @@ export interface CalendarEvent {
   };
   notification_value?: number | null;
   notification_unit?: string | null;
+}
+
+export interface ApprovalUser {
+  id: string;
+  name: string;
+  email: string;
+}
+
+export interface ApprovalRow {
+  user: ApprovalUser;
+  approved: boolean;
+  response_time?: string | null;
+  status: "approved" | "pending" | "declined";
+}
+
+export interface EventDetails extends CalendarEvent {
+  approvals: ApprovalRow[];
 }
 
 export interface ApprovalEvent {
@@ -39,6 +56,11 @@ export async function listHouseholdEvents(): Promise<CalendarEvent[]> {
   const res = await api.get("/calendar/events/");
   return res.data;
 }
+
+export async function getEventId(id: string): Promise<EventDetails> {
+  const response = await api.get(`/calendar/events/${id}/`);
+  return response.data;
+};
 
 // All events created by the current user > "Your Events" section
 export async function listMyEvents(): Promise<CalendarEvent[]> {
