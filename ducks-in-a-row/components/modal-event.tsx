@@ -98,20 +98,39 @@ export default function EventModal({event, owner=false, printDate, ...props}:Eve
             </View>
             <View style={modalTheme.rowStart}>
                 <IconSymbol size={20} name="pin" color='black'/>
-                <ThemedText>Location: {event?.location}</ThemedText>
+                <ThemedText>Location: {event?.location === "" ? "Living Room" : event?.location}</ThemedText>
             </View>
             <View style={modalTheme.rowStart}>
                 <IconSymbol size={20} name="person" color='black'/>
-                <ThemedText>Created by: {event?.event_owner_name?.full_name}</ThemedText>
+                <ThemedText>Created by: {event?.event_owner_name?.full_name ?? "You"}</ThemedText>
             </View>
             <View style={{width:'100%', marginTop: 50}}>
                 <View style={{borderBottomColor: 'rgba(215, 209, 209, 1)', borderBottomWidth: 1, marginTop: 10, marginBottom: 10}}/>
             </View>
             <ThemedText type='title'>Roommate Approval</ThemedText>
-            {/* <ThemedText type='subtitle'>{approvalEvent?.approved} of {approvalEvent?.approved} roommates have approved</ThemedText> */}
-            {
-                
-            }
+            <ThemedText type='subtitle'>1 of 2 roommates have approved</ThemedText>
+            <View style={[modalTheme.rowSpace, modalTheme.rowPadding]}>
+                <View  style={modalTheme.rowStart}>
+                    <View style={modalTheme.avatarCircle}>
+                    <Text style={modalTheme.avatarText}>L</Text>
+                    </View>
+                    <ThemedText type='boldText'>Leyna</ThemedText>
+                </View>
+                <TouchableOpacity  style={modalTheme.rowEnd} onPress={() => notifyRoommate()}>
+                    <Octicons size={30} name='check-circle' color='black'/>
+                </TouchableOpacity>
+            </View>
+            <View style={[modalTheme.rowSpace, modalTheme.rowPadding]}>
+                <View  style={modalTheme.rowStart}>
+                    <View style={modalTheme.avatarCircleYellow}>
+                    <Text style={modalTheme.avatarText}>E</Text>
+                    </View>
+                    <ThemedText type='boldText'>Elle</ThemedText>
+                </View>
+                <TouchableOpacity  style={modalTheme.rowEnd} onPress={() => notifyRoommate()}>
+                    <Octicons size={30} name='bell' color='black'/>
+                </TouchableOpacity>
+            </View>
             </View>
         </Modal>
         {editModal && (
@@ -197,5 +216,38 @@ const modalTheme = StyleSheet.create({
         color: "#fff",
         fontSize: 16,
         fontWeight: 500
-    }
+    },
+    avatar: {
+    width: 78,
+    alignItems: "center",
+  },
+  avatarCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 24,
+    backgroundColor: "#087d4b",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  avatarCircleYellow: {
+    width: 36,
+    height: 36,
+    borderRadius: 24,
+    backgroundColor: "#f8b118",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  avatarText: {
+    color: "#fff",
+    fontWeight: "900",
+    fontSize: 16,
+  },
+  avatarName: {
+    marginTop: 6,
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#111",
+    maxWidth: 78,
+    textAlign: "center",
+  },
 });

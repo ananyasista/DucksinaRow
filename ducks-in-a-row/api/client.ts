@@ -6,10 +6,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 baseURL: "http://127.0.0.1:8000/api"
 // 7);
 const WEB_API_URL = "http://127.0.0.1:8000/api";
-const MOBILE_API_URL = "http://10.136.37.2:8000/api";
+const MOBILE_API_URL = "http://10.136.138.209:8000/api";
 export const api = axios.create({
 baseURL: Platform.OS === "web" ? WEB_API_URL : MOBILE_API_URL,
 }) ;
+
 // Attach token to every request by user, every api call gets authenticated 
 api.interceptors.request.use(async (config) => {
   const token = await AsyncStorage.getItem("accessToken");
