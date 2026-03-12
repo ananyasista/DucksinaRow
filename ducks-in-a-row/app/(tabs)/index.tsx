@@ -143,7 +143,6 @@ export default function HomeScreen() {
   const loadUpcomingWeekEvents = async () => {
   try {
     const allEvents = await listHouseholdEvents();
-    console.log("ALL EVENTS:", allEvents);
 
     const now = new Date();
     const today = new Date(now);

@@ -9,7 +9,7 @@ import ModalCalendarForm from '@/components/modal-calendar-form';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import AntDesign from '@expo/vector-icons/AntDesign';
-import { CalendarEvent as APICalendarEvent, ApprovalEvent, listHouseholdEvents, listMyEvents, listNeedsApproval } from '@/api/calendar';
+import { CalendarEvent as APICalendarEvent, ApprovalEvent as APIApprovalEvent, listHouseholdEvents, listMyEvents, listNeedsApproval } from '@/api/calendar';
 
 
 export interface CalendarEvent extends ICalendarEventBase {
@@ -43,21 +43,17 @@ export default function CalendarPage () {
     const onScreenLoad = async () => {
       try {
         const allEvents = await listHouseholdEvents();
-        console.log(allEvents);
         const loadMyEvents = await listMyEvents();
-        console.log(loadMyEvents);
-        const loadNeedMyApproval:ApprovalEvent[] = await listNeedsApproval();
-        console.log(loadNeedMyApproval);
+        const loadNeedMyApproval:APIApprovalEvent[] = await listNeedsApproval();
         const calenEvents: ICalendarEventBase[] = 
           allEvents.map((event) => ({
             start: new Date(event.start_date),
             end: new Date(event.end_date ? event.end_date : new Date(event.start_date + 3600*1000).toISOString()),
             title: event.title,
           }));
-          console.log(loadNeedMyApproval);
         const needMyApprovalEvents: APICalendarEvent[] = 
           loadNeedMyApproval.map((e) => ({
-            id: e.id,
+            id: e.event.id,
             title: e.event.title,
             details: "",
             all_day: (e.event.start_date === e.event.end_date),
@@ -70,14 +66,11 @@ export default function CalendarPage () {
               id: "",
               full_name: e.event.event_owner_name ?? "",
               email: "",
-            },
-        }))
-        console.log(needMyApprovalEvents);
-        
+            }
+        }))        
         setEvents(calenEvents);
         setMyEvents(loadMyEvents);
         setNeedsMyApproval(needMyApprovalEvents);
-        // console.log(loadMyEvents);
       } catch (e: any) {
         console.log("Home page error: " + e);
       }
@@ -142,7 +135,7 @@ export default function CalendarPage () {
         }
       }, [mode])
     );
-
+    
       
     
   return (
@@ -203,7 +196,7 @@ export default function CalendarPage () {
               <ThemedText type='secondarySubtitle'>Needs Approval</ThemedText>
               {
                 needsMyApproval.map((event) => {
-                  return <EventTile key={event.id} event={event} owner={false}/>
+                  return <EventTile key={event.id} event={event}  owner={false}/>
                 })
               }
               <ThemedText type='secondarySubtitle'>Your Events</ThemedText>
