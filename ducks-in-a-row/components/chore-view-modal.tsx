@@ -2,7 +2,6 @@ import {View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Pressable, K
 import Chip from './chip';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
-import { ChoreItem } from '@/app/(tabs)/chores';
 import { IconSymbol } from './ui/icon-symbol';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { ChoreDetail } from '@/api/chores';

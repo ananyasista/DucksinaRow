@@ -43,7 +43,7 @@ class ChoreViewSet(viewsets.ModelViewSet):
         assignee = self.request.query_params.get("assignee")
         if assignee:
             assignee_ids = [a.strip() for a in assignee.split(",")]
-            queryset = queryset.filter(assigned_roommate__id__in=assignee_ids)
+            queryset = queryset.filter(assignments__assignee__id__in=assignee_ids).distinct()
         
         # Filter: Location
         location = self.request.query_params.get("location")
@@ -54,31 +54,15 @@ class ChoreViewSet(viewsets.ModelViewSet):
         start = self.request.query_params.get("start")
         end = self.request.query_params.get("end")
         if start and end:
-            queryset = queryset.filter(date__range=[start, end])
+            queryset = queryset.filter(assignments__due_date__range=[start, end]).distinct()
         elif start:
-            queryset = queryset.filter(date__gte=start)
+            queryset = queryset.filter(assignments__due_date__gte=start).distinct()
         elif end:
-            queryset = queryset.filter(date__lte=end)
-
+            queryset = queryset.filter(assignments__due_date__lte=end).distinct()
         return queryset
 
     def perform_create(self, serializer):
-        chore = serializer.save(household=self.request.user.household)
-
-        initial_assignee_id = self.request.data.get("initial_assignee")
-        next_assignee_id = self.request.data.get("next_assignee")
-        due_date = self.request.data.get("due_date")
-
-        # Create the initial assignment
-        if initial_assignee_id and due_date:
-            ChoreAssignment.objects.create(
-                chore=chore,
-                assignee_id=initial_assignee_id,
-                next_assignee_id=next_assignee_id,
-                due_date=due_date,
-                completed=False,
-                all_day=self.request.data.get("all_day", True)
-            )
+        serializer.save(household=self.request.user.household)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -89,23 +73,17 @@ class ChoreViewSet(viewsets.ModelViewSet):
     def filters(self, request):
         user = request.user
 
-        # Base queryset (respect household rules)
+        # Base queryset
         if user.is_superuser:
             chores = Chore.objects.all()
         else:
             chores = Chore.objects.filter(household=user.household)
 
-        # Unique locations
-        locations = (
-            chores.exclude(location="")
-            .values_list("location", flat=True)
-            .distinct()
-        )
+        # Unique locations (exclude null and empty)
+        locations = chores.exclude(location__isnull=True).exclude(location="").values_list("location", flat=True).distinct()
 
-        # Roommates in this household
-        roommates = User.objects.filter(
-            household=user.household
-        ).values("id", "first_name")
+        # Roommates in household (exclude users without household)
+        roommates_qs = User.objects.filter(household=user.household).exclude(id__isnull=True).values("id", "first_name")
 
         data = {
             "locations": list(locations),
@@ -113,9 +91,7 @@ class ChoreViewSet(viewsets.ModelViewSet):
                 {"value": True, "label": "Completed"},
                 {"value": False, "label": "Incomplete"},
             ],
-            "roommates": [
-                {"label": u["first_name"], "value": u["id"]} for u in roommates
-            ],
+            "roommates": [{"label": u["first_name"], "value": u["id"]} for u in roommates_qs],
         }
 
         return Response(data)

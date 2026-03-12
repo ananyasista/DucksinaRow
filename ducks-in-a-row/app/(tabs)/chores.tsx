@@ -14,19 +14,19 @@ import ChoreItemModal from '@/components/chore-item-modal';
 import * as choreAPI from '@/api/chores';
 import { getHouseholdRoommates } from '@/api/household';
 
-type ChoreItem = {
-  id: string;
-  title: string;
-  details: string;
-  repeat: string;
-  date: Date;
-  completed: boolean;
-  assignee: string;
-  location: string;
-  next_assignee: string;
-  roommates: string[];
-  all_day: boolean;
-}
+// type ChoreItem = {
+//   id: string;
+//   title: string;
+//   details: string;
+//   repeat: string;
+//   date: Date;
+//   completed: boolean;
+//   assignee: string;
+//   location: string;
+//   next_assignee: string;
+//   roommates: string[];
+//   all_day: boolean;
+// }
 
 // const mockData: ChoreItem[] = [
 //   {
@@ -199,7 +199,7 @@ export default function InventoryScreen() {
                 repeat_unit: chore.repeat_unit ?? "daily",
                 repeat_value: chore.repeat_value ?? 1,
                 location: chore.location ?? "",
-                is_rotation: chore.is_rotation ?? false,
+                is_rotating: chore.is_rotating ?? false,
                 pass_to_next_unit: chore.pass_to_next_unit ?? "None",
                 pass_to_next_value: chore.pass_to_next_value ?? 0,
                 all_day: chore.all_day ?? true,
@@ -290,5 +290,3 @@ const styles = StyleSheet.create({
 
   
 });
-
-export type {ChoreItem};

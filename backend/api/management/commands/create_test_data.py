@@ -117,12 +117,13 @@ class Command(BaseCommand):
             for chore_name in ["Vacuum", "Dishes", "Laundry"]:
                 # Create the chore definition
                 is_rotating = random.choice([True, False])
+                is_all_day = random.choice([True, False])
                 chore, created = Chore.objects.get_or_create(
                     household=hh,
                     title=chore_name,
                     details=f"{chore_name} for {hh.household_name}",
                     repeat=random.choice([r[0] for r in RepeatChoices.choices]),
-                    is_rotating=random.choice([True, False]),
+                    is_rotating=is_rotating,
                     pass_to_next_value=random.randint(1, 5) if is_rotating else 0,
                     pass_to_next_unit=random.choice([u[0] for u in PassToUnitChoices.choices[1:]]) if is_rotating else "none",
                     location=random.choice([u[0] for u in LocationChoices.choices]),
@@ -148,7 +149,7 @@ class Command(BaseCommand):
                     assignee=initial_assignee,
                     next_assignee=next_assignee,
                     due_date=due_date,
-                    all_day=False,
+                    all_day=is_all_day,
                     completed=False
                 )
                 self.stdout.write(self.style.SUCCESS(f"Created chore: {chore.title}"))

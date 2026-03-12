@@ -27,7 +27,6 @@ export default function ChoreTile(props: ChoreTileProps){
         <TouchableOpacity onPress={props.onPress}>
         <View 
             style={[styles.tile, props.completed && styles.restockTile]}
-            
         >
             <Text style={styles.titleHeading}>{props.title}</Text>
             <View style={styles.content}>
@@ -36,8 +35,8 @@ export default function ChoreTile(props: ChoreTileProps){
                     <Text>Due on {props.due_date.toDateString()}</Text>
                 </View>
                 <View style={{flexDirection: 'row', gap: 10, alignItems: 'center'}}>
-                    <View style={styles.profile}><Text style={{color: '#fff'}}>{props.assignee.name.charAt(0)}</Text></View>
-                    <Text>{props.assignee.first_name}</Text>
+                    <View style={styles.profile}><Text style={{color: '#fff'}}>{props.assignee?.first_name.charAt(0) ?? "U"}</Text></View>
+                    <Text>{props.assignee?.first_name ?? "Unassigned"}</Text>
                 </View>
                 <CircularCheckbox 
                     checked = {checked}

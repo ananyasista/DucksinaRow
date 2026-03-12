@@ -4,7 +4,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useEffect } from 'react';
 import DropDownPicker from 'react-native-dropdown-picker'
 import DateTimePicker, { DateTimePickerEvent, Event } from '@react-native-community/datetimepicker';
-import { ChoreItem } from '@/app/(tabs)/chores';
 import Counter from './counter';
 import { IconSymbol } from './ui/icon-symbol';
 import { ChoreDetail, ChoreCard } from '@/api/chores';
@@ -27,7 +26,7 @@ export default function ChoreItemModal(props: ModalProps) {
 
     const [repeatQuantity, setRepeatQuantity] = useState(props.chore ? props.chore.repeat_value : 1);
     const [allDay, setAllDay] = useState(props.chore ? props.chore.all_day : true);
-    const [dueDate, setDueDate] = useState(props.chore ? props.chore.due_date : new Date());
+    const [dueDate, setDueDate] = useState<Date>(props.chore?.due_date ? new Date(props.chore.due_date) : new Date());
     
     const [assignee, setAssignee] = useState(props.chore ? props.chore.assignee : null);
     
@@ -83,10 +82,10 @@ export default function ChoreItemModal(props: ModalProps) {
                 id: props.chore?.id,
                 title: choreTitle,
                 details: choreDetails,
-                due_date: dueDate,
+                due_date: dueDate instanceof Date ? dueDate : new Date(dueDate),
                 location: choreLocation,
                 all_day: allDay,
-                is_rotation: false, // or controlled by a switch
+                is_rotating: false, // or controlled by a switch
                 roommates_involved: roommatesInvolved,
                 repeat_value: repeatQuantity,
                 repeat_unit: repeatUnit,
@@ -190,7 +189,7 @@ export default function ChoreItemModal(props: ModalProps) {
                         </Text>
                         <View style={{flexDirection: 'row'}}>
                             <IconSymbol name='calendar' size={30} color="#000"/>
-                            {allDay ? (
+                            {/* {allDay ? (
                             <DateTimePicker
                                     testID="dateTimePicker"
                                     value={dueDate}
@@ -210,7 +209,7 @@ export default function ChoreItemModal(props: ModalProps) {
                                     themeVariant='light'
                                     onChange={() => setDueDate}
                                 />
-                            )}
+                            )} */}
                             
                         </View>
                     </View>
