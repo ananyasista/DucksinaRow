@@ -1,131 +1,172 @@
 import { Calendar, CalendarEvent, ICalendarEventBase, Mode } from 'react-native-big-calendar'
-import { StyleSheet, TouchableOpacity, ScrollView, LayoutChangeEvent, Button, Platform} from 'react-native';
+import { StyleSheet, TouchableOpacity, ScrollView, LayoutChangeEvent, Button, Platform, TouchableWithoutFeedback, Modal} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { EventTile } from '@/components/event-tile';
 import ModalCalendarForm from '@/components/modal-calendar-form';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import AntDesign from '@expo/vector-icons/AntDesign';
+import { CalendarEvent as APICalendarEvent, ApprovalEvent as APIApprovalEvent, listHouseholdEvents, listMyEvents, listNeedsApproval } from '@/api/calendar';
 
-const events = [
-  {
-    title: 'Meeting',
-    start: new Date(2026, 1, 18, 10, 0),
-    end: new Date(2026, 1, 18, 12, 30),
-    description: "a",
-    needsApproval: ['dadf'],
-  },
-  {
-    title: 'Twerk',
-    start: new Date(2026, 1, 19, 8, 0),
-    end: new Date(2026, 1, 19, 14, 30),
-    description: "b",
-    needsApproval: ['me'],
-  },
-  {
-    title: 'lil break',
-    start: new Date(2026, 1, 19, 12, 35),
-    end: new Date(2026, 1, 19, 13, 30),
-    description: "c",
-    needsApproval: ['sd'],
-  },
-  {
-    title: 'Twerk',
-    start: new Date(2026, 1, 19, 13, 35),
-    end: new Date(2026, 1, 19, 20, 30),
-    description: "d",
-    needsApproval: [],
-  },
-  {
-    title: 'Coffee break',
-    start: new Date(2026, 2, 31, 15, 45),
-    end: new Date(2026, 2, 31, 16, 30),
-    description: 'what is up', 
-    needsApproval: ['me'],
-  },
-  {
-    title: 'Multi DAY',
-    start: new Date(2026, 2, 2, 15, 45),
-    end: new Date(2026, 2, 31, 16, 30),
-    description: 'what is up', 
-    needsApproval: ['me', 'you'],
-  },
-]
+
 export interface CalendarEvent extends ICalendarEventBase {
   description: string;
   needsApproval:any;
-
 }
 
-export default function CalendarPage() {
-    const abbrMonth = ["Jan","Feb","Mar","Apr","May","June","July","Aug","Sept","Oct","Nov","Dec"];
-    const abbrDay = ["Sun", "Mon", "Tues", "Wed", "Thur", "Fri", "Sat"];
-    const[currentDate, setCurrentDate] = useState(new Date());
-    const[currentMonth, setCurrentMonth] = useState(abbrMonth[currentDate.getMonth()]);
-    const[currentMode, setCurrentMode] = useState<Mode>('week');
-    const[calendarHeight, setCalendarHeight] = useState(0);
+export default function CalendarPage () {
+    const { mode } = useLocalSearchParams();
+    const [events, setEvents] = useState<ICalendarEventBase[]>([]);
+    const [myEvents, setMyEvents] = useState<APICalendarEvent[]>([]);
+    const [needsMyApproval, setNeedsMyApproval] = useState<APICalendarEvent[]>([]);
+    const month = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+    const [currentDate, setCurrentDate] = useState(new Date());
+    const [openDropdown, setOpenDropdown] = useState(false);
+    const [currentMode, setCurrentMode] = useState<Mode>('week');
+    const [calendarHeight, setCalendarHeight] = useState(0);
     const [showCalendar, setShowCalendar] = useState(true);
     const [showEvents, setShowEvents] = useState(false);
     const [editModal, setEditModal] = useState(false);
     const [event, setEvent] = useState<CalendarEvent|null>(null);
+    const memoizedEvents = React.useMemo(() => events, [events]);
+    const menuRef = useRef<View>(null);    
+    const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 });
+
+    
+    useEffect(() => {
+      onScreenLoad();
+    }, [])
+
+    const onScreenLoad = async () => {
+      try {
+        const allEvents = await listHouseholdEvents();
+        const loadMyEvents = await listMyEvents();
+        const loadNeedMyApproval:APIApprovalEvent[] = await listNeedsApproval();
+        const calenEvents: ICalendarEventBase[] = 
+          allEvents.map((event) => ({
+            start: new Date(event.start_date),
+            end: new Date(event.end_date ? event.end_date : new Date(event.start_date + 3600*1000).toISOString()),
+            title: event.title,
+          }));
+        const needMyApprovalEvents: APICalendarEvent[] = 
+          loadNeedMyApproval.map((e) => ({
+            id: e.event.id,
+            title: e.event.title,
+            details: "",
+            all_day: (e.event.start_date === e.event.end_date),
+            start_date: e.event.start_date,
+            end_date: e.event.end_date,
+            repeat: "",
+            requires_approval: e.event.requires_approval,
+            location: e.event.location,
+            event_owner_name: {
+              id: "",
+              full_name: e.event.event_owner_name ?? "",
+              email: "",
+            }
+        }))        
+        setEvents(calenEvents);
+        setMyEvents(loadMyEvents);
+        setNeedsMyApproval(needMyApprovalEvents);
+      } catch (e: any) {
+        console.log("Home page error: " + e);
+      }
+    };
+
     const calendarLayout = (e:LayoutChangeEvent) => {
       const{height} = e.nativeEvent.layout;
       setCalendarHeight(height);
     }
-    function changeView(date: Date, switchView: Boolean) {
-        if(switchView === true) {
-            setCurrentMode(currentMode==='week'? 'month' : 'week' );
-        }
+   
+    async function changeDateMode(date: Date) {
+        await setCurrentDate(date);
+        setOpenDropdown(false);
+        setCurrentMode(currentMode === 'week' ? 'month' : 'week');
+    }
+    
+    function switchToCalendar(mode?: Mode, date?: Date) {
+      if(mode)
+      {
+        router.setParams({mode:mode});
+        setCurrentMode(mode);
+      }
+      if(date)
+      {
         setCurrentDate(date);
-        setCurrentMonth(abbrMonth[date.getMonth()]);
-    } 
-    function switchToCalendar() {
+      }
       setShowCalendar(true);
       setShowEvents(false);
+      setOpenDropdown(false);
     }
     function switchToEvents() {
       setShowCalendar(false);
       setShowEvents(true);
+      setOpenDropdown(false);
     }
     
     function showEditModal(event:CalendarEvent|null)
     {
         setEditModal(!editModal);
         setEvent(event);
+        setOpenDropdown(false);
     }
+    function toggleDropdown() {
+        if (menuRef.current) {
+          menuRef.current.measureInWindow((x, y, width, height) => {
+            setDropdownPos({
+              top: y + height,
+              right: 20
+            });
+          });
+        }
+         setOpenDropdown(!openDropdown);
 
+      }
+    useFocusEffect(
+      React.useCallback(() => {
+        if (mode === 'event') {
+          switchToEvents();
+
+          // clear param after using it
+          router.setParams({ mode: undefined });
+        }
+      }, [mode])
+    );
+    
+      
+    
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.background}}>
       
         {/*Date and Today Button*/}
         <View style={calendarTheme.header}>
-            <View style = {calendarTheme.dateContainer}>
-                <Text style = {calendarTheme.bigDateText}>
-                    {currentDate.getDate()}
-                </Text>
-                <View style ={calendarTheme.dateTextStack}>
-                    <Text style = {calendarTheme.smallDateText}>
-                        {abbrDay[currentDate.getDay()]}
-                    </Text>
-                    <Text style = {calendarTheme.smallDateText}>
-                        {abbrMonth[currentDate.getMonth()] + " " + currentDate.getFullYear()}
-                    </Text>
-                </View>
-            </View>       
-            <View >
-                <TouchableOpacity style = {calendarTheme.todayButton} onPress={()=> changeView(new Date(), false)}>
-                    <Text style = {calendarTheme.todayButtonText}>
-                        Today
-                    </Text>
-                </TouchableOpacity>
+            <View style={calendarTheme.dateContainer}>
+              <View style={calendarTheme.dateTextStack}>
+                <ThemedText type='title'>Calendar</ThemedText>
+                {showCalendar && (<ThemedText type='secondarySubtitle'>{month[currentDate.getMonth()]} {currentDate.getFullYear()}</ThemedText>)}
+              </View>
             </View>
+            <TouchableOpacity ref={menuRef} onPress={toggleDropdown} >
+              <AntDesign name="menu" size={32} color="black" />
+           </TouchableOpacity>
         </View>
-        
-        {/*Calendar & Events Tabs */}
-        <View style={calendarTheme.tabs}>
-            <Text style={calendarTheme.tabsText} onPress={() => switchToCalendar()}>Calendar</Text>
-            <Text style={calendarTheme.tabsText} onPress={() => switchToEvents()}>Events</Text>
-        </View>
+        {openDropdown && (
+            <View style={[
+                calendarTheme.dropdown,
+                { top: dropdownPos.top, right: dropdownPos.right }
+              ]} >
+              <TouchableOpacity style={calendarTheme.item} onPress={() => switchToCalendar(undefined, new Date())}><ThemedText type='boldText'>Today</ThemedText></TouchableOpacity>
+              <TouchableOpacity style={calendarTheme.item} onPress={() => switchToCalendar('day')}><ThemedText type='boldText'>Day</ThemedText></TouchableOpacity>
+              <TouchableOpacity style={calendarTheme.item} onPress={() => switchToCalendar('3days')}><ThemedText type='boldText'>3-Day</ThemedText></TouchableOpacity>
+              <TouchableOpacity style={calendarTheme.item} onPress={() => switchToCalendar('week')}><ThemedText type='boldText'>Week</ThemedText></TouchableOpacity>
+              <TouchableOpacity style={calendarTheme.item} onPress={() => switchToCalendar('month')}><ThemedText type='boldText'>Month</ThemedText></TouchableOpacity>
+              <TouchableOpacity style={calendarTheme.item} onPress={()=> switchToEvents()}><ThemedText type='boldText'>All Events</ThemedText></TouchableOpacity>
+            </View>
+            
+        )}
         
         {/*Calendar*/}
         <View
@@ -133,13 +174,14 @@ export default function CalendarPage() {
           onLayout={calendarLayout}
         >
           {showCalendar && (<Calendar
-              events={events}
+              events={memoizedEvents}
               height={calendarHeight}
               date = {currentDate}
               eventCellStyle = {calendarTheme.eventStyle}
               mode={currentMode}
-              onPressDateHeader={(date:Date) =>changeView(date, true)}
-              onSwipeEnd = {(date:Date) => changeView(date, false)}
+              onPressCell={(date:Date) =>changeDateMode(date)}
+              onPressDateHeader={(date:Date) =>changeDateMode(date)}
+              onSwipeEnd = {(date:Date) => setCurrentDate(date)}
               theme = {theme.calendar}
               onPressEvent={(event) => showEditModal( event as CalendarEvent)}
           />)
@@ -151,22 +193,29 @@ export default function CalendarPage() {
           */}
           {showEvents && (
             <ScrollView style={calendarTheme.indent}>
-              <ThemedText type='subtitle'>Needs Approval</ThemedText>
+              <ThemedText type='secondarySubtitle'>Needs Approval</ThemedText>
               {
-                events.map((event) =>  {
-                  if(event.needsApproval.includes('me'))
-                  {
-                    return  <EventTile title={event.title} start={event.start} end={event.end} description ={event.description} needsApproval= {event.needsApproval} />;
-                  }
+                needsMyApproval.map((event) => {
+                  return <EventTile key={event.id} event={event}  owner={false}/>
                 })
               }
-              <ThemedText type='subtitle'>Your Events</ThemedText>
+              <ThemedText type='secondarySubtitle'>Your Events</ThemedText>
               {
-                events.map((event) =>  {
-                  if(!event.needsApproval.includes('me'))
-                  {
-                    return  <EventTile title={event.title} start={event.start} end={event.end} description ={event.description} needsApproval= {event.needsApproval}/>;
-                  }
+                
+                myEvents.map((event) => {
+                    if(event.requires_approval && event.approval_counts && event.approval_counts?.approved < event.approval_counts?.total)
+                    {
+                      return <EventTile key={event.id} event={event} owner={true}/>
+                    }
+                })
+                
+              }
+              {
+                myEvents.map((event) => {
+                    if(event.requires_approval && event.approval_counts && event.approval_counts?.approved >= event.approval_counts?.total)
+                    {
+                      return <EventTile key={event.id} event={event} owner={true}/>
+                    }
                 })
               }
             </ScrollView>
@@ -177,7 +226,7 @@ export default function CalendarPage() {
         <ModalCalendarForm formTitle ="Create Event" edit={false} onClose={() => setEditModal(false)} />
 
         {editModal && (
-          <ModalCalendarForm formTitle="Edit Event" edit={true} event={event} onClose={() => setEditModal(false)}/>
+          <ModalCalendarForm formTitle="Edit Event" edit={true}  onClose={() => setEditModal(false)}/>
           )}
     </SafeAreaView>
   )
@@ -209,10 +258,12 @@ const calendarTheme = StyleSheet.create({
     justifyContent: 'space-between',
     paddingLeft: 15,
     paddingRight: 15,
+    paddingBottom: 20
   },
   dateContainer: {
     flexDirection: 'row',
     alignContent: 'center',
+   
   },
   tabs: {
     flexDirection: 'row',
@@ -273,6 +324,25 @@ const calendarTheme = StyleSheet.create({
     width: 100
   },
   indent: {
-    marginLeft: 10
+    marginLeft: 15
+  },
+  dropdown: {
+    position: "absolute",
+    top: 45,
+    right: 20,
+    width: 150,
+    backgroundColor: "white",
+    borderRadius: 8,
+    elevation: 5, // Android shadow
+    shadowColor: "#000", // iOS shadow
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    zIndex: 20
+  },
+
+  item: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee"
   }
-});
+})

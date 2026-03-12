@@ -8,10 +8,37 @@ export interface CalendarEvent {
   start_date: string;
   end_date?: string | null;
   repeat: string;
-  requires_approval: boolean;
+  requires_approval: boolean; 
   location?: string;
+  event_owner_name?: {
+    id: string;
+    full_name: string;
+    email: string;
+  };
   notification_value?: number | null;
   notification_unit?: string | null;
+  approval_status?: "approved"|"pending"|"declined";
+  approval_counts?: {
+    approved:number;
+    total: number;
+  }
+}
+
+export interface ApprovalUser {
+  id: string;
+  name: string;
+  email: string;
+}
+
+export interface ApprovalRow {
+  user: ApprovalUser;
+  approved: boolean;
+  response_time?: string | null;
+  status: "approved" | "pending" | "declined";
+}
+
+export interface EventDetails extends CalendarEvent {
+  approvals: ApprovalRow[];
 }
 
 export interface ApprovalEvent {
@@ -22,16 +49,28 @@ export interface ApprovalEvent {
     start_date: string;
     end_date?: string | null;
     location?: string;
+    event_owner_name?: string;
     requires_approval: boolean;
   };
   approved: boolean;
   response_time?: string | null;
 }
 
+export type CalendarEventCreateInput = Omit<
+  CalendarEvent,
+  "id" | "event_owner_name" | "approval_status" | "approval_counts"
+>;
+
 // All events in the current user's household
 export async function listHouseholdEvents(): Promise<CalendarEvent[]> {
   const res = await api.get("/calendar/events/");
   return res.data;
+}
+
+// One event detail
+export async function getEventId(id: string): Promise<EventDetails> {
+  const response = await api.get(`/calendar/events/${id}/`);
+  return response.data;
 }
 
 // All events created by the current user > "Your Events" section
@@ -46,13 +85,49 @@ export async function listNeedsApproval(): Promise<ApprovalEvent[]> {
   return res.data;
 }
 
-export async function createEvent(payload: Partial<CalendarEvent>) {
+export async function createEvent(data: CalendarEventCreateInput) {
+  let formattedStartDate = data.start_date;
+  let formattedEndDate = data.end_date ?? null;
+
+  if (data.start_date) {
+    const startObj = new Date(data.start_date);
+    formattedStartDate = data.all_day
+      ? startObj.toISOString()
+      : startObj.toISOString();
+  }
+
+  if (data.end_date) {
+    const endObj = new Date(data.end_date);
+    formattedEndDate = data.all_day
+      ? endObj.toISOString()
+      : endObj.toISOString();
+  }
+
+  const payload = {
+    ...data,
+    start_date: formattedStartDate,
+    end_date: formattedEndDate,
+  };
+
   const res = await api.post("/calendar/events/", payload);
   return res.data;
 }
 
-export async function updateEvent(eventId: string, patch: Partial<CalendarEvent>) {
-  const res = await api.patch(`/calendar/events/${eventId}/`, patch);
+export async function updateEvent(
+  eventId: string,
+  patch: Partial<CalendarEventCreateInput>
+) {
+  const payload = { ...patch };
+
+  if (patch.start_date) {
+    payload.start_date = new Date(patch.start_date).toISOString();
+  }
+
+  if (patch.end_date) {
+    payload.end_date = new Date(patch.end_date).toISOString();
+  }
+
+  const res = await api.patch(`/calendar/events/${eventId}/`, payload);
   return res.data;
 }
 

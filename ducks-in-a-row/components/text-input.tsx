@@ -3,16 +3,18 @@ import {StyleSheet, TextInput} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 
 type ThemedTextInputProps = PropsWithChildren<{
+    onChangeText: (text:string) => void;
     size?: 'small' | 'large';
     multiline?: boolean,
     placeholder?: string,
     defaultValue?: string,
 }>;
 
-export function ThemedTextInput({size='small', multiline = false, placeholder= "", defaultValue =""}: ThemedTextInputProps) {
+export function ThemedTextInput({onChangeText, size='small', multiline = false, placeholder= "", defaultValue =""}: ThemedTextInputProps) {
 
   return (
     <TextInput
+        onChangeText={onChangeText}
         style={[
             styles.textInput,
             size === 'small' ? styles.small : undefined,

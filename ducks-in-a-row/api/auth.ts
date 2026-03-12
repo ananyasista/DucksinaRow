@@ -9,14 +9,22 @@ export async function signup(data: {
   password: string;
   join_code?: string;
 }) {
-  const res = await api.post("/auth/signup/", data);
-  return res.data; // { token, user }
+  const res = await api.post("/auth/signup/", data, {
+    headers: {
+      Authorization: undefined,
+    },
+  });
+  return res.data;
 }
 
 // Login 
 export async function login(data: { email: string; password: string }) {
-  const res = await api.post("/auth/login/", data);
-  return res.data; // { token, user }
+  const res = await api.post("/auth/login/", data, {
+    headers: {
+      Authorization: undefined,
+    },
+  });
+  return res.data;
 }
 
 // User's profile

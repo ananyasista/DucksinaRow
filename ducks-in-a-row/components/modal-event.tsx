@@ -1,7 +1,7 @@
 import { Calendar, ICalendarEventBase, Mode } from 'react-native-big-calendar'
 import { StyleSheet, Dimensions, TouchableOpacity, Modal, Platform} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 // import { View } from 'react-native-reanimated/lib/typescript/Animated';
 import { View, Text } from 'react-native';
 import { Button, Header } from '@react-navigation/elements';
@@ -15,9 +15,13 @@ import DateTimePicker, { DateTimePickerEvent, Event } from '@react-native-commun
 import RNDateTimePicker from '@react-native-community/datetimepicker';
 import { IconSymbol } from './ui/icon-symbol';
 import ModalCalendarForm from './modal-calendar-form';
+import {CalendarEvent as APICalendarEvent, EventDetails as APIEventDetails} from '@/api/calendar';
 
 type EventModalProps = PropsWithChildren<{
-    event?: CalendarEvent|null;
+    event: APICalendarEvent|null;
+    pendingEvent?: APIEventDetails;
+    owner?: boolean;
+    printDate?: string;
     onClose?: any;
 }>
 
@@ -26,14 +30,52 @@ export interface CalendarEvent extends ICalendarEventBase {
   needsApproval:any;
 }
 
-export default function EventModal({event, ...props}:EventModalProps) {
+export default function EventModal({event, owner=false, pendingEvent, printDate, ...props}:EventModalProps) {
     const[approvalModalVisible, setApprovalModalVisible] = useState(true);
     const[editModal, setEditModal] = useState(false);
-
+    const [title, setTitle] = useState(event?.title || '');
+    const [startDate, setStartDate] = useState(new Date());
+    const [endDate, setEndDate] = useState(new Date(startDate.toISOString()+3600*1000))
+    const [cEvent, setEvent] = useState<CalendarEvent>();
+    const [approved, setApproved] = useState(0);
+    const [pending, setPending] = useState(0);
+    const [denied, setDenied] = useState(0);
+    const total = pendingEvent?.approvals.length;
+    useEffect(()=> {
+        if(event?.start_date)
+        {
+            setStartDate(new Date(event.start_date));
+            if(event?.end_date)
+            {
+                setEndDate(new Date(event.end_date));
+            } else {
+                setEndDate(new Date(startDate.toISOString() + 3600*1000));
+            }
+        }
+        console.log(pendingEvent);
+        var a = 0;
+        var p = 0;
+        var d = 0; 
+        pendingEvent?.approvals.forEach((e) => {
+            if(e.status==='approved')
+            {
+                a++;
+            } else if(e.status==='pending') {
+                p++;
+            } else {
+                d++;
+            }
+        })
+        setApproved(a);
+        setDenied(d);
+        setPending(p);
+        console.log("HERE" + a + " " + d + " " + p);
+    },[])
     function close() {
         setApprovalModalVisible(false);
         props.onClose();
     }
+
     function showModal(approval: boolean, edit: boolean)
     {
         setApprovalModalVisible(approval);
@@ -61,7 +103,7 @@ export default function EventModal({event, ...props}:EventModalProps) {
                 <TouchableOpacity onPress={() => close()}>
                     <Octicons name='x-circle' size = {30} color='#000000'/> 
                 </TouchableOpacity>
-                <View style={modalTheme.rowEnd}>
+               {owner&& <View style={modalTheme.rowEnd}>
                     <TouchableOpacity onPress={() => deleteEvent()}>
                         <Octicons name='trash' size = {30} color='#000000' style={{margin:5}}/> 
                     </TouchableOpacity>
@@ -69,39 +111,72 @@ export default function EventModal({event, ...props}:EventModalProps) {
                         <Octicons name='pencil' size = {30} color='#000000' style={{margin:5}}/> 
                     </TouchableOpacity>
                 </View>
+                }
             </View>
             <ThemedText type='title'>{event?.title}</ThemedText>
-            <ThemedText type='subtitle'>{event?.description}</ThemedText>
+            <ThemedText type='subtitle'>{event?.details}</ThemedText>
             <View style={modalTheme.rowStart}>
                 <IconSymbol size={20} name="calendar" color='black'/>
-                <ThemedText>{event?.start.toDateString()}</ThemedText>
+                <ThemedText>{printDate}</ThemedText>
             </View>
             <View style={modalTheme.rowStart}>
                 <IconSymbol size={20} name="pin" color='black'/>
-                <ThemedText>Location: {event?.start.toDateString()}</ThemedText>
+                <ThemedText>Location: {event?.location === "" ? "Living Room" : event?.location}</ThemedText>
             </View>
             <View style={modalTheme.rowStart}>
                 <IconSymbol size={20} name="person" color='black'/>
-                <ThemedText>Created by: ADD IN</ThemedText>
+                <ThemedText>Created by: {owner? "You" : event?.event_owner_name?.full_name}</ThemedText>
             </View>
             <View style={{width:'100%', marginTop: 50}}>
                 <View style={{borderBottomColor: 'rgba(215, 209, 209, 1)', borderBottomWidth: 1, marginTop: 10, marginBottom: 10}}/>
             </View>
             <ThemedText type='title'>Roommate Approval</ThemedText>
-            <ThemedText type='subtitle'># of # roommates have approved</ThemedText>
-            {
-                event?.needsApproval.map((e: string) =>  {
-                    return  <View style={[modalTheme.rowSpace, modalTheme.rowPadding]}>
+            <ThemedText type='subtitle'>{approved} of {total} roommates have approved</ThemedText>
+            {pendingEvent && 
+                pendingEvent.approvals.map((e) => {
+                    
+                    if(e.status === 'approved')
+                    {
+                        return <View style={[modalTheme.rowSpace, modalTheme.rowPadding]}>
+                                    <View  style={modalTheme.rowStart}>
+                                        <View style={modalTheme.avatarCircle}>
+                                        <Text style={modalTheme.avatarText}>{e.user.name.charAt(0)}</Text>
+                                        </View>
+                                        <ThemedText type='boldText'>{e.user.name}</ThemedText>
+                                    </View>
+                                    <TouchableOpacity  style={modalTheme.rowEnd} onPress={() => notifyRoommate()}>
+                                        <Octicons size={30} name='check-circle' color='black'/>
+                                    </TouchableOpacity>
+                                </View>
+                    }  else if(e.status === 'declined') {
+                        return <View style={[modalTheme.rowSpace, modalTheme.rowPadding]}>
                                 <View  style={modalTheme.rowStart}>
-                                    <IconSymbol size={40} name="circle.fill" color='rgba(86, 182, 100, 1)' />
-                                    <ThemedText type='boldText'>{e}</ThemedText>
+                                    <View style={modalTheme.avatarCircleRed}>
+                                    <Text style={modalTheme.avatarText}>{e.user.name.charAt(0)}</Text>
+                                    </View>
+                                    <ThemedText type='boldText'>{e.user.name}</ThemedText>
                                 </View>
                                 <TouchableOpacity  style={modalTheme.rowEnd} onPress={() => notifyRoommate()}>
-                                    <Octicons size={30} name='check-circle' color='black'/>
+                                    <Octicons size={30} name='x' color='black'/>
                                 </TouchableOpacity>
-                            </View>;
+                            </View>
+                    } else {
+                      return  <View style={[modalTheme.rowSpace, modalTheme.rowPadding]}>
+                                <View  style={modalTheme.rowStart}>
+                                    <View style={modalTheme.avatarCircleYellow}>
+                                    <Text style={modalTheme.avatarText}>{e.user.name.charAt(0)}</Text>
+                                    </View>
+                                    <ThemedText type='boldText'>{e.user.name}</ThemedText>
+                                </View>
+                                <TouchableOpacity  style={modalTheme.rowEnd} onPress={() => notifyRoommate()}>
+                                    <Octicons size={30} name='bell' color='black'/>
+                                </TouchableOpacity>
+                            </View>
+                    }
                 })
             }
+            
+            
             </View>
         </Modal>
         {editModal && (
@@ -187,5 +262,46 @@ const modalTheme = StyleSheet.create({
         color: "#fff",
         fontSize: 16,
         fontWeight: 500
-    }
+    },
+    avatar: {
+    width: 78,
+    alignItems: "center",
+  },
+  avatarCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 24,
+    backgroundColor: "#087d4b",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  avatarCircleYellow: {
+    width: 36,
+    height: 36,
+    borderRadius: 24,
+    backgroundColor: "#f8b118",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  avatarCircleRed: {
+    width: 36,
+    height: 36,
+    borderRadius: 24,
+    backgroundColor: "#f81818",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  avatarText: {
+    color: "#fff",
+    fontWeight: "900",
+    fontSize: 16,
+  },
+  avatarName: {
+    marginTop: 6,
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#111",
+    maxWidth: 78,
+    textAlign: "center",
+  },
 });

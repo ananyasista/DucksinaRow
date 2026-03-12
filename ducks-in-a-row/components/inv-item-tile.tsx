@@ -7,7 +7,7 @@ type InvItemTileProps = {
     title: string;
     restock: boolean;
     category: string;
-    stock?: number;
+    quantity?: number;
     onChange: () => void;
     onPress: () => void;
 }
@@ -23,7 +23,7 @@ export default function InvItemTile(props: InvItemTileProps){
             <Text style={styles.titleHeading}>{props.title}</Text>
             <Text style={styles.subheading}>Category: {props.category}</Text>
             <View style={styles.subView}>
-                <Text style={styles.subheading}>Stock: {props.stock}</Text>
+                <Text style={styles.subheading}>Stock: {props.quantity}</Text>
                 <View style={{flexDirection: 'row'}}>
                     <Text style={styles.subheading}>Restock? </Text>
                     <Switch 

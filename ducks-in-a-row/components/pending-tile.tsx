@@ -12,11 +12,13 @@ export default function PendingTile(props: PendingTileProps){
     return (
         <View style={styles.tile}>
             <ThemedText style={styles.tileHeading}>{props.title}</ThemedText>
-            <ThemedText style={styles.eventNumber}>{props.numEvents}
-                <ThemedText style={styles.bodyText}> events</ThemedText>
-            </ThemedText>
-            <View style={styles.iconRow}>
-                <IconSymbol  size={24} name="chevron.right" color="#000000"></IconSymbol>
+            <View style={styles.rowSpace}>
+                <ThemedText style={styles.eventNumber}>{props.numEvents}
+                    <ThemedText style={styles.bodyText}> events</ThemedText>
+                </ThemedText>
+                <View style={styles.iconRow}>
+                    <IconSymbol  size={24} name="chevron.right" color="#000000"></IconSymbol>
+                </View>
             </View>
         </View>
         
@@ -25,19 +27,20 @@ export default function PendingTile(props: PendingTileProps){
 
 const styles = StyleSheet.create({
     tileHeading: {
-        fontSize: 24,
+        fontSize: 22,
         fontWeight: 600,
         paddingBottom: 20,
-        textAlign: 'center'
     },
     tile: {
         backgroundColor: "#F8DA79",
         borderRadius: 16,
-        padding: 20
+        paddingTop: 20,
+        paddingRight: 20, 
+        paddingBottom: 10,
+        paddingLeft: 20,
     },
     eventNumber: {
         fontSize: 48,
-        textAlign: "center",
         margin: 0,
         lineHeight: 50,
         paddingBottom: 2
@@ -47,5 +50,12 @@ const styles = StyleSheet.create({
     },
     iconRow: {
         alignItems: "flex-end"
+    },
+    rowSpace: {
+        justifyContent:"space-between",
+        display: "flex",
+        flexDirection: "row",
+        alignItems: "center",
+    
     }
 });

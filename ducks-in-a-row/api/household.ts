@@ -16,6 +16,8 @@ export type LivingPreferences = {
 export type Roommate = {
   id: string;
   full_name: string;
+  first_name: string;
+  last_name: string;
   email: string;
   living_preferences: LivingPreferences;
 };
@@ -33,5 +35,10 @@ export async function getHouseholdRoommates(): Promise<Roommate[]> {
 
 export async function createHousehold(household_name: string): Promise<Household> {
   const res = await api.post("/household/create/", { household_name });
+  return res.data;
+}
+
+export async function getHouseholdName(): Promise<Household> {
+  const res = await api.get("/household/get-name/");
   return res.data;
 }
