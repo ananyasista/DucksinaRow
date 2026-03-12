@@ -3,11 +3,11 @@ import Chip from './chip';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import Counter from './counter';
-import { InvItem } from '@/app/(tabs)/inventory';
+import { InventoryDetails } from '@/api/inventory';
 import { IconSymbol } from './ui/icon-symbol';
 
 type ModalProps = {
-    item: InvItem;
+    item: InventoryDetails;
     //toggleRestock: () => void;
     visible: boolean;
     onClose: () => void;
@@ -51,7 +51,7 @@ export default function InvViewModal(props: ModalProps) {
                     <Text style={styles.title}>{props.item.name}</Text>
                     <Text style={styles.text}>{props.item.details}</Text>
                     <Text style={styles.subHeading}>Location: <Text style={styles.text}>{props.item.location}</Text></Text>
-                    <Text style={styles.subHeading}>Last Purchased By: <Text style={styles.text}>{props.item.last_purchased_by}</Text></Text>
+                    <Text style={styles.subHeading}>Last Purchased By: <Text style={styles.text}>{props.item.last_purchased_by.first_name}</Text></Text>
                     <Text style={styles.subHeading}>Purchase Date: <Text style={styles.text}>{props.item.last_purchased_date.toDateString()}</Text></Text>
                     <View>
                         <View style={{flexDirection: 'row', gap: 12}}>

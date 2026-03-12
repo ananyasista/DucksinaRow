@@ -7,7 +7,7 @@ from rest_framework.authtoken.models import Token
 from django.utils import timezone
 
 from rest_framework import viewsets
-from ..serializers.chores_serializers import ChoreSerializer, ChoreListSerializer, ChoreAssignmentSerializer
+from ..serializers.chores_serializers import ChoreSerializer, ChoreAssignmentSerializer
 from ..models import Chore, User, ChoreAssignment
 
 class ChoreViewSet(viewsets.ModelViewSet):
@@ -16,8 +16,8 @@ class ChoreViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_serializer_class(self):
-        if self.action == "list":
-            return ChoreListSerializer
+        # if self.action == "list":
+        #     return ChoreListSerializer
         return ChoreSerializer
     
     # READ
@@ -43,7 +43,7 @@ class ChoreViewSet(viewsets.ModelViewSet):
         assignee = self.request.query_params.get("assignee")
         if assignee:
             assignee_ids = [a.strip() for a in assignee.split(",")]
-            queryset = queryset.filter(assigned_roommate__id__in=assignee_ids)
+            queryset = queryset.filter(assignments__assignee__id__in=assignee_ids).distinct()
         
         # Filter: Location
         location = self.request.query_params.get("location")
@@ -54,25 +54,15 @@ class ChoreViewSet(viewsets.ModelViewSet):
         start = self.request.query_params.get("start")
         end = self.request.query_params.get("end")
         if start and end:
-            queryset = queryset.filter(date__range=[start, end])
+            queryset = queryset.filter(assignments__due_date__range=[start, end]).distinct()
         elif start:
-            queryset = queryset.filter(date__gte=start)
+            queryset = queryset.filter(assignments__due_date__gte=start).distinct()
         elif end:
-            queryset = queryset.filter(date__lte=end)
-
+            queryset = queryset.filter(assignments__due_date__lte=end).distinct()
         return queryset
 
     def perform_create(self, serializer):
-        chore = serializer.save(household=self.request.user.household)
-    
-        initial_assignee = self.request.data.get("initial_assignee")
-        due_date = self.request.data.get("due_date")
-        if initial_assignee and due_date:
-            ChoreAssignment.objects.create(
-                chore=chore,
-                assignee_id=initial_assignee,
-                due_date=due_date
-            )
+        serializer.save(household=self.request.user.household)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -83,23 +73,17 @@ class ChoreViewSet(viewsets.ModelViewSet):
     def filters(self, request):
         user = request.user
 
-        # Base queryset (respect household rules)
+        # Base queryset
         if user.is_superuser:
             chores = Chore.objects.all()
         else:
             chores = Chore.objects.filter(household=user.household)
 
-        # Unique locations
-        locations = (
-            chores.exclude(location="")
-            .values_list("location", flat=True)
-            .distinct()
-        )
+        # Unique locations (exclude null and empty)
+        locations = chores.exclude(location__isnull=True).exclude(location="").values_list("location", flat=True).distinct()
 
-        # Roommates in this household
-        roommates = User.objects.filter(
-            household=user.household
-        ).values("id", "first_name")
+        # Roommates in household (exclude users without household)
+        roommates_qs = User.objects.filter(household=user.household).exclude(id__isnull=True).values("id", "first_name")
 
         data = {
             "locations": list(locations),
@@ -107,13 +91,12 @@ class ChoreViewSet(viewsets.ModelViewSet):
                 {"value": True, "label": "Completed"},
                 {"value": False, "label": "Incomplete"},
             ],
-            "roommates": list(roommates),
+            "roommates": [{"label": u["first_name"], "value": u["id"]} for u in roommates_qs],
         }
 
         return Response(data)
     
     def perform_update(self, serializer):
-
         instance = self.get_object()
         was_complete = instance.completed
 

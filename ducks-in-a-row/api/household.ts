@@ -16,6 +16,8 @@ export type LivingPreferences = {
 export type Roommate = {
   id: string;
   full_name: string;
+  first_name: string;
+  last_name: string;
   email: string;
   living_preferences: LivingPreferences;
 };

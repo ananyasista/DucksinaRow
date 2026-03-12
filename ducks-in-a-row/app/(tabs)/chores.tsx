@@ -1,5 +1,5 @@
 import {StyleSheet, View, Text, ScrollView, TouchableOpacity, TextInput } from 'react-native';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link } from 'expo-router';
@@ -11,61 +11,133 @@ import ChoreTile from '@/components/chore-tile';
 import ChoreViewModal from '@/components/chore-view-modal';
 import ChoreItemModal from '@/components/chore-item-modal';
 
-type ChoreItem = {
-  id: string;
-  name: string;
-  details: string;
-  repeat: string;
-  date: Date;
-  completed: boolean;
-  assignee: string;
-  location: string;
-  next_assignee: string;
-  roommates: string[];
-  all_day: boolean;
-}
+import * as choreAPI from '@/api/chores';
+import { getHouseholdRoommates } from '@/api/household';
 
-const mockData: ChoreItem[] = [
-  {
-    id: "123",
-    name: "Vacuum",
-    details: "Empty when done!",
-    date: new Date("2026-03-09"),
-    completed: false,
-    assignee: "Leyna",
-    location: "Living Room",
-    next_assignee: "Elle",
-    repeat: 'daily',
-    roommates: ["Leyna", "Elle", "Ananya", "Sofia"],
-    all_day: false
-  },
-  {
-    id: "456",
-    name: "Wash Dishes",
-    details: "Please clear the drying rack before starting",
-    date: new Date("2026-03-09T20:36:26.989156Z"),
-    completed: true,
-    assignee: "Ananya",
-    location: "Kitchen",
-    next_assignee: "Sofia",
-    repeat: 'daily',
-    roommates: ["Ananya", "Sofia"],
-    all_day: true
-  }
-]
+// type ChoreItem = {
+//   id: string;
+//   title: string;
+//   details: string;
+//   repeat: string;
+//   date: Date;
+//   completed: boolean;
+//   assignee: string;
+//   location: string;
+//   next_assignee: string;
+//   roommates: string[];
+//   all_day: boolean;
+// }
+
+// const mockData: ChoreItem[] = [
+//   {
+//     id: "123",
+//     name: "Vacuum",
+//     details: "Empty when done!",
+//     date: new Date("2026-03-09"),
+//     completed: false,
+//     assignee: "Leyna",
+//     location: "Living Room",
+//     next_assignee: "Elle",
+//     repeat: 'daily',
+//     roommates: ["Leyna", "Elle", "Ananya", "Sofia"],
+//     all_day: false
+//   },
+//   {
+//     id: "456",
+//     name: "Wash Dishes",
+//     details: "Please clear the drying rack before starting",
+//     date: new Date("2026-03-09T20:36:26.989156Z"),
+//     completed: true,
+//     assignee: "Ananya",
+//     location: "Kitchen",
+//     next_assignee: "Sofia",
+//     repeat: 'daily',
+//     roommates: ["Ananya", "Sofia"],
+//     all_day: true
+//   }
+// ]
 
 export default function InventoryScreen() {
-  const itemList = mockData;
-  
+  const [choresList, setChoresList] = useState<choreAPI.ChoreDetail[]>([]);
+  const [roommatesList, setRoommatesList] = useState<{
+    email: string,
+    first_name: string,
+    id: string,
+    last_name: string,
+    name: string,
+  }[]>([]);
+
   const [addItemVisible, setAddItemVisible] = useState(false);
   const [viewItemVisible, setViewItemVisible] = useState(false);
   const [editItemVisible, setEditItemVisible] = useState(false);
   const [complete, setComplete] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<ChoreItem | null>(null);
+  const [selectedItem, setSelectedItem] = useState<choreAPI.ChoreDetail | null>(null);
   const [searchText, setSearchText] = useState('');
 
+  const [locationFilterList, setLocationFilterList] = useState<string[]>([]);
+  const [roommateFilterList, setRoommateFilterList] = useState<string[]>([]);
+  const [completedFilter, setCompletedFilter] = useState<boolean>(true);
+  const [startDateFilter, setStartDateFilter] = useState<Date | null>(null);
+  const [endDateFilter, setEndDateFilter] = useState<Date | null>(null);
+
+
+
   // TODO: have to create function that triggers when restock toggle is pressed
+  useEffect(() => {
+      const loadData = async () => {
+        const filterData = await choreAPI.getChoreFilterOptions();
+        const choreData = await choreAPI.getChores();
+        const choresWithDates = choreData.map(chore => ({
+          ...chore,
+          due_date: new Date(chore.due_date),
+        }));
+        getRoommates();
   
+        setLocationFilterList(filterData.locations);
+        setRoommateFilterList(filterData.roommates);
+        setChoresList(choresWithDates);
+      };
+  
+      loadData();
+    }, []);
+    
+    // add in date filters
+    const applyFilterChanges = async () => {
+      const data = await choreAPI.getChores({completed: completedFilter, assignee: roommateFilterList, location: locationFilterList});
+      const choresWithDates = data.map(chore => ({
+        ...chore,
+        due_date: new Date(chore.due_date),
+      }));
+      setChoresList(choresWithDates);
+  
+    }
+  
+    const refreshChores = async () => {
+      const data = await choreAPI.getChores();
+      const choresWithDates = data.map(chore => ({
+        ...chore,
+        due_date: new Date(chore.due_date),
+      }));
+      setChoresList(choresWithDates);
+    }
+  
+    const getChore = async (id: string) => {
+      const chore = await choreAPI.getChoreById(id);
+      chore.due_date = new Date(chore.due_date);
+      setSelectedItem(chore);
+    }
+
+    const getRoommates = async () => {
+      const roommates = await getHouseholdRoommates();
+      const filterRoommates= roommates.map(r => ({
+        id: r.id,
+        email: r.email,
+        first_name: r.first_name,
+        last_name: r.last_name,
+        name: r.full_name
+      }));
+      setRoommatesList(filterRoommates);
+    }
 
 
   return (
@@ -85,21 +157,21 @@ export default function InventoryScreen() {
           </View>
 
           <View style={styles.section}>
-            {itemList
+            {choresList
                 .filter(item => {
                   if(!searchText) return true;
-                  return item.name.toLowerCase().includes(searchText.toLowerCase());
+                  return item.title.toLowerCase().includes(searchText.toLowerCase());
                 })
                 .map((item) => (
                 <ChoreTile
                   id={item.id}
-                  title={item.name} 
+                  title={item.title} 
                   completed={item.completed}
-                  end_date={item.date}
-                  repeat={item.repeat}
+                  due_date={item.due_date ?? new Date()}
+                  repeat={item.repeat_unit}
                   assignee={item.assignee}
                   onPress={() => {
-                    setSelectedItem(item);
+                    getChore(item.id);
                     setViewItemVisible(true);
                   }}
                   onChange={() => console.log("changed")}
@@ -114,9 +186,32 @@ export default function InventoryScreen() {
             </TouchableOpacity>
           </View>
 
+          <ChoreItemModal 
+            visible={addItemVisible}
+            onClose={() => setAddItemVisible(false)}
+            title="Add Chore"
+            save={async (chore) => {
+              await choreAPI.createChore({
+                title: chore.title ?? "",
+                details: chore.details ?? "",
+                due_date: chore.due_date ?? new Date(),
+                repeat_unit: chore.repeat_unit ?? "daily",
+                repeat_value: chore.repeat_value ?? 1,
+                location: chore.location ?? "",
+                is_rotating: chore.is_rotating ?? false,
+                pass_to_next_unit: chore.pass_to_next_unit ?? "None",
+                pass_to_next_value: chore.pass_to_next_value ?? 0,
+                all_day: chore.all_day ?? true,
+                roommates_involved: chore.roommates_involved || [],
+              })
+              refreshChores();
+            }}
+            allRoommates={roommatesList}
+          />
+
           {selectedItem && (
             <ChoreViewModal 
-              item={selectedItem}
+              chore={selectedItem}
               visible={viewItemVisible}
               onClose={() => {
                 setViewItemVisible(false);
@@ -127,24 +222,25 @@ export default function InventoryScreen() {
                 setEditItemVisible(true);
               }}
               onDelete={() => {
+                choreAPI.deleteChore(selectedItem.id);
                 setViewItemVisible(false);
-                // set delete functionality here
+                refreshChores();
               }}
             />
           )}
-
-          <ChoreItemModal 
-            title="Add Chore"
-            visible={addItemVisible}
-            onClose={() => setAddItemVisible(false)}
-          />
 
           {selectedItem && (
             <ChoreItemModal
               visible={editItemVisible}
               onClose={() => setEditItemVisible(false)}
               title="Edit Chore"
-              item={selectedItem}
+              chore={selectedItem}
+              save={async (chore) => {
+                if(!selectedItem) return;
+                await choreAPI.updateChore(selectedItem.id, chore);
+                refreshChores();
+              }}
+              allRoommates={roommatesList}
             />
             
           )}
@@ -194,5 +290,3 @@ const styles = StyleSheet.create({
 
   
 });
-
-export type {ChoreItem};

@@ -7,9 +7,15 @@ type ChoreTileProps = {
     id: string;
     title: string;
     completed: boolean;
-    end_date: Date;
+    due_date: Date;
     repeat: string;
-    assignee: string;
+    assignee: {
+        email: string,
+        first_name: string,
+        id: string
+        last_name: string
+        name: string
+    };
     onChange: () => void;
     onPress: () => void;
 }
@@ -21,17 +27,16 @@ export default function ChoreTile(props: ChoreTileProps){
         <TouchableOpacity onPress={props.onPress}>
         <View 
             style={[styles.tile, props.completed && styles.restockTile]}
-            
         >
             <Text style={styles.titleHeading}>{props.title}</Text>
             <View style={styles.content}>
                 <View>
                     <Text>Repeats {props.repeat}</Text>
-                    <Text>Due on {props.end_date.toLocaleDateString()}</Text>
+                    <Text>Due on {props.due_date.toDateString()}</Text>
                 </View>
                 <View style={{flexDirection: 'row', gap: 10, alignItems: 'center'}}>
-                    <View style={styles.profile}><Text style={{color: '#fff'}}>{props.assignee.charAt(0)}</Text></View>
-                    <Text>{props.assignee}</Text>
+                    <View style={styles.profile}><Text style={{color: '#fff'}}>{props.assignee?.first_name.charAt(0) ?? "U"}</Text></View>
+                    <Text>{props.assignee?.first_name ?? "Unassigned"}</Text>
                 </View>
                 <CircularCheckbox 
                     checked = {checked}

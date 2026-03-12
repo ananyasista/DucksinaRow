@@ -1,5 +1,5 @@
 import {StyleSheet, View, Text, ScrollView, TouchableOpacity, TextInput } from 'react-native';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link } from 'expo-router';
@@ -11,61 +11,72 @@ import Octicons from "@expo/vector-icons/Octicons";
 import InvItemTile from '@/components/inv-item-tile';
 import InvViewModal from '@/components/inv-view-modal';
 
-type InvItem = {
-  id: string;
-  name: string;
-  details: string;
-  last_purchased_date: Date;
-  restock_needed: boolean;
-  quantity: number;
-  location: string;
-  last_purchased_by: string;
-}
-
-const mockData: InvItem[] = [
-  {
-    id: "123",
-    name: "Paper Towels",
-    details: "Use only one at a time",
-    last_purchased_date: new Date("2026-03-09"),
-    restock_needed: false,
-    quantity: 5,
-    location: "Kitchen",
-    last_purchased_by: "Elle"
-  },
-  {
-    id: "456",
-    name: "Trash Bags",
-    details: "Double bag!",
-    last_purchased_date: new Date("2026-03-10"),
-    restock_needed: true,
-    quantity: 3,
-    location: "Kitchen",
-    last_purchased_by: "Leyna"
-  }
-]
+import * as invAPI from '@/api/inventory';
 
 export default function InventoryScreen() {
-  const itemList = mockData;
-  
+  const [itemList, setItemList] = useState<invAPI.InventoryDetails[]>([]);
+  const [locationList, setLocationList] = useState<string[]>([]);
+  const [purchaseList, setPurchaseList] = useState<{ label: string; value: string }[]>([]);
+
   const [addItemVisible, setAddItemVisible] = useState(false);
   const [viewItemVisible, setViewItemVisible] = useState(false);
   const [editItemVisible, setEditItemVisible] = useState(false);
   const [restock, setRestock] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<InvItem | null>(null);
+  const [selectedItem, setSelectedItem] = useState<invAPI.InventoryDetails | null>(null);
   const [searchText, setSearchText] = useState('');
 
-  // TODO: have to create function that triggers when restock toggle is pressed
-  
+  const [locationFilterList, setLocationFilterList] = useState<string[]>([]);
+  const [purchaseFilterList, setPurchaseFilterList] = useState<string[]>([]);
+  const [stockFilter, setStockFilter] = useState<boolean>(true);
 
+  useEffect(() => {
+    const loadData = async () => {
+      const filterData = await invAPI.getInventoryFilterOptions();
+      const itemData = await invAPI.getInventory();
 
+      setLocationList(filterData.locations);
+      setPurchaseList(filterData.purchased_by);
+      setItemList(itemData);
+    };
+
+    loadData();
+  }, []);
+
+  const applyFilterChanges = async () => {
+    const data = await invAPI.getInventory({restock_needed: stockFilter, purchased_by: purchaseFilterList, location: locationFilterList});
+    setItemList(data);
+
+  }
+
+  const refreshItems = async () => {
+    const data = await invAPI.getInventory();
+    setItemList(data);
+  }
+
+  const getItem = async (id: string) => {
+    const item = await invAPI.getItemById(id);
+    item.last_purchased_date = new Date(item.last_purchased_date);
+    setSelectedItem(item);
+  }
+ 
   return (
     <SafeAreaView>
       <ScrollView>
         <View style={styles.fullLayout}>
           <Text style={styles.title}>Items</Text>
           <View style={{flexDirection: 'row', gap: 13}}>
-            <InvFilterModal title='Filters'/>
+            <InvFilterModal 
+              title='Filters'
+              locationFilterList={locationFilterList}
+              setLocationFilterList={setLocationFilterList}
+              purchaseFilterList={purchaseFilterList}
+              setPurchaseFilterList={setPurchaseFilterList}
+              stockFilter={stockFilter}
+              setStockFilter={setStockFilter}
+              locationList={locationList}
+              purchaseList={purchaseList}
+              onApply={() => applyFilterChanges()}
+            />
             <TextInput 
                 style={styles.input}
                 onChangeText={setSearchText}
@@ -75,7 +86,6 @@ export default function InventoryScreen() {
             />
           </View>
           
-
           <View style={styles.section}>
             {itemList
                 .filter(item => {
@@ -86,18 +96,18 @@ export default function InventoryScreen() {
                 <InvItemTile
                   id={item.id}
                   title={item.name} 
-                  category={item.location}
-                  restock={item.restock_needed} 
+                  category={item.location ?? ''}
+                  restock={item.restock_needed}
+                  quantity={item.quantity}
                   onChange={() => setRestock(!restock)}
                   onPress={() => {
-                    setSelectedItem(item);
+                    getItem(item.id);
                     setViewItemVisible(true);
                   }}
                 />
               ))
             }
           </View>
-
 
           <View style={styles.addButton}>
             <TouchableOpacity onPress={() => setAddItemVisible(true)}>
@@ -109,6 +119,17 @@ export default function InventoryScreen() {
             visible = {addItemVisible}
             onClose = {() => setAddItemVisible(false)}
             title = "Add Item"
+            save={async (item) => {
+                await invAPI.createItem({
+                  name: item.name ?? "",
+                  details: item.details ?? "",
+                  location: item.location ?? null,
+                  quantity: item.quantity ?? 1,
+                  restock_needed: false,
+                });
+
+              refreshItems();
+            }}
           />
 
           {selectedItem && (
@@ -121,8 +142,9 @@ export default function InventoryScreen() {
                 setEditItemVisible(true);
               }}
               onDelete={() => {
+                invAPI.deleteItem(selectedItem.id);
                 setViewItemVisible(false);
-                // TODO: add delete function call here
+                refreshItems();
               }}
             />
           )}
@@ -133,11 +155,13 @@ export default function InventoryScreen() {
             onClose = {() => setEditItemVisible(false)}
             title = "Edit Item"
             item = {selectedItem}
+            save={async (item) => {
+              if (!selectedItem) return;
+              await invAPI.updateItem(selectedItem.id, item);
+              refreshItems();
+            }}
           />
           )}
-
-
-          
           
         </View>    
       </ScrollView>
@@ -182,5 +206,3 @@ const styles = StyleSheet.create({
 
   
 });
-
-export type {InvItem};
