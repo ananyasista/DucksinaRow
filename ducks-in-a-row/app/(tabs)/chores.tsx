@@ -1,7 +1,7 @@
 import {StyleSheet, View, Text, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { useState, useEffect } from 'react';
 
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView} from 'react-native-safe-area-context';
 import { Link } from 'expo-router';
 
 import Octicons from "@expo/vector-icons/Octicons";
@@ -14,48 +14,6 @@ import ChoreItemModal from '@/components/chore-item-modal';
 import * as choreAPI from '@/api/chores';
 import { getHouseholdRoommates } from '@/api/household';
 
-// type ChoreItem = {
-//   id: string;
-//   title: string;
-//   details: string;
-//   repeat: string;
-//   date: Date;
-//   completed: boolean;
-//   assignee: string;
-//   location: string;
-//   next_assignee: string;
-//   roommates: string[];
-//   all_day: boolean;
-// }
-
-// const mockData: ChoreItem[] = [
-//   {
-//     id: "123",
-//     name: "Vacuum",
-//     details: "Empty when done!",
-//     date: new Date("2026-03-09"),
-//     completed: false,
-//     assignee: "Leyna",
-//     location: "Living Room",
-//     next_assignee: "Elle",
-//     repeat: 'daily',
-//     roommates: ["Leyna", "Elle", "Ananya", "Sofia"],
-//     all_day: false
-//   },
-//   {
-//     id: "456",
-//     name: "Wash Dishes",
-//     details: "Please clear the drying rack before starting",
-//     date: new Date("2026-03-09T20:36:26.989156Z"),
-//     completed: true,
-//     assignee: "Ananya",
-//     location: "Kitchen",
-//     next_assignee: "Sofia",
-//     repeat: 'daily',
-//     roommates: ["Ananya", "Sofia"],
-//     all_day: true
-//   }
-// ]
 
 export default function InventoryScreen() {
   const [choresList, setChoresList] = useState<choreAPI.ChoreDetail[]>([]);
@@ -141,8 +99,8 @@ export default function InventoryScreen() {
 
 
   return (
-    <SafeAreaView>
-      <ScrollView>
+    <SafeAreaView style={{flex: 1}}>
+      <ScrollView style={{paddingBottom: 100}}>
         <View style={styles.fullLayout}>
           <Text style={styles.title}>Chores</Text>
           <View style={{flexDirection: 'row', gap: 13}}>
@@ -179,12 +137,6 @@ export default function InventoryScreen() {
               ))
             }
           </View>  
-
-          <View style={styles.addButton}>
-            <TouchableOpacity onPress={() => setAddItemVisible(true)}>
-              <Octicons name='plus' size = {30} color='#fff'/>
-            </TouchableOpacity>
-          </View>
 
           <ChoreItemModal 
             visible={addItemVisible}
@@ -249,6 +201,11 @@ export default function InventoryScreen() {
 
         </View>    
       </ScrollView>
+        <View style={styles.addButton}>
+          <TouchableOpacity onPress={() => setAddItemVisible(true)}>
+            <Octicons name='plus' size = {30} color='#fff'/>
+          </TouchableOpacity>
+        </View>
     </SafeAreaView>
   );
 }
@@ -275,7 +232,10 @@ const styles = StyleSheet.create({
         height: 50,
         borderRadius: 30,
         justifyContent: 'center',
-        alignItems: 'center'
+        alignItems: 'center',
+        position: 'absolute',
+        bottom: 25,
+        right: 25
     },
   
   input: {
