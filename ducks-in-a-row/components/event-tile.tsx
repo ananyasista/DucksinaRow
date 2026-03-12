@@ -3,7 +3,7 @@ import {Switch, StyleSheet, View, TouchableOpacity} from 'react-native';
 import { ThemedText } from './themed-text';
 import { Text } from '@react-navigation/elements';
 import { IconSymbol } from './ui/icon-symbol';
-import {CalendarEvent as APICalendarEvent, ApprovalEvent as APIApprovalEvent, CalendarEvent} from '@/api/calendar';
+import {CalendarEvent as APICalendarEvent, ApprovalEvent as APIApprovalEvent, CalendarEvent, getEventId, EventDetails as APIEventDetails} from '@/api/calendar';
 import EventModal from './modal-event';
 interface EventTileProps {
   event: APICalendarEvent;
@@ -16,7 +16,7 @@ export function EventTile({event, owner}:EventTileProps) {
     const [eventDetails, setEventDetails] = useState(false);
     const [startDate, setStartDate] = useState(new Date(event.start_date));
     const [endDate, setEndDate] = useState(event.end_date ? new Date(event.end_date) : new Date(event.start_date+3600*1000));
-
+    const [pending, setPending] = useState<APIEventDetails>();
     useEffect(()=>{
         getPrintDate();
     },[])
@@ -95,10 +95,17 @@ export function EventTile({event, owner}:EventTileProps) {
         }
         setPrintDate(date);
     }
+
+    async function openEventDetails() 
+    {
+        const currPending = await getEventId(event.id);
+        setPending(currPending);
+        setEventDetails(true);
+    }
     
     //TODO: Add in Created by, Approved by #, Waiting for #, Decline/Approve functionality
   return (
-    <TouchableOpacity id={event.id} style={eventTileStyle.container} onPress={() => setEventDetails(true)}>
+    <TouchableOpacity id={event.id} style={eventTileStyle.container} onPress={() => openEventDetails()}>
         <View style={eventTileStyle.titleContainer}>
             <ThemedText type="boldText">{event.title}</ThemedText>
             { owner && event.approval_status && (event.approval_status === "approved" ||(event.approval_counts &&event.approval_counts?.approved >= event.approval_counts.total)) && (
@@ -148,7 +155,7 @@ export function EventTile({event, owner}:EventTileProps) {
              </View>
         )}
         { eventDetails && (
-            <EventModal event={event} owner={owner} printDate={printDate}  onClose={() => setEventDetails(false)}/>
+            <EventModal event={event} owner={owner} pendingEvent={pending} printDate={printDate}  onClose={() => setEventDetails(false)}/>
         )}
         
     </TouchableOpacity>
