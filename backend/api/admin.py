@@ -35,6 +35,7 @@ class UserAdmin(DjangoUserAdmin):
     list_display = (
         "household_code",
         "household_name",
+        "id",
         "email",
         "first_name",
         "last_name",
