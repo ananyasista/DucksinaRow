@@ -108,7 +108,7 @@ export default function EventModal({event, owner=false, printDate, ...props}:Eve
                 <View style={{borderBottomColor: 'rgba(215, 209, 209, 1)', borderBottomWidth: 1, marginTop: 10, marginBottom: 10}}/>
             </View>
             <ThemedText type='title'>Roommate Approval</ThemedText>
-            <ThemedText type='subtitle'>1 of 2 roommates have approved</ThemedText>
+            <ThemedText type='subtitle'>2 of 3 roommates have approved</ThemedText>
             <View style={[modalTheme.rowSpace, modalTheme.rowPadding]}>
                 <View  style={modalTheme.rowStart}>
                     <View style={modalTheme.avatarCircle}>
@@ -122,10 +122,21 @@ export default function EventModal({event, owner=false, printDate, ...props}:Eve
             </View>
             <View style={[modalTheme.rowSpace, modalTheme.rowPadding]}>
                 <View  style={modalTheme.rowStart}>
-                    <View style={modalTheme.avatarCircleYellow}>
+                    <View style={modalTheme.avatarCircle}>
                     <Text style={modalTheme.avatarText}>E</Text>
                     </View>
                     <ThemedText type='boldText'>Elle</ThemedText>
+                </View>
+                <TouchableOpacity  style={modalTheme.rowEnd} onPress={() => notifyRoommate()}>
+                    <Octicons size={30} name='check-circle' color='black'/>
+                </TouchableOpacity>
+            </View>
+            <View style={[modalTheme.rowSpace, modalTheme.rowPadding]}>
+                <View  style={modalTheme.rowStart}>
+                    <View style={modalTheme.avatarCircleYellow}>
+                    <Text style={modalTheme.avatarText}>S</Text>
+                    </View>
+                    <ThemedText type='boldText'>Sofia</ThemedText>
                 </View>
                 <TouchableOpacity  style={modalTheme.rowEnd} onPress={() => notifyRoommate()}>
                     <Octicons size={30} name='bell' color='black'/>
