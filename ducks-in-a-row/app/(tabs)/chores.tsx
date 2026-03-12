@@ -124,7 +124,6 @@ export default function InventoryScreen() {
     const getChore = async (id: string) => {
       const chore = await choreAPI.getChoreById(id);
       chore.due_date = new Date(chore.due_date);
-      console.log(chore);
       setSelectedItem(chore);
     }
 

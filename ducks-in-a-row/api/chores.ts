@@ -128,9 +128,9 @@ export const getChores = async (filters?: {
   };
 
   const response = await api.get<RawChore[]>("/chore/", { params });
-  console.log(response.data);
+  // console.log(response.data);
   const chore_detail = response.data.map(parseChore);
-  console.log(chore_detail);
+  // console.log(chore_detail);
   return chore_detail;
 };
 
@@ -165,13 +165,16 @@ export const createChore = async (data: ChoreCreateInput) => {
     pass_to_next_unit: data.pass_to_next_unit?.toLowerCase(),
     location: data.location?.toLowerCase(),
   };
-  console.log(payload);
+
+  // console.log(payload);
+
   const response = await api.post("/chore/", payload);
   return response.data;
 };
 
 export const updateChore = async (id: string, data: Partial<ChoreDetail>) => {
-  console.log(data);
+  // console.log(data);
+  
   const { roommates_involved, ...rest } = data; // pull it out
   // Format due_date correctly
   let formattedDueDate = null;
@@ -185,6 +188,7 @@ export const updateChore = async (id: string, data: Partial<ChoreDetail>) => {
       formattedDueDate = dateObj.toISOString(); // "YYYY-MM-DDTHH:MM:SS.sssZ"
     }
   }
+
   const payload = {
     ...rest,
     due_date: formattedDueDate,
@@ -192,6 +196,7 @@ export const updateChore = async (id: string, data: Partial<ChoreDetail>) => {
     pass_to_next_unit: data.pass_to_next_unit?.toLowerCase(),
     location: data.location?.toLowerCase()
   };
+
   const response = await api.patch(`/chore/${id}/`, payload);
   return response.data;
 };
