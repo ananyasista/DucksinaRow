@@ -112,7 +112,7 @@ export default function InventoryScreen() {
   
     }
   
-    const refreshItems = async () => {
+    const refreshChores = async () => {
       const data = await choreAPI.getChores();
       const choresWithDates = data.map(chore => ({
         ...chore,
@@ -205,7 +205,7 @@ export default function InventoryScreen() {
                 all_day: chore.all_day ?? true,
                 roommates_involved: chore.roommates_involved || [],
               })
-              refreshItems();
+              refreshChores();
             }}
             allRoommates={roommatesList}
           />
@@ -225,6 +225,7 @@ export default function InventoryScreen() {
               onDelete={() => {
                 choreAPI.deleteChore(selectedItem.id);
                 setViewItemVisible(false);
+                refreshChores();
               }}
             />
           )}
@@ -238,7 +239,7 @@ export default function InventoryScreen() {
               save={async (chore) => {
                 if(!selectedItem) return;
                 await choreAPI.updateChore(selectedItem.id, chore);
-                refreshItems();
+                refreshChores();
               }}
               allRoommates={roommatesList}
             />

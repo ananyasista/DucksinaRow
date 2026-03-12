@@ -144,6 +144,7 @@ export default function InventoryScreen() {
               onDelete={() => {
                 invAPI.deleteItem(selectedItem.id);
                 setViewItemVisible(false);
+                refreshItems();
               }}
             />
           )}

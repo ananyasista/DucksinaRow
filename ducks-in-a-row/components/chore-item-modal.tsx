@@ -189,7 +189,7 @@ export default function ChoreItemModal(props: ModalProps) {
                         </Text>
                         <View style={{flexDirection: 'row'}}>
                             <IconSymbol name='calendar' size={30} color="#000"/>
-                            {/* {allDay ? (
+                            {allDay ? (
                             <DateTimePicker
                                     testID="dateTimePicker"
                                     value={dueDate}
@@ -209,7 +209,7 @@ export default function ChoreItemModal(props: ModalProps) {
                                     themeVariant='light'
                                     onChange={() => setDueDate}
                                 />
-                            )} */}
+                            )}
                             
                         </View>
                     </View>
