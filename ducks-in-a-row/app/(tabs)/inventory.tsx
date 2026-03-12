@@ -56,9 +56,6 @@ export default function InventoryScreen() {
   const getItem = async (id: string) => {
     const item = await invAPI.getItemById(id);
     item.last_purchased_date = new Date(item.last_purchased_date);
-    // NOTE: Need to get USER
-    // item.last_purchased_by = { label: ; value: item.last_purchased_by }
-    console.log(item.last_purchased_date);
     setSelectedItem(item);
   }
  
@@ -159,7 +156,6 @@ export default function InventoryScreen() {
             item = {selectedItem}
             save={async (item) => {
               if (!selectedItem) return;
-
               await invAPI.updateItem(selectedItem.id, item);
               refreshItems();
             }}

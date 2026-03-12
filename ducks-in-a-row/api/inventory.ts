@@ -11,9 +11,12 @@ export interface InventoryCard {
 
 export interface InventoryDetails extends InventoryCard {
   last_purchased_by: {
-    id: string;
-    name: string;
-  }[];
+    email: string,
+    first_name: string,
+    id: string
+    last_name: string
+    name: string
+  };
   created_date: string;
   last_purchased_date: Date;
 }

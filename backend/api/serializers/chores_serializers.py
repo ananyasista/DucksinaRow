@@ -1,15 +1,16 @@
 from rest_framework import serializers
 from django.utils import timezone
 from ..models import Chore, ChoreAssignment
+from .serializers import SimpleUserSerializer
 
 
 class ChoreAssignmentSerializer(serializers.ModelSerializer):
-    assignee_name = serializers.CharField(source="assignee.name", read_only=True)
+    assignee = SimpleUserSerializer(read_only=True)
     chore_id = serializers.PrimaryKeyRelatedField(source="chore", read_only=True)
 
     class Meta:
         model = ChoreAssignment
-        fields = ["id", "chore_id", "assignee", "assignee_name", "due_date", "completed", "all_day"]
+        fields = ["id", "chore_id", "assignee", "due_date", "completed", "all_day"]
 
 class ChoreListSerializer(serializers.ModelSerializer):
     latest_assignment = serializers.SerializerMethodField()

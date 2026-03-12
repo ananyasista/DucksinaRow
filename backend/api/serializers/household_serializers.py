@@ -12,7 +12,7 @@ class RoommateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ("id", "full_name", "email", "living_preferences")
+        fields = ("id", "full_name", "first_name", "last_name", "email", "living_preferences")
 
     def get_full_name(self, obj):
         name = f"{obj.first_name} {obj.last_name}".strip()
