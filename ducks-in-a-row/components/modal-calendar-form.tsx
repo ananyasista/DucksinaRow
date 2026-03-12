@@ -1,5 +1,5 @@
 import { Calendar, ICalendarEventBase, Mode } from 'react-native-big-calendar'
-import { StyleSheet, Dimensions, TouchableOpacity, Modal, Platform} from 'react-native';
+import { StyleSheet, Dimensions, TouchableOpacity, Modal, Platform, ScrollView} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useState } from 'react';
 // import { View } from 'react-native-reanimated/lib/typescript/Animated';
@@ -14,18 +14,15 @@ import { ThemedSwitch } from './themed-switch';
 import DateTimePicker, { DateTimePickerEvent, Event } from '@react-native-community/datetimepicker';
 import RNDateTimePicker from '@react-native-community/datetimepicker';
 import { IconSymbol } from './ui/icon-symbol';
+import {CalendarEvent as APICalendarEvent} from '@/api/calendar';
 
 type ModalProps = PropsWithChildren<{
     formTitle:string;
     edit?: boolean;
-    event?: CalendarEvent | null;
+    event?: APICalendarEvent | null;
     onClose?: any;
 }>;
 
-export interface CalendarEvent extends ICalendarEventBase {
-  description: string;
-  needsApproval?:any;
-}
 export default function ModalCalendarForm({edit = false, onClose, ...props}: ModalProps) {
     const [addVisible, setAddVisible] = useState(edit);
     const [startDate, setStartDate] = useState(new Date());
@@ -49,9 +46,9 @@ export default function ModalCalendarForm({edit = false, onClose, ...props}: Mod
     
     const showMode = (currentMode: any) => {
       setShowStart(true);
-      setStartDate(props.event?.start ?? new Date());
+      setStartDate(new Date(props.event?.start_date + "") ?? new Date());
       setShowEnd(true);
-      setEndDate(props.event?.end ?? new Date(startDate.getTime() + 3600*1000));
+      setEndDate(new Date(props.event?.end_date +"") ?? new Date(startDate.getTime() + 3600*1000));
       setMode(currentMode);
       endDate.setHours(endDate.getHours()+1);
     };
@@ -114,12 +111,13 @@ export default function ModalCalendarForm({edit = false, onClose, ...props}: Mod
                     <Text style={modalTheme.saveText}>Save</Text>
                 </TouchableOpacity>
             </View>
+            <ScrollView>
             <View style= {{flex: 1, padding: 16}}>
                 {eventTitleError && (<ThemedText type='errorText'>Event title is required</ThemedText>)}
                 <ThemedText type="boldText" >Event Title:</ThemedText>
                 <ThemedTextInput placeholder="Item Name" defaultValue={props.event?.title}/>
                 <ThemedText type="boldText">Description:</ThemedText>
-                <ThemedTextInput size="large" multiline={true} placeholder="Add Details" defaultValue={props.event?.description}/>
+                <ThemedTextInput size="large" multiline={true} placeholder="Add Details" defaultValue={props.event?.details}/>
                 <ThemedSwitch label="All-Day" />
                 
                 <View onLayout={showDatepicker}>
@@ -188,6 +186,9 @@ export default function ModalCalendarForm({edit = false, onClose, ...props}: Mod
                 <ThemedSwitch label="Needs Roommates Approval?"/>
                 <ThemedText type='text'>Notify all roommates to approve this event</ThemedText>
             </View>
+            <></><></><></>
+            </ScrollView>
+            
         </Modal>
     </View>
   )

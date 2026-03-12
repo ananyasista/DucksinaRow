@@ -9,7 +9,7 @@ import ModalCalendarForm from '@/components/modal-calendar-form';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import AntDesign from '@expo/vector-icons/AntDesign';
-import { CalendarEvent as APICalendarEvent, listHouseholdEvents, listMyEvents } from '@/api/calendar';
+import { CalendarEvent as APICalendarEvent, ApprovalEvent, listHouseholdEvents, listMyEvents, listNeedsApproval } from '@/api/calendar';
 
 
 export interface CalendarEvent extends ICalendarEventBase {
@@ -21,6 +21,7 @@ export default function CalendarPage () {
     const { mode } = useLocalSearchParams();
     const [events, setEvents] = useState<ICalendarEventBase[]>([]);
     const [myEvents, setMyEvents] = useState<APICalendarEvent[]>([]);
+    const [needsMyApproval, setNeedsMyApproval] = useState<APICalendarEvent[]>([]);
     const month = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
     const [currentDate, setCurrentDate] = useState(new Date());
     const [openDropdown, setOpenDropdown] = useState(false);
@@ -42,15 +43,40 @@ export default function CalendarPage () {
     const onScreenLoad = async () => {
       try {
         const allEvents = await listHouseholdEvents();
-        // const loadMyEvents = await listMyEvents();
+        console.log(allEvents);
+        const loadMyEvents = await listMyEvents();
+        console.log(loadMyEvents);
+        const loadNeedMyApproval:ApprovalEvent[] = await listNeedsApproval();
+        console.log(loadNeedMyApproval);
         const calenEvents: ICalendarEventBase[] = 
           allEvents.map((event) => ({
             start: new Date(event.start_date),
             end: new Date(event.end_date ? event.end_date : new Date(event.start_date + 3600*1000).toISOString()),
             title: event.title,
           }));
+          console.log(loadNeedMyApproval);
+        const needMyApprovalEvents: APICalendarEvent[] = 
+          loadNeedMyApproval.map((e) => ({
+            id: e.id,
+            title: e.event.title,
+            details: "",
+            all_day: (e.event.start_date === e.event.end_date),
+            start_date: e.event.start_date,
+            end_date: e.event.end_date,
+            repeat: "",
+            requires_approval: e.event.requires_approval,
+            location: e.event.location,
+            event_owner_name: {
+              id: "",
+              full_name: e.event.event_owner_name ?? "",
+              email: "",
+            },
+        }))
+        console.log(needMyApprovalEvents);
+        
         setEvents(calenEvents);
-        setMyEvents([]);
+        setMyEvents(loadMyEvents);
+        setNeedsMyApproval(needMyApprovalEvents);
         // console.log(loadMyEvents);
       } catch (e: any) {
         console.log("Home page error: " + e);
@@ -130,7 +156,7 @@ export default function CalendarPage () {
                 {showCalendar && (<ThemedText type='secondarySubtitle'>{month[currentDate.getMonth()]} {currentDate.getFullYear()}</ThemedText>)}
               </View>
             </View>
-            <TouchableOpacity ref={menuRef} onPress={toggleDropdown} onBlur={() => setOpenDropdown(false)}>
+            <TouchableOpacity ref={menuRef} onPress={toggleDropdown} >
               <AntDesign name="menu" size={32} color="black" />
            </TouchableOpacity>
         </View>
@@ -176,20 +202,26 @@ export default function CalendarPage () {
             <ScrollView style={calendarTheme.indent}>
               <ThemedText type='secondarySubtitle'>Needs Approval</ThemedText>
               {
-                
+                needsMyApproval.map((event) => {
+                  return <EventTile key={event.id} event={event} owner={false}/>
+                })
               }
               <ThemedText type='secondarySubtitle'>Your Events</ThemedText>
               {
-                // events.map((event) =>  {
-                //   if(!event.needsApproval.includes('me'))
-                //   {
-                //     return  <EventTile title={event.title} start={event.start} end={event.end} description ={event.description} needsApproval= {event.needsApproval}/>;
-                //   }
-                // })
+                
                 myEvents.map((event) => {
-                    if(event.requires_approval)
+                    if(event.requires_approval && event.approval_counts && event.approval_counts?.approved < event.approval_counts?.total)
                     {
-                      return <EventTile title = {event.title} start={new Date(event.start_date)} end ={new Date(event.end_date ? event.end_date : new Date(event.start_date+3600*1000).toString())} description={event.details? event.details:""} needsApproval={true}/>
+                      return <EventTile key={event.id} event={event} owner={true}/>
+                    }
+                })
+                
+              }
+              {
+                myEvents.map((event) => {
+                    if(event.requires_approval && event.approval_counts && event.approval_counts?.approved >= event.approval_counts?.total)
+                    {
+                      return <EventTile key={event.id} event={event} owner={true}/>
                     }
                 })
               }
@@ -201,7 +233,7 @@ export default function CalendarPage () {
         <ModalCalendarForm formTitle ="Create Event" edit={false} onClose={() => setEditModal(false)} />
 
         {editModal && (
-          <ModalCalendarForm formTitle="Edit Event" edit={true} event={event} onClose={() => setEditModal(false)}/>
+          <ModalCalendarForm formTitle="Edit Event" edit={true}  onClose={() => setEditModal(false)}/>
           )}
     </SafeAreaView>
   )

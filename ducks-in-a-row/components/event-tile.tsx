@@ -1,47 +1,53 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Switch, StyleSheet, View, TouchableOpacity} from 'react-native';
 import { ThemedText } from './themed-text';
 import { Text } from '@react-navigation/elements';
 import { IconSymbol } from './ui/icon-symbol';
-import { CalendarEvent } from './modal-calendar-form';
+import {CalendarEvent as APICalendarEvent} from '@/api/calendar';
 import EventModal from './modal-event';
-
-export function EventTile(event:CalendarEvent) {
+interface EventTileProps {
+  event: APICalendarEvent;
+  owner: boolean;
+}
+export function EventTile({event, owner}:EventTileProps) {
     const abbrMonth = ["Jan","Feb","Mar","Apr","May","June","July","Aug","Sept","Oct","Nov","Dec"];
     const [printDate, setPrintDate] = useState("");
     const [showModal, setShowModal] = useState(false);
     const [eventDetails, setEventDetails] = useState(false);
-
+    const [startDate, setStartDate] = useState(new Date(event.start_date));
+    const [endDate, setEndDate] = useState(event.end_date ? new Date(event.end_date) : new Date(event.start_date+3600*1000));
+    useEffect(()=>{
+        getPrintDate();
+    },[])
     function getPrintDate() {
         var date = "";
-        date += abbrMonth[event.start.getMonth()] + " ";
-        date += event.start.getDate();
-        if(event.start.getDate() === 1 || event.start.getDate() === 21 || event.start.getDate() === 31)
-        {
-            date += "st";
-        } else if (event.start.getDate() === 2 || event.start.getDate() === 22) {
-            date += "nd";
-        } else if(event.start.getDate() === 3 || event.start.getDate() === 23) {
-            date += "rd";
-        } else {
-            date += "th";
-        }
+        date += abbrMonth[startDate.getMonth()] + " ";
+        date += startDate.getDate();
+        var day = startDate.getDate()+"";
+        const st = new RegExp("$1|21|31^");
+        const nd = new RegExp("$2|22^");
+        const rd = new RegExp("$3|23^");
+        date +=  st.test(day)? "st" : 
+                nd.test(day)? "nd" :
+                rd.test(day)?"rd" :
+                "th";
         date += " ";
-        if(event.start.getHours() == 0)
+
+        if(startDate.getHours() == 0)
         {
-            date += "12:" + event.start.getMinutes();
-        } else if(event.start.getHours() > 12) {
-            date += (event.start.getHours()%12) + ":"+ event.start.getMinutes();
+            date += "12:" + startDate.getMinutes();
+        } else if(startDate.getHours() > 12) {
+            date += (startDate.getHours()%12) + ":"+ startDate.getMinutes();
         } else {
-            date += event.start.getHours() + ":"+ event.start.getMinutes();
+            date += startDate.getHours() + ":"+ startDate.getMinutes();
         }
         
-        if(event.start.getMinutes() === 0)
+        if(startDate.getMinutes() === 0)
         {
             date += "0";
         }
         date += " ";
-        if(event.start.getHours() < 12)
+        if(startDate.getHours() < 12)
         {
             date += "AM";
         } else {
@@ -49,37 +55,37 @@ export function EventTile(event:CalendarEvent) {
         }
         date += " - ";
         
-        if(event.start.getMonth() !== event.end.getMonth() || event.start.getDate() !== event.end.getDate())
+        if(startDate.getMonth() !== endDate.getMonth() || startDate.getDate() !== endDate.getDate())
         {
-            date += abbrMonth[event.end.getMonth()] + " ";
-            date += event.end.getDate() ;
-            if(event.end.getDate() === 1 || event.end.getDate() === 21 || event.end.getDate() === 31)
+            date += abbrMonth[endDate.getMonth()] + " ";
+            date += endDate.getDate() ;
+            if(endDate.getDate() === 1 || endDate.getDate() === 21 || endDate.getDate() === 31)
             {
                 date += "st";
-            } else if (event.end.getDate() === 2 || event.end.getDate() === 22) {
+            } else if (endDate.getDate() === 2 || endDate.getDate() === 22) {
                 date += "nd";
-            } else if(event.end.getDate() === 3 || event.end.getDate() === 23) {
+            } else if(endDate.getDate() === 3 || endDate.getDate() === 23) {
                 date += "rd";
             } else {
                 date += "th";
             }
             date += " ";
         } 
-        if(event.end.getHours() == 0)
+        if(endDate.getHours() == 0)
         {
-            date += "12:" + event.end.getMinutes();
-        } else if(event.end.getHours() > 12) {
-            date += (event.end.getHours()%12) + ":"+ event.end.getMinutes();
+            date += "12:" + endDate.getMinutes();
+        } else if(endDate.getHours() > 12) {
+            date += (endDate.getHours()%12) + ":"+ endDate.getMinutes();
         } else {
-            date += event.end.getHours() + ":"+ event.end.getMinutes();
+            date += endDate.getHours() + ":"+ endDate.getMinutes();
         }
         
-        if(event.end.getMinutes() === 0)
+        if(endDate.getMinutes() === 0)
         {
             date += "0";
         }
         date += " ";
-        if(event.end.getHours() < 12)
+        if(endDate.getHours() < 12)
         {
             date += "AM";
         } else {
@@ -89,30 +95,32 @@ export function EventTile(event:CalendarEvent) {
     }
     //TODO: Add in Created by, Approved by #, Waiting for #, Decline/Approve functionality
   return (
-    <TouchableOpacity style={eventTileStyle.container} onPress={() => setEventDetails(true)}>
+    <TouchableOpacity id={event.id} style={eventTileStyle.container} onPress={() => setEventDetails(true)}>
         <View style={eventTileStyle.titleContainer}>
             <ThemedText type="boldText">{event.title}</ThemedText>
-            { !event.needsApproval.includes('me') && event.needsApproval.length === 0 && (
+            { owner && event.approval_status && (event.approval_status === "approved" ||(event.approval_counts &&event.approval_counts?.approved >= event.approval_counts.total)) && (
                 <Text style={eventTileStyle.approvedBubble}>Approved</Text>
             )}
-            { !event.needsApproval.includes('me') && event.needsApproval.length !== 0 && (
+            { owner && event.approval_status && ((event.approval_counts && event.approval_counts?.approved < event.approval_counts.total)) && (
                 <Text style={eventTileStyle.pendingBubble}>Pending</Text>
             )}
         </View>
-        <ThemedText type='text'>{event.description}</ThemedText>
+        <ThemedText type='text'>{event.details}</ThemedText>
         <View style={eventTileStyle.titleContainer} onLayout={getPrintDate}>
             <IconSymbol size={20} name="calendar" color='black'/>
             <ThemedText type='text'>{printDate}</ThemedText>
-            {/* <ThemedText type='text'>{abbrMonth[event.start.getMonth()]} {event.start.getDay().toString()} • {event.start.getHours().toString()}-{event.end.getHours().toString()}:{event.end.getMinutes().toString()}</ThemedText> */}
         </View>
         <View style={eventTileStyle.titleContainer}>
-            <IconSymbol size={20} name="pin" color='black'/>
-            <ThemedText type='text'>Location</ThemedText>
+            { event.location && event.location !== "" &&
+                <IconSymbol name='pin' size={20} color="black"/> &&
+                <ThemedText type='text'>Location: {event.location} </ThemedText>
+            }
+            
         </View>
-        {event.needsApproval.includes('me') && (
+        {!owner && (
             <View style={{width:'100%'}}>
                 <View style={{borderBottomColor: 'rgba(215, 209, 209, 1)', borderBottomWidth: 1, marginTop: 10, marginBottom: 10}}/>
-                <ThemedText type='text'>Created By: ADD CREATOR</ThemedText>
+                <ThemedText type='text'>Created By: {event.event_owner_name?.full_name}</ThemedText>
                 <View style={eventTileStyle.buttonContainer}>
                         <TouchableOpacity style={eventTileStyle.declineButton}>
                             <Text style={eventTileStyle.cancelText}>Decline</Text>
@@ -123,20 +131,21 @@ export function EventTile(event:CalendarEvent) {
                 </View>
             </View>
         )}
-        { !event.needsApproval.includes('me') && event.needsApproval.length === 0 && (
+        { owner && event.approval_status && (event.approval_status === "approved" ||(event.approval_counts &&event.approval_counts?.approved >= event.approval_counts.total)) && (
            <View style={eventTileStyle.titleContainer}>
             <IconSymbol size={20} name="checkmark" color='black'/>
-            <Text style={eventTileStyle.approvedText}>Approved by X roommates</Text>
+            <Text style={eventTileStyle.approvedText}>Approved by all roommates</Text>
          </View>
         )}
-        { !event.needsApproval.includes('me') && event.needsApproval.length !== 0 && (
+       
+        { owner && event.approval_status && ((event.approval_counts &&event.approval_counts?.approved < event.approval_counts.total))&&  (
             <View style={eventTileStyle.titleContainer}>
                 <IconSymbol size={20} name="hourglass" color='black'/>
-                <Text style={eventTileStyle.pendingText}>Waiting for approval (#/#)</Text>
+                <Text style={eventTileStyle.pendingText}>Waiting for approval ({(event.approval_counts?.total ?? 0) - (event.approval_counts?.approved ?? 0)}/{event.approval_counts?.total} remaining)</Text>
              </View>
         )}
         { eventDetails && (
-            <EventModal event={event}  onClose={() => setEventDetails(false)}/>
+            <EventModal event={event} printDate={printDate}  onClose={() => setEventDetails(false)}/>
         )}
         
     </TouchableOpacity>

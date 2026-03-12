@@ -17,6 +17,11 @@ export interface CalendarEvent {
   };
   notification_value?: number | null;
   notification_unit?: string | null;
+  approval_status?: "approved"|"pending"|"declined";
+  approval_counts?: {
+    approved:number;
+    total: number;
+  }
 }
 
 export interface ApprovalEvent {
