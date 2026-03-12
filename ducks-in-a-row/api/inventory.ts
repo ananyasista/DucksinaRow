@@ -13,9 +13,9 @@ export interface InventoryDetails extends InventoryCard {
   last_purchased_by: {
     email: string,
     first_name: string,
-    id: string
-    last_name: string
-    name: string
+    id: string,
+    last_name: string,
+    name: string,
   };
   created_date: string;
   last_purchased_date: Date;
@@ -36,7 +36,7 @@ export const getInventory = async (filters?: {
     params: params,
   });
 
-  console.log(response.data);
+  // console.log(response.data);
   return response.data;
 };
 

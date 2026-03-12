@@ -7,7 +7,7 @@ from rest_framework.authtoken.models import Token
 from django.utils import timezone
 
 from rest_framework import viewsets
-from ..serializers.chores_serializers import ChoreSerializer, ChoreListSerializer, ChoreAssignmentSerializer
+from ..serializers.chores_serializers import ChoreSerializer, ChoreAssignmentSerializer
 from ..models import Chore, User, ChoreAssignment
 
 class ChoreViewSet(viewsets.ModelViewSet):
@@ -16,8 +16,8 @@ class ChoreViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_serializer_class(self):
-        if self.action == "list":
-            return ChoreListSerializer
+        # if self.action == "list":
+        #     return ChoreListSerializer
         return ChoreSerializer
     
     # READ
@@ -64,14 +64,20 @@ class ChoreViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         chore = serializer.save(household=self.request.user.household)
-    
-        initial_assignee = self.request.data.get("initial_assignee")
+
+        initial_assignee_id = self.request.data.get("initial_assignee")
+        next_assignee_id = self.request.data.get("next_assignee")
         due_date = self.request.data.get("due_date")
-        if initial_assignee and due_date:
+
+        # Create the initial assignment
+        if initial_assignee_id and due_date:
             ChoreAssignment.objects.create(
                 chore=chore,
-                assignee_id=initial_assignee,
-                due_date=due_date
+                assignee_id=initial_assignee_id,
+                next_assignee_id=next_assignee_id,
+                due_date=due_date,
+                completed=False,
+                all_day=self.request.data.get("all_day", True)
             )
 
     def destroy(self, request, *args, **kwargs):
@@ -115,7 +121,6 @@ class ChoreViewSet(viewsets.ModelViewSet):
         return Response(data)
     
     def perform_update(self, serializer):
-
         instance = self.get_object()
         was_complete = instance.completed
 

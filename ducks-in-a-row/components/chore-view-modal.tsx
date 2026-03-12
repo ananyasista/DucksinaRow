@@ -5,9 +5,10 @@ import { useState } from 'react';
 import { ChoreItem } from '@/app/(tabs)/chores';
 import { IconSymbol } from './ui/icon-symbol';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { ChoreDetail } from '@/api/chores';
 
 type ModalProps = {
-    item: ChoreItem;
+    chore: ChoreDetail;
     //toggleRestock: () => void;
     visible: boolean;
     onClose: () => void;
@@ -47,34 +48,34 @@ export default function ChoreViewModal(props: ModalProps) {
 
                 <SafeAreaView style={styles.modalContent}>
                     <View style={{gap: 10}}>
-                        <Text style={styles.title}>{props.item.name}</Text>
-                        <Text style={styles.text}>{props.item.details}</Text>
+                        <Text style={styles.title}>{props.chore.title}</Text>
+                        <Text style={styles.text}>{props.chore.details}</Text>
                         <View style={{flexDirection: 'row'}}>
                             <IconSymbol name='calendar' size={30} color="#000"/>
                             <DateTimePicker
                                 testID="dateTimePicker"
-                                value={props.item.date}
+                                value={props.chore.due_date}
                                 is24Hour={true}
                                 mode={'date'}
                                 display = 'default'
                                 themeVariant='light'
                             />
                         </View>
-                        <Text style={styles.subHeading}>Pass chore to next roommate: <Text style={styles.text}>{props.item.repeat}</Text></Text>
-                        <Text style={styles.subHeading}>Next Up: <Text style={styles.text}>{props.item.next_assignee}</Text></Text>
+                        <Text style={styles.subHeading}>Pass chore to next roommate: <Text style={styles.text}>{props.chore.repeat_value} {props.chore.repeat_unit}</Text></Text>
+                        <Text style={styles.subHeading}>Next Up: <Text style={styles.text}>{props.chore.next_assignee.first_name}</Text></Text>
                         <View>
                             <Text style={styles.subHeading}>Roomates Involved:</Text>
                             <View style={styles.chipView}>
-                            {props.item.roommates.map((name) =>
+                            {props.chore.roommates_involved.map((r) =>
                                     <Chip 
-                                        key={name}
-                                        title={name}
+                                        key={r.id}
+                                        title={r.first_name}
                                     />
                                 )} 
                             </View>
                             
                         </View>
-                        <Text style={styles.subHeading}>Locations: <Text style={styles.text}>{props.item.location}</Text></Text>
+                        <Text style={styles.subHeading}>Locations: <Text style={styles.text}>{props.chore.location}</Text></Text>
                         
                     </View>
                     

@@ -206,8 +206,6 @@ class Chore(models.Model):
         blank=True
     )
 
-    # ANANYA - add repeat and pass to
-
     is_rotating = models.BooleanField(default=False)
 
     roommates_involved = models.ManyToManyField(
@@ -250,6 +248,14 @@ class ChoreAssignment(models.Model):
         null=True
     )
 
+    next_assignee = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True, 
+        related_name='next_assignments'
+    )
+
     due_date = models.DateField()
 
     completed = models.BooleanField(default=False)
@@ -260,53 +266,49 @@ class ChoreAssignment(models.Model):
 
     def create_next_assignment(self):
         chore = self.chore
-
-        # Prevent duplicate assignments
-        if ChoreAssignment.objects.filter(
-            chore=chore,
-            due_date__gt=self.due_date
-        ).exists():
+        if ChoreAssignment.objects.filter(chore=chore, due_date__gt=self.due_date).exists():
             return
-        
-        next_user = self.assignee
+
+        # Rotate assignees
+        next_user = self.next_assignee or self.assignee
         next_due_date = self.due_date
 
-        # ROTATION LOGIC
-        if chore.is_rotating:
-            roommates = list(chore.roommates_involved.all())
+        roommates = list(chore.roommates_involved.all())
+        if chore.is_rotating and roommates:
+            if self.assignee in roommates:
+                index = roommates.index(self.assignee)
+                next_user = roommates[(index + 1) % len(roommates)]
+            else:
+                next_user = roommates[0]
 
-            if roommates:
-                if self.assignee in roommates:
-                    index = roommates.index(self.assignee)
-                    next_user = roommates[(index + 1) % len(roommates)]
-                else:
-                    next_user = roommates[0]
-
-        # PASS TO NEXT TIME DELAY
+        # Pass-to-next logic
         if chore.pass_to_next_value and chore.pass_to_next_unit:
-
             if chore.pass_to_next_unit == "days":
                 next_due_date += timedelta(days=chore.pass_to_next_value)
-
             elif chore.pass_to_next_unit == "weeks":
                 next_due_date += timedelta(weeks=chore.pass_to_next_value)
 
-        # REPEAT LOGIC (same user)
+        # Repeat same user logic
         elif chore.repeat:
-
             if chore.repeat == "daily":
                 next_due_date += timedelta(days=1)
-
             elif chore.repeat == "weekly":
                 next_due_date += timedelta(weeks=1)
-
             elif chore.repeat == "monthly":
                 next_due_date += timedelta(days=30)
 
-        # CREATE NEW ASSIGNMENT
+        # Determine next assignee
+        if roommates:
+            current_index = roommates.index(next_user) if next_user in roommates else -1
+            new_next_assignee = roommates[(current_index + 1) % len(roommates)] if current_index != -1 else None
+        else:
+            new_next_assignee = None
+
+        # Create the new assignment
         ChoreAssignment.objects.create(
             chore=chore,
             assignee=next_user,
+            next_assignee=new_next_assignee,
             due_date=next_due_date,
             completed=False,
             all_day=self.all_day

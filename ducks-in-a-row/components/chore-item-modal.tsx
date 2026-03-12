@@ -1,32 +1,46 @@
 import {View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Switch, Keyboard, TouchableWithoutFeedback } from 'react-native'
 import Chip from './chip';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DropDownPicker from 'react-native-dropdown-picker'
 import DateTimePicker, { DateTimePickerEvent, Event } from '@react-native-community/datetimepicker';
 import { ChoreItem } from '@/app/(tabs)/chores';
 import Counter from './counter';
 import { IconSymbol } from './ui/icon-symbol';
+import { ChoreDetail, ChoreCard } from '@/api/chores';
 
 type ModalProps = {
     visible: boolean;
     onClose: () => void;
     title: string;
-    save?: () => void;
-    item?: ChoreItem;
-    
+    save: (chore: Partial<ChoreDetail>) => void;
+    chore?: ChoreDetail;
+    allRoommates: ChoreDetail['roommates_involved']; 
 }
 
 export default function ChoreItemModal(props: ModalProps) {
-    const [choreName, setChoreName] = useState(props.item ? props.item.name : '');
-    const [choreDetails, setChoreDetails] = useState(props.item ? props.item.details : '');
-    const [choreLocation, setChoreLocation] = useState(props.item ? props.item.location : null);
-    const [repeatDate, setRepeatDate] = useState(props.item ? props.item.repeat : null);
-    const [repeatQuantity, setRepeatQuantity] = useState(1);
-    const [allDay, setAllDay] = useState(props.item ? props.item.all_day : true);
-    const [dueDate, setDueDate] = useState(props.item ? props.item.date : new Date())
+    const [choreTitle, setChoreTitle] = useState(props.chore ? props.chore.title : '');
+    const [choreDetails, setChoreDetails] = useState(props.chore ? props.chore.details : '');
+    const [choreLocation, setChoreLocation] = useState(props.chore ? props.chore.location : null);
+    const [repeatUnit, setRepeatUnit] = useState(props.chore ? props.chore.repeat_unit : undefined);
+    const [repeatDate, setRepeatDate] = useState(props.chore ? props.chore.repeat_unit : 1);
 
-    const [roommateOwnerList, setRoommateOwnerList] = useState<string[]>(props.item ? props.item.roommates : []);
+    const [repeatQuantity, setRepeatQuantity] = useState(props.chore ? props.chore.repeat_value : 1);
+    const [allDay, setAllDay] = useState(props.chore ? props.chore.all_day : true);
+    const [dueDate, setDueDate] = useState(props.chore ? props.chore.due_date : new Date());
+    
+    const [assignee, setAssignee] = useState(props.chore ? props.chore.assignee : null);
+    
+    const [passToNextValue, setPassToNextValue] = useState(props.chore ? props.chore.pass_to_next_value : 1);
+    const [passToNextUnit, setPassToNextUnit] = useState(props.chore ? props.chore.pass_to_next_unit : 'Weeks');
+    const [roommatesInvolved, setRoommatesInvolved] = useState<ChoreDetail['roommates_involved']>(props.chore?.roommates_involved || []);
+    
+    const [nextAssignee, setNextAssignee] = useState<ChoreDetail['next_assignee'] | null>(
+        props.chore ? props.chore.next_assignee : null
+    );
+
+
+    // const [roommateOwnerList, setRoommateOwnerList] = useState<string[]>(props.chore ? props.chore.roommates : []);
     
 
     const roommateList: string[] = ["Elle", "Leyna", "Sofia", "Ananya"];
@@ -58,6 +72,48 @@ export default function ChoreItemModal(props: ModalProps) {
         showMode('date')
     };
 
+    // By label
+    const selectByLabel = (label: string) => {
+        const found = repeatInt.find(item => item.label === label);
+            if (found) setRepeatUnit(found.label);
+    };
+
+    const handleSave = () => {
+        const updatedItem: Partial<ChoreDetail> = {
+                id: props.chore?.id,
+                title: choreTitle,
+                details: choreDetails,
+                due_date: dueDate,
+                location: choreLocation,
+                all_day: allDay,
+                is_rotation: false, // or controlled by a switch
+                roommates_involved: roommatesInvolved,
+                repeat_value: repeatQuantity,
+                repeat_unit: repeatUnit,
+                pass_to_next_value: passToNextValue,
+                pass_to_next_unit: passToNextUnit,
+            };
+            
+            console.log(repeatDate);
+            // console.log(repeatInt[repeatDate]);
+            props.save(updatedItem);
+            props.onClose();
+        };
+    
+        useEffect(() => {
+            if (props.chore) {
+                setChoreTitle(props.chore.title);
+                setChoreDetails(props.chore.details);
+                setChoreLocation(props.chore.location);
+                setDueDate(props.chore.due_date);
+                setAllDay(props.chore.all_day);
+                setAssignee(props.chore.assignee);
+                setRoommatesInvolved(props.chore.roommates_involved);
+                setRepeatQuantity(props.chore.repeat_value);
+                setRepeatUnit(props.chore.repeat_unit);
+            }
+        }, [props.chore]);
+
 
     return (
         <View>
@@ -75,15 +131,15 @@ export default function ChoreItemModal(props: ModalProps) {
                 <View style={styles.header}>
                     <TouchableOpacity style={styles.cancelButton} 
                         onPress={() => {
-                            props.item ? (
+                            props.chore ? (
                                 props.onClose()
                             ) : (
-                                setChoreName(''),
+                                setChoreTitle(''),
                                 setChoreDetails(''),
                                 setChoreLocation(null),
                                 setRepeatQuantity(1),
-                                setRoommateOwnerList([]),
-                                setRepeatDate(null),
+                                setRoommatesInvolved([]),
+                                setRepeatUnit(undefined),
                                 setDate(new Date()),
                                 props.onClose()
                             )
@@ -93,7 +149,7 @@ export default function ChoreItemModal(props: ModalProps) {
                         <Text style={styles.cancelText}>Cancel</Text>
                     </TouchableOpacity>
                     <Text style={styles.title}>{props.title}</Text>
-                    <TouchableOpacity style={styles.cancelButton} onPress={props.save}>
+                    <TouchableOpacity style={styles.cancelButton} onPress={handleSave}>
                         <Text style={styles.cancelText}>Save</Text>
                     </TouchableOpacity>
                 </View>
@@ -104,8 +160,8 @@ export default function ChoreItemModal(props: ModalProps) {
                         <Text style={styles.subHeading}>Chore Name</Text>
                         <TextInput 
                             style={styles.input}
-                            onChangeText={setChoreName}
-                            value={choreName}
+                            onChangeText={setChoreTitle}
+                            value={choreTitle}
                             placeholder='Chore Name'
                             placeholderTextColor='#ABA4A461'
                         />
@@ -162,19 +218,20 @@ export default function ChoreItemModal(props: ModalProps) {
                     <View style={styles.formField}>
                         <Text style={styles.subHeading}>Roommates Involved</Text>
                         <View style={styles.chipView}>
-                            {roommateList.map((name => (
+                            {props.allRoommates.map((user => (
                                 <Chip 
-                                    title={name} 
+                                    key={user.id}
+                                    title={user.first_name}
+                                    selected={roommatesInvolved.some(r => r.id === user.id)}
                                     onPress={() => {
-                                        setRoommateOwnerList(prev => {
-                                            if(prev.includes(name)) {
-                                                return prev.filter(item => item !== name);
-                                            } else {
-                                                return [...prev, name];
-                                            }
-                                        })                                }}
-                                    selected = {roommateOwnerList.includes(name)}
-                                
+                                        setRoommatesInvolved(prev => {
+                                        if (prev.some(r => r.id === user.id)) {
+                                            return prev.filter(r => r.id !== user.id);
+                                        } else {
+                                            return [...prev, user];
+                                        }
+                                        });
+                                    }}
                                 />
                             )))}
     

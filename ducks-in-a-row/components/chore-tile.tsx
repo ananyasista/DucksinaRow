@@ -7,9 +7,15 @@ type ChoreTileProps = {
     id: string;
     title: string;
     completed: boolean;
-    end_date: Date;
+    due_date: Date;
     repeat: string;
-    assignee: string;
+    assignee: {
+        email: string,
+        first_name: string,
+        id: string
+        last_name: string
+        name: string
+    };
     onChange: () => void;
     onPress: () => void;
 }
@@ -27,11 +33,11 @@ export default function ChoreTile(props: ChoreTileProps){
             <View style={styles.content}>
                 <View>
                     <Text>Repeats {props.repeat}</Text>
-                    <Text>Due on {props.end_date.toLocaleDateString()}</Text>
+                    <Text>Due on {props.due_date.toDateString()}</Text>
                 </View>
                 <View style={{flexDirection: 'row', gap: 10, alignItems: 'center'}}>
-                    <View style={styles.profile}><Text style={{color: '#fff'}}>{props.assignee.charAt(0)}</Text></View>
-                    <Text>{props.assignee}</Text>
+                    <View style={styles.profile}><Text style={{color: '#fff'}}>{props.assignee.name.charAt(0)}</Text></View>
+                    <Text>{props.assignee.first_name}</Text>
                 </View>
                 <CircularCheckbox 
                     checked = {checked}

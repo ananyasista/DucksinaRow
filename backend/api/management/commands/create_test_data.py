@@ -135,6 +135,7 @@ class Command(BaseCommand):
 
                 # Create the first assignment
                 initial_assignee = random.choice(roommates_for_chore)
+                next_assignee=random.choice(roommates_for_chore)
                 due_date = timezone.now().date() + timedelta(days=random.randint(0, 7))
 
                 ChoreAssignment.objects.create(
