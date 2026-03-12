@@ -1,7 +1,7 @@
-import { Calendar, ICalendarEventBase, Mode } from 'react-native-big-calendar'
-import { StyleSheet, Dimensions, TouchableOpacity, Modal, Platform} from 'react-native';
+import { Calendar, ICalendarEventBase, Mode, todayInMinutes } from 'react-native-big-calendar'
+import { StyleSheet, Dimensions, TouchableOpacity, Modal, Platform, ScrollView} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import React, { useState } from 'react';
+import React, { use, useState } from 'react';
 // import { View } from 'react-native-reanimated/lib/typescript/Animated';
 import { View, Text } from 'react-native';
 import { Button, Header } from '@react-navigation/elements';
@@ -14,19 +14,16 @@ import { ThemedSwitch } from './themed-switch';
 import DateTimePicker, { DateTimePickerEvent, Event } from '@react-native-community/datetimepicker';
 import RNDateTimePicker from '@react-native-community/datetimepicker';
 import { IconSymbol } from './ui/icon-symbol';
+import {CalendarEvent as APICalendarEvent, createEvent, updateEvent} from '@/api/calendar';
 
 type ModalProps = PropsWithChildren<{
     formTitle:string;
     edit?: boolean;
-    event?: CalendarEvent | null;
+    event?: APICalendarEvent | null;
     onClose?: any;
 }>;
 
-export interface CalendarEvent extends ICalendarEventBase {
-  description: string;
-  needsApproval:any;
-}
-export default function ModalCalendarForm({edit = false, onClose, ...props}: ModalProps) {
+export default function ModalCalendarForm({edit = false,event, onClose, ...props}: ModalProps) {
     const [addVisible, setAddVisible] = useState(edit);
     const [startDate, setStartDate] = useState(new Date());
     const [endDate, setEndDate] = useState(new Date());
@@ -37,30 +34,79 @@ export default function ModalCalendarForm({edit = false, onClose, ...props}: Mod
     const [startDateError, setStartDateError] = useState(false);
     const [endDateBeforeStartError, setEndDateBeforeStartError] = useState(false);
     const [endDateError, setEndDateError] = useState(false);
+    const [eventTitle, setEventTitle] = useState("");
+    const [eventDescription, setEventDescription] = useState("");
+    const [eventLocation, setEventLocation] = useState("");
+    const [allDay, setAllDay] = useState(false);
+    const [needsApproval, setNeedsApproval] =useState(false);
 
     const onChangeStart = (event:DateTimePickerEvent, selectedDate?:Date) => {
-      const currentDate = selectedDate ? selectedDate : new Date();
+      const currentDate = selectedDate ? selectedDate : new Date(todayInMinutes());
       setStartDate(currentDate);
     };
     const onChangeEnd = (event:DateTimePickerEvent, selectedDate?:Date) => {
-      const currentDate = selectedDate ? selectedDate : new Date();
+      const currentDate = selectedDate ? selectedDate : new Date(todayInMinutes()+ 3600);
       setEndDate(currentDate);
     }
     
     const showMode = (currentMode: any) => {
       setShowStart(true);
-      setStartDate(props.event?.start ?? new Date());
+      if(event?.start_date)
+      {
+        setStartDate(new Date(event.start_date));
+      } else {
+        setStartDate(new Date());
+      }
       setShowEnd(true);
-      setEndDate(props.event?.end ?? new Date(startDate.getTime() + 3600*1000));
+      if(event?.end_date)
+      {
+        setEndDate(new Date(event.end_date));
+      } else {
+        setEndDate(new Date());
+      }
       setMode(currentMode);
       endDate.setHours(endDate.getHours()+1);
     };
-    
+
     const close = () => {
-        var errors = checkErrors();
-        if(!errors){return;}
+        // var errors = checkErrors();
+        // if(!errors){return;}
         setAddVisible(false);
         onClose();
+    }
+    
+    const save = () => {
+        var noErrors = checkErrors();
+        if(!noErrors)
+        {
+            return;
+        }
+        try {
+            const eventToSave: APICalendarEvent = {
+                id: event?.id ??"",
+                title: eventTitle,
+                details: eventDescription,
+                all_day: allDay,
+                start_date: startDate.toISOString(),
+                end_date: endDate.toISOString(),
+                repeat: "",
+                requires_approval: true,
+                location: eventLocation,
+            }
+            close(); //COME BACK!!
+            return;
+            // if(event)
+            // {
+            //     console.log('update');
+            //     updateEvent(event.id, eventToSave);
+            // } else {
+            //     console.log('create');
+            //     createEvent(eventToSave);
+            // }
+
+        } catch (e: any) {
+            console.log("ERROR Saving Event Modal: " + e);
+        }
     }
     
     const showDatepicker = () => {
@@ -72,12 +118,18 @@ export default function ModalCalendarForm({edit = false, onClose, ...props}: Mod
     };
     
     function checkErrors() {
+        var error = false
+        if(eventTitle === "")
+        {
+            setEventTitleError(true);
+            error = true;
+        }
         if(startDate > endDate)
         {
             setEndDateBeforeStartError(true);
-            return false;
+            error = true;
         }
-        return true;
+        return !error;
     }
     function open() {
         setEventTitleError(false);
@@ -106,17 +158,18 @@ export default function ModalCalendarForm({edit = false, onClose, ...props}: Mod
                     <Text style={modalTheme.cancelText}>Cancel</Text>
                 </TouchableOpacity>
                 <Text style={modalTheme.headerText}>{props.formTitle}</Text>
-                <TouchableOpacity style={modalTheme.saveButton} onPress={() => close()}>
+                <TouchableOpacity style={modalTheme.saveButton} onPress={() => save()}>
                     <Text style={modalTheme.saveText}>Save</Text>
                 </TouchableOpacity>
             </View>
+            <ScrollView>
             <View style= {{flex: 1, padding: 16}}>
                 {eventTitleError && (<ThemedText type='errorText'>Event title is required</ThemedText>)}
                 <ThemedText type="boldText" >Event Title:</ThemedText>
-                <ThemedTextInput placeholder="Item Name" defaultValue={props.event?.title}/>
+                <ThemedTextInput onChangeText={setEventTitle}placeholder="Item Name" defaultValue={event?.title}/>
                 <ThemedText type="boldText">Description:</ThemedText>
-                <ThemedTextInput size="large" multiline={true} placeholder="Add Details" defaultValue={props.event?.description}/>
-                <ThemedSwitch label="All-Day" />
+                <ThemedTextInput onChangeText={setEventDescription} size="large" multiline={true} placeholder="Add Details" defaultValue={event?.details}/>
+                <ThemedSwitch onChangeSwitch={setAllDay} label="All-Day" />
                 
                 <View onLayout={showDatepicker}>
                 {startDateError && (<ThemedText type='errorText'>Start date is required</ThemedText>)}
@@ -137,6 +190,7 @@ export default function ModalCalendarForm({edit = false, onClose, ...props}: Mod
                                 themeVariant='light'
                             />
                         </View>
+                        {!allDay &&
                         <View style={modalTheme.rowStart}>
                             <IconSymbol size={20} name="clock" color='black'/>
                             <DateTimePicker
@@ -148,6 +202,7 @@ export default function ModalCalendarForm({edit = false, onClose, ...props}: Mod
                                 themeVariant='light'
                             />
                         </View>
+                        } 
                     </View>
                 )}
                 {endDateError && (<ThemedText type='errorText'>End date is required</ThemedText>)}
@@ -165,6 +220,7 @@ export default function ModalCalendarForm({edit = false, onClose, ...props}: Mod
                                 themeVariant='light'
                             />
                         </View>
+                        {!allDay &&
                         <View style={modalTheme.rowStart}>
                             <IconSymbol size={20} name="clock" color='black'/>
                             <DateTimePicker
@@ -176,14 +232,18 @@ export default function ModalCalendarForm({edit = false, onClose, ...props}: Mod
                                 themeVariant='light'
                             />
                         </View>
+                        }
                     </View>
                 )}
                 </View>
                 <ThemedText type="boldText">Location:</ThemedText>
-                <ThemedTextInput placeholder='Living Room'/>
-                <ThemedSwitch label="Needs Roommates Approval?"/>
+                <ThemedTextInput onChangeText={setEventLocation} placeholder='Living Room'/>
+                <ThemedSwitch onChangeSwitch={setNeedsApproval} label="Needs Roommates Approval?"/>
                 <ThemedText type='text'>Notify all roommates to approve this event</ThemedText>
             </View>
+            <></><></><></>
+            </ScrollView>
+
         </Modal>
     </View>
   )
@@ -254,3 +314,7 @@ const modalTheme = StyleSheet.create({
         fontWeight: 500
     }
 });
+function uuidv4(): string {
+    throw new Error('Function not implemented.');
+}
+

@@ -82,7 +82,7 @@ class CalendarEventViewSet(viewsets.ViewSet):
 
     # Retrieve a specific event details 
     def retrieve(self, request, pk=None):
-        event = get_object_or_404(self.get_queryset(request), pk=pk)
+        event = get_object_or_404(self.get_queryset(), pk=pk)
         serializer = CalendarEventDetailSerializer(event)
         return Response(serializer.data)
 
@@ -119,7 +119,7 @@ class CalendarEventViewSet(viewsets.ViewSet):
 
     # Only the event owner can edit the event
     def partial_update(self, request, pk=None):
-        event = get_object_or_404(self.get_queryset(request), pk=pk)
+        event = get_object_or_404(self.get_queryset(), pk=pk)
 
         if event.event_owner != request.user:
             return Response(
@@ -135,7 +135,7 @@ class CalendarEventViewSet(viewsets.ViewSet):
 
     # Delete an event
     def destroy(self, request, pk=None):
-        event = get_object_or_404(self.get_queryset(request), pk=pk)
+        event = get_object_or_404(self.get_queryset(), pk=pk)
 
         if event.event_owner != request.user:
             return Response(
@@ -168,7 +168,7 @@ class CalendarEventViewSet(viewsets.ViewSet):
     # Get all events for the current user's household > "My Events" section
     @action(detail=False, methods=["get"], url_path="my-events")
     def my_events(self, request):
-        events = self.get_queryset(request).filter(
+        events = self.get_queryset().filter(
             event_owner=request.user
         ).order_by("start_date")
 
@@ -188,7 +188,7 @@ class CalendarEventViewSet(viewsets.ViewSet):
             "action": "decline"
         }
         """
-        event = get_object_or_404(self.get_queryset(request), pk=pk)
+        event = get_object_or_404(self.get_queryset(), pk=pk)
 
         approval = get_object_or_404(
             EventApprovals,

@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Modal,
   ScrollView,
+  SafeAreaView,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -15,6 +16,7 @@ import { router } from "expo-router";
 import { me, ProfileResponse } from "../../api/auth";
 import { getLivingPreferences } from "../../api/preferences";
 import { getHouseholdRoommates, Roommate } from "../../api/household";
+import { IconSymbol } from "@/components/ui/icon-symbol";
 
 const TestUser: ProfileResponse = {
   id: "demo",
@@ -81,129 +83,139 @@ export default function ProfileScreen() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.h1}>
-        Hello, {profile.first_name || profile.username || "Roommate"}!
-      </Text>
+    <SafeAreaView style={{ flex: 1}}>
+      <ScrollView contentContainerStyle={styles.container}>
+        <Text style={styles.h1}>
+          Hello, {profile.first_name || profile.username || "Roommate"}!
+        </Text>
 
-      {loading ? (
-        <ActivityIndicator style={{ marginTop: 12 }} />
-      ) : (
-        <>
-          {!!error && <Text style={styles.error}>{error}</Text>}
+        {loading ? (
+          <ActivityIndicator style={{ marginTop: 12 }} />
+        ) : (
+          <>
+            {!!error && <Text style={styles.error}>{error}</Text>}
 
-          {/* Profile Info */}
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Your Profile</Text>
-
-            <Row label="Name" value={`${profile.first_name} ${profile.last_name}`.trim() || "N/A"} />
-            <Row label="Email" value={profile.email || "N/A"} />
-            <Row label="Join Code" value={profile.household_join_code ?? "N/A"} />
-          </View>
-
-          {/* Roommates */}
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Roommates</Text>
-
-            {roommates.length ? (
-              <View style={styles.avatarRow}>
-                {roommates.map((rm) => (
+            {/* Profile Info */}
+            <View style={styles.card}>
+              <View style={styles.rowSpace}>
+                <Text style={styles.cardTitle}>Your Profile</Text>
                   <Pressable
-                    key={rm.id}
-                    style={styles.avatar}
-                    onPress={() => setSelectedRoommate(rm)}
                   >
-                    <Text style={styles.avatarText}>{initials(rm.full_name)}</Text>
-                    <Text style={styles.avatarName} numberOfLines={1}>
-                      {rm.full_name}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            ) : (
-              <Text style={styles.muted}>No roommates found.</Text>
-            )}
-          </View>
-
-          {/* Living Preferences */}
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Living Preferences</Text>
-
-            {livingPrefs ? (
-              <>
-                <Row label="Cleanliness" value={toStr(livingPrefs.cleanliness)} />
-                <Row label="Clean up space" value={yesNo(livingPrefs.clean_up_your_space)} />
-                <Row label="Cooks" value={yesNo(livingPrefs.cook)} />
-                <Row label="Shares items" value={yesNo(livingPrefs.sharing_items)} />
-                <Row label="Pets" value={yesNo(livingPrefs.pets)} />
-                <Row label="Guests" value={yesNo(livingPrefs.guests)} />
-                <Row label="Personality" value={livingPrefs.personality_type || "N/A"} />
-                <Row label="Sleep" value={livingPrefs.sleep_schedule || "N/A"} />
-                <Row label="Smoking" value={yesNo(livingPrefs.smoking)} />
-                <Row label="Drinking" value={yesNo(livingPrefs.drinking_alcohol)} />
-              </>
-            ) : (
-              <Text style={styles.muted}>No preferences found.</Text>
-            )}
-          </View>
-
-          <Pressable
-            style={styles.btnOutline}
-            onPress={() => router.push("/living-preferences?mode=edit")}
-          >
-            <Text style={styles.btnOutlineText}>Edit Living Preferences</Text>
-          </Pressable>
-
-          <Pressable style={styles.btnOutline} onPress={loadProfile}>
-            <Text style={styles.btnOutlineText}>Refresh</Text>
-          </Pressable>
-
-          <Pressable style={styles.btnDanger} onPress={onLogout}>
-            <Text style={styles.btnDangerText}>Log out</Text>
-          </Pressable>
-
-          {/* Roommate Preferences Modal */}
-          <Modal
-            visible={!!selectedRoommate}
-            transparent
-            animationType="slide"
-            onRequestClose={() => setSelectedRoommate(null)}
-          >
-            <View style={styles.modalBackdrop}>
-              <View style={styles.modalCard}>
-                <Text style={styles.modalTitle}>
-                  {selectedRoommate?.full_name}'s Preferences
-                </Text>
-
-                {selectedRoommate?.living_preferences ? (
-                  <>
-                    <Row
-                      label="Cleanliness"
-                      value={toStr(selectedRoommate.living_preferences.cleanliness)}
-                    />
-                    <Row label="Clean up space" value={yesNo(selectedRoommate.living_preferences.clean_up_your_space)} />
-                    <Row label="Cooks" value={yesNo(selectedRoommate.living_preferences.cook)} />
-                    <Row label="Shares items" value={yesNo(selectedRoommate.living_preferences.sharing_items)} />
-                    <Row label="Pets" value={yesNo(selectedRoommate.living_preferences.pets)} />
-                    <Row label="Guests" value={yesNo(selectedRoommate.living_preferences.guests)} />
-                    <Row label="Personality" value={selectedRoommate.living_preferences.personality_type || "N/A"} />
-                    <Row label="Sleep" value={selectedRoommate.living_preferences.sleep_schedule || "N/A"} />
-                    <Row label="Smoking" value={yesNo(selectedRoommate.living_preferences.smoking)} />
-                    <Row label="Drinking" value={yesNo(selectedRoommate.living_preferences.drinking_alcohol)} />
-                  </>
-                ) : (
-                  <Text style={styles.muted}>No preferences found.</Text>
-                )}
-
-                <Pressable style={styles.btnOutline} onPress={() => setSelectedRoommate(null)}>
-                  <Text style={styles.btnOutlineText}>Close</Text>
+                    <IconSymbol name='pencil' color='black' size={20} style={{marginBottom:12}}/>
                 </Pressable>
               </View>
+              <Row label="Name" value={`${profile.first_name} ${profile.last_name}`.trim() || "N/A"} />
+              <Row label="Email" value={profile.email || "N/A"} />
+              <Row label="Join Code" value={profile.household_join_code ?? "N/A"} />
             </View>
-          </Modal>
-        </>
-      )}
-    </ScrollView>
+
+            {/* Roommates */}
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Roommates</Text>
+
+              {roommates.length ? (
+                <View style={styles.avatarRow}>
+                  {roommates.map((rm) => (
+                    <Pressable
+                      key={rm.id}
+                      style={styles.avatar}
+                      onPress={() => setSelectedRoommate(rm)}
+                    >
+                      <View style={styles.avatarCircle}>
+                        <Text style={styles.avatarText}>{initials(rm.full_name)}</Text>
+                      </View>
+                      <Text style={styles.avatarName} numberOfLines={1}>
+                        {rm.full_name}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              ) : (
+                <Text style={styles.muted}>No roommates found.</Text>
+              )}
+            </View>
+
+            {/* Living Preferences */}
+            <View style={styles.card}>
+              <View style={styles.rowSpace}>
+                <Text style={styles.cardTitle}>Living Preferences</Text>
+                  <Pressable
+                    onPress={() => router.push("/living-preferences?mode=edit")}
+                  >
+                    <IconSymbol name='pencil' color='black' size={20} style={{marginBottom:12}}/>
+                </Pressable>
+              </View>
+              {livingPrefs ? (
+                <>
+                  <Row label="Cleanliness" value={toStr(livingPrefs.cleanliness)} />
+                  <Row label="Clean up space" value={yesNo(livingPrefs.clean_up_your_space)} />
+                  <Row label="Cooks" value={yesNo(livingPrefs.cook)} />
+                  <Row label="Shares items" value={yesNo(livingPrefs.sharing_items)} />
+                  <Row label="Pets" value={yesNo(livingPrefs.pets)} />
+                  <Row label="Guests" value={yesNo(livingPrefs.guests)} />
+                  <Row label="Personality" value={livingPrefs.personality_type || "N/A"} />
+                  <Row label="Sleep" value={livingPrefs.sleep_schedule || "N/A"} />
+                  <Row label="Smoking" value={yesNo(livingPrefs.smoking)} />
+                  <Row label="Drinking" value={yesNo(livingPrefs.drinking_alcohol)} />
+                </>
+              ) : (
+                <Text style={styles.muted}>No preferences found.</Text>
+              )}
+            </View>
+
+            
+
+            <Pressable style={styles.btnOutline} onPress={loadProfile}>
+              <Text style={styles.btnOutlineText}>Refresh</Text>
+            </Pressable>
+
+            <Pressable style={styles.btnDanger} onPress={onLogout}>
+              <Text style={styles.btnDangerText}>Log out</Text>
+            </Pressable>
+
+            {/* Roommate Preferences Modal */}
+            <Modal
+              visible={!!selectedRoommate}
+              transparent
+              animationType="slide"
+              onRequestClose={() => setSelectedRoommate(null)}
+            >
+              <View style={styles.modalBackdrop}>
+                <View style={styles.modalCard}>
+                  <Text style={styles.modalTitle}>
+                    {selectedRoommate?.full_name}'s Preferences
+                  </Text>
+
+                  {selectedRoommate?.living_preferences ? (
+                    <>
+                      <Row
+                        label="Cleanliness"
+                        value={toStr(selectedRoommate.living_preferences.cleanliness)}
+                      />
+                      <Row label="Clean up space" value={yesNo(selectedRoommate.living_preferences.clean_up_your_space)} />
+                      <Row label="Cooks" value={yesNo(selectedRoommate.living_preferences.cook)} />
+                      <Row label="Shares items" value={yesNo(selectedRoommate.living_preferences.sharing_items)} />
+                      <Row label="Pets" value={yesNo(selectedRoommate.living_preferences.pets)} />
+                      <Row label="Guests" value={yesNo(selectedRoommate.living_preferences.guests)} />
+                      <Row label="Personality" value={selectedRoommate.living_preferences.personality_type || "N/A"} />
+                      <Row label="Sleep" value={selectedRoommate.living_preferences.sleep_schedule || "N/A"} />
+                      <Row label="Smoking" value={yesNo(selectedRoommate.living_preferences.smoking)} />
+                      <Row label="Drinking" value={yesNo(selectedRoommate.living_preferences.drinking_alcohol)} />
+                    </>
+                  ) : (
+                    <Text style={styles.muted}>No preferences found.</Text>
+                  )}
+
+                  <Pressable style={styles.btnOutline} onPress={() => setSelectedRoommate(null)}>
+                    <Text style={styles.btnOutlineText}>Close</Text>
+                  </Pressable>
+                </View>
+              </View>
+            </Modal>
+          </>
+        )}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -270,6 +282,7 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     marginBottom: 12,
     color: "#111",
+    alignItems: 'center',
   },
   row: {
     flexDirection: "row",
@@ -298,17 +311,18 @@ const styles = StyleSheet.create({
     width: 78,
     alignItems: "center",
   },
-  avatarText: {
+  avatarCircle: {
     width: 48,
     height: 48,
     borderRadius: 24,
     backgroundColor: PRIMARY,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  avatarText: {
     color: "#fff",
-    textAlign: "center",
-    textAlignVertical: "center",
     fontWeight: "900",
     fontSize: 16,
-    overflow: "hidden",
   },
   avatarName: {
     marginTop: 6,
@@ -360,5 +374,12 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     marginBottom: 12,
     color: "#111",
+  },
+  rowSpace: {
+      justifyContent:"space-between",
+      display: "flex",
+      flexDirection: "row",
+      alignItems: "center",
+      alignContent: 'center',
   },
 });

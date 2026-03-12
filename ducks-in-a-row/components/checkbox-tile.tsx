@@ -24,16 +24,19 @@ export default function CheckboxTile(props: CheckboxTileProps){
 const styles = StyleSheet.create({
     titleHeading: {
         fontSize: 24,
-        fontWeight: 600
+        fontWeight: 600,
     },
     tile: {
         backgroundColor: "#FF7648",
         borderRadius: 16,
-        padding: 20,
+        padding: 15,
+        paddingLeft: 20,
+        paddingRight: 20,
         fontSize: 24,
         color: "#000000",
         justifyContent: "space-between",
-        flexDirection: 'row'
+        flexDirection: 'row',
+        alignItems: 'center'
     },
     checkbox: {
         alignItems: "flex-end",
