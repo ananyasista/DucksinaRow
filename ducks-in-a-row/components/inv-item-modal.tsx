@@ -5,13 +5,13 @@ import { useState, useEffect } from 'react';
 import DropDownPicker from 'react-native-dropdown-picker'
 import DateTimePicker, { DateTimePickerEvent, Event } from '@react-native-community/datetimepicker';
 import Counter from './counter';
-import { InventoryDetails } from '@/api/inventory';
+import { InventoryDetails, InventoryCard } from '@/api/inventory';
 
 type ModalProps = {
     visible: boolean;
     onClose: () => void;
     title: string;
-    save: (item: Partial<InventoryDetails>) => void;
+    save: (item: Partial<InventoryCard>) => void;
     item?: InventoryDetails;
     
 }
@@ -27,8 +27,8 @@ export default function InvItemModal(props: ModalProps) {
         {label: 'Kitchen', value: 'kitchen'},
         {label: 'Living Room', value: 'living room'},
         {label: 'Bedroom', value: 'bedroom'},
-        {label: 'Bathroom', value: 'Bathroom'},
-        {label: 'Other', value: 'Other'}
+        {label: 'Bathroom', value: 'bathroom'},
+        {label: 'Other', value: 'other'}
     ])
 
     const [date, setDate] = useState(new Date());
@@ -49,7 +49,7 @@ export default function InvItemModal(props: ModalProps) {
     };
 
     const handleSave = () => {
-    const updatedItem: Partial<InventoryDetails> = {
+    const updatedItem: Partial<InventoryCard> = {
             id: props.item?.id,
             name: itemName,
             details: itemDetails,
@@ -128,6 +128,11 @@ export default function InvItemModal(props: ModalProps) {
                             multiline
                         />
                     </View>
+                
+                    <View style={styles.formField}>
+                        <Text style={styles.subHeading}>Quantity</Text>
+                        <Counter value={quantity} onChange={setQuantity} />
+                    </View>
 
                     <View style={styles.formField}>
                         <Text style={styles.subHeading}>Location</Text>
@@ -141,12 +146,6 @@ export default function InvItemModal(props: ModalProps) {
                             style={styles.input}
                             dropDownContainerStyle={styles.dropdownMenu}
                         />
-                    </View>
-                    
-                
-                    <View style={styles.formField}>
-                        <Text style={styles.subHeading}>Quantity</Text>
-                        <Counter value={quantity} onChange={setQuantity} />
                     </View>
 
                 </SafeAreaView>

@@ -13,13 +13,10 @@ import InvViewModal from '@/components/inv-view-modal';
 
 import * as invAPI from '@/api/inventory';
 
-
-
-
 export default function InventoryScreen() {
   const [itemList, setItemList] = useState<invAPI.InventoryDetails[]>([]);
   const [locationList, setLocationList] = useState<string[]>([]);
-  const [purchaseList, setPurchaseList] = useState<Map<string,string>>(new Map());
+  const [purchaseList, setPurchaseList] = useState<{ label: string; value: string }[]>([]);
 
   const [addItemVisible, setAddItemVisible] = useState(false);
   const [viewItemVisible, setViewItemVisible] = useState(false);
@@ -50,9 +47,21 @@ export default function InventoryScreen() {
     setItemList(data);
 
   }
+
+  const refreshItems = async () => {
+    const data = await invAPI.getInventory();
+    setItemList(data);
+  }
+
+  const getItem = async (id: string) => {
+    const item = await invAPI.getItemById(id);
+    item.last_purchased_date = new Date(item.last_purchased_date);
+    // NOTE: Need to get USER
+    // item.last_purchased_by = { label: ; value: item.last_purchased_by }
+    console.log(item.last_purchased_date);
+    setSelectedItem(item);
+  }
  
-
-
   return (
     <SafeAreaView>
       <ScrollView>
@@ -80,7 +89,6 @@ export default function InventoryScreen() {
             />
           </View>
           
-
           <View style={styles.section}>
             {itemList
                 .filter(item => {
@@ -92,17 +100,17 @@ export default function InventoryScreen() {
                   id={item.id}
                   title={item.name} 
                   category={item.location ?? ''}
-                  restock={item.restock_needed} 
+                  restock={item.restock_needed}
+                  quantity={item.quantity}
                   onChange={() => setRestock(!restock)}
                   onPress={() => {
-                    setSelectedItem(item);
+                    getItem(item.id);
                     setViewItemVisible(true);
                   }}
                 />
               ))
             }
           </View>
-
 
           <View style={styles.addButton}>
             <TouchableOpacity onPress={() => setAddItemVisible(true)}>
@@ -121,12 +129,9 @@ export default function InventoryScreen() {
                   location: item.location ?? null,
                   quantity: item.quantity ?? 1,
                   restock_needed: false,
-                  last_purchased_by: item.last_purchased_by ?? [],
-                  created_date: new Date().toISOString(),
-                  last_purchase_date: item.last_purchase_date ?? new Date(),
                 });
 
-              applyFilterChanges();
+              refreshItems();
             }}
           />
 
@@ -156,13 +161,10 @@ export default function InventoryScreen() {
               if (!selectedItem) return;
 
               await invAPI.updateItem(selectedItem.id, item);
-              applyFilterChanges();
+              refreshItems();
             }}
           />
           )}
-
-
-          
           
         </View>    
       </ScrollView>

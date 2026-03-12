@@ -13,7 +13,7 @@ type ModalProps = PropsWithChildren<{
     setPurchaseFilterList: React.Dispatch<React.SetStateAction<string[]>>;
     setStockFilter: React.Dispatch<React.SetStateAction<boolean>>;
 
-    purchaseList: Map<string, string>;
+    purchaseList: { label: string; value: string }[];
     locationList: string[];
 
     onApply: () => void;
@@ -91,20 +91,20 @@ export default function InvFilterModal(props: ModalProps) {
 
                         <Text style={styles.subHeading}>Last Purchased By</Text>
                         <View style={styles.chipView}>
-                            {Array.from(props.purchaseList.entries()).map(([id, name]) => (
+                            {props.purchaseList.map(user => (
                                 <Chip
-                                key={id}
-                                title={name}
+                                key={user.value}
+                                title={user.label}
                                 onPress={() => {
                                     props.setPurchaseFilterList(prev => {
-                                    if (prev.includes(id)) {
-                                        return prev.filter(item => item !== id);
+                                    if (prev.includes(user.value)) {
+                                        return prev.filter(item => item !== user.value);
                                     } else {
-                                        return [...prev, id];
+                                        return [...prev, user.value];
                                     }
                                     });
                                 }}
-                                selected={props.purchaseFilterList.includes(id)}
+                                selected={props.purchaseFilterList.includes(user.value)}
                                 />
                             ))}
                             </View>

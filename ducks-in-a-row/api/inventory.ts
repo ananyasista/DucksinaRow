@@ -5,17 +5,17 @@ export interface InventoryCard {
   name: string;
   restock_needed: boolean;
   quantity: number;
+  details: string;
+  location: string | null;
+}
+
+export interface InventoryDetails extends InventoryCard {
   last_purchased_by: {
     id: string;
     name: string;
   }[];
-}
-
-export interface InventoryDetails extends InventoryCard {
-  details: string;
-  location: string | null;
   created_date: string;
-  last_purchase_date: Date;
+  last_purchased_date: Date;
 }
 
 export const getInventory = async (filters?: {
@@ -24,27 +24,33 @@ export const getInventory = async (filters?: {
   location?: string[];
 }) => {
   const params = {
-    restock_needed: filters?.restock_needed,
-    last_purchased_by: filters?.purchased_by?.join(","),
-    location: filters?.location?.join(","),
-  };
+    restock_needed: filters?.restock_needed,
+    last_purchased_by: filters?.purchased_by?.join(","),
+    location: filters?.location?.join(","),
+  };
+
   const response = await api.get<InventoryDetails[]>("/inventory/", {
     params: params,
   });
+
+  console.log(response.data);
   return response.data;
 };
 
 export const getItemById = async (id: string) => {
   const response = await api.get<InventoryDetails>(`/inventory/${id}/`);
+  console.log(response.data);
+  console.log(response.data.last_purchased_by);
   return response.data;
 };
 
-export const createItem = async (data: Omit<InventoryDetails, "id">) => {
+export const createItem = async (data: Omit<InventoryCard, "id">) => {
+  console.log(data);
   const response = await api.post("/inventory/", data);
   return response.data;
 };
 
-export const updateItem = async (id: string, data: Partial<InventoryDetails>) => {
+export const updateItem = async (id: string, data: Partial<InventoryCard>) => {
   const response = await api.patch(`/inventory/${id}/`, data);
   return response.data;
 };
@@ -54,6 +60,6 @@ export const deleteItem = async (id: string) => {
 };
 
 export const getInventoryFilterOptions = async () => {
-  const response = await api.get("/inventory/filter-options/");
+  const response = await api.get("/inventory/filters/");
   return response.data;
 };
