@@ -9,17 +9,20 @@ import ModalCalendarForm from '@/components/modal-calendar-form';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import AntDesign from '@expo/vector-icons/AntDesign';
-import { CalendarEvent as APICalendarEvent, ApprovalEvent as APIApprovalEvent, listHouseholdEvents, listMyEvents, listNeedsApproval } from '@/api/calendar';
+import { CalendarEvent as APICalendarEvent, ApprovalEvent as APIApprovalEvent, EventDetails as APIEventDetails, listHouseholdEvents, listMyEvents, listNeedsApproval, getEventId } from '@/api/calendar';
+import { CalendarContainerProps } from 'react-native-big-calendar/build/components/CalendarContainer';
+import CreateHouseholdScreen from '../create-household';
+import EventModal from '@/components/modal-event';
 
 
 export interface CalendarEvent extends ICalendarEventBase {
-  description: string;
-  needsApproval:any;
+  id: string;
 }
 
 export default function CalendarPage () {
     const { mode } = useLocalSearchParams();
     const [events, setEvents] = useState<ICalendarEventBase[]>([]);
+    const [fullDetailEvent, setFullDetailEvents] = useState<APICalendarEvent[]>([]);
     const [myEvents, setMyEvents] = useState<APICalendarEvent[]>([]);
     const [needsMyApproval, setNeedsMyApproval] = useState<APICalendarEvent[]>([]);
     const month = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
@@ -31,11 +34,13 @@ export default function CalendarPage () {
     const [showEvents, setShowEvents] = useState(false);
     const [editModal, setEditModal] = useState(false);
     const [event, setEvent] = useState<CalendarEvent|null>(null);
-    const memoizedEvents = React.useMemo(() => events, [events]);
+    const [APIEvent, setAPIEvent] = useState<APICalendarEvent|null>(null);
+    // const memoizedEvents = React.useMemo(() => events, [events]);
     const menuRef = useRef<View>(null);    
     const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 });
-
-    
+    const [detailsModal, setDetailsModal] = useState(false);
+    const [pendingEvent, setPendingEvent] = useState<APIEventDetails|null>(null); 
+    const [isOwner, setIsOwner] = useState(false);
     useEffect(() => {
       onScreenLoad();
     }, [])
@@ -43,13 +48,16 @@ export default function CalendarPage () {
     const onScreenLoad = async () => {
       try {
         const allEvents = await listHouseholdEvents();
+        console.log("All events: " );
+        console.log(allEvents);
         const loadMyEvents = await listMyEvents();
         const loadNeedMyApproval:APIApprovalEvent[] = await listNeedsApproval();
-        const calenEvents: ICalendarEventBase[] = 
+        const calenEvents: CalendarEvent[] = 
           allEvents.map((event) => ({
             start: new Date(event.start_date),
             end: new Date(event.end_date ? event.end_date : new Date(event.start_date + 3600*1000).toISOString()),
             title: event.title,
+            id: event.id,
           }));
         const needMyApprovalEvents: APICalendarEvent[] = 
           loadNeedMyApproval.map((e) => ({
@@ -68,6 +76,7 @@ export default function CalendarPage () {
               email: "",
             }
         }))        
+        setFullDetailEvents(allEvents);
         setEvents(calenEvents);
         setMyEvents(loadMyEvents);
         setNeedsMyApproval(needMyApprovalEvents);
@@ -106,7 +115,27 @@ export default function CalendarPage () {
       setShowEvents(true);
       setOpenDropdown(false);
     }
-    
+    async function showDetailModal(currEvent:CalendarEvent)
+    {
+      setEvent(currEvent);
+      setOpenDropdown(false);
+      const myEvents = await listMyEvents();
+      const pendingEvent = await getEventId(currEvent.id);
+      setPendingEvent(pendingEvent);
+      myEvents.forEach((e) => {
+        if(e.id === currEvent.id)
+        {
+          setIsOwner(true);
+        }
+      })
+      fullDetailEvent.forEach((e) => {
+        if(e.id=== currEvent.id)
+        {
+          setAPIEvent(e);
+        }
+      })
+      setDetailsModal(true);
+    }
     function showEditModal(event:CalendarEvent|null)
     {
         setEditModal(!editModal);
@@ -174,7 +203,7 @@ export default function CalendarPage () {
           onLayout={calendarLayout}
         >
           {showCalendar && (<Calendar
-              events={memoizedEvents}
+              events={events}
               height={calendarHeight}
               date = {currentDate}
               eventCellStyle = {calendarTheme.eventStyle}
@@ -183,7 +212,7 @@ export default function CalendarPage () {
               onPressDateHeader={(date:Date) =>changeDateMode(date)}
               onSwipeEnd = {(date:Date) => setCurrentDate(date)}
               theme = {theme.calendar}
-              onPressEvent={(event) => showEditModal( event as CalendarEvent)}
+              onPressEvent={(event) => showDetailModal(event as CalendarEvent)}
           />)
           }
           {/* Event View - Approval vs Approved*/}
@@ -225,9 +254,13 @@ export default function CalendarPage () {
         {/* Create Event Modal */}
         <ModalCalendarForm formTitle ="Create Event" edit={false} onClose={() => setEditModal(false)} />
 
-        {editModal && (
+        {detailsModal && (
+          <EventModal event={APIEvent} pendingEvent={pendingEvent} owner={isOwner} onClose={() => setDetailsModal(false)}/>
+        )}
+
+        {/* {editModal && (
           <ModalCalendarForm formTitle="Edit Event" edit={true}  onClose={() => setEditModal(false)}/>
-          )}
+          )} */}
     </SafeAreaView>
   )
 }

@@ -19,9 +19,8 @@ import {CalendarEvent as APICalendarEvent, EventDetails as APIEventDetails} from
 
 type EventModalProps = PropsWithChildren<{
     event: APICalendarEvent|null;
-    pendingEvent?: APIEventDetails;
+    pendingEvent?: APIEventDetails|null;
     owner?: boolean;
-    printDate?: string;
     onClose?: any;
 }>
 
@@ -30,18 +29,22 @@ export interface CalendarEvent extends ICalendarEventBase {
   needsApproval:any;
 }
 
-export default function EventModal({event, owner=false, pendingEvent, printDate, ...props}:EventModalProps) {
+export default function EventModal({event, owner=false, pendingEvent, ...props}:EventModalProps) {
+    const abbrMonth = ["Jan","Feb","Mar","Apr","May","June","July","Aug","Sept","Oct","Nov","Dec"];
+    const [printDate, setPrintDate] = useState("");
+
     const[approvalModalVisible, setApprovalModalVisible] = useState(true);
     const[editModal, setEditModal] = useState(false);
     const [title, setTitle] = useState(event?.title || '');
-    const [startDate, setStartDate] = useState(new Date());
-    const [endDate, setEndDate] = useState(new Date(startDate.toISOString()+3600*1000))
+    const [startDate, setStartDate] = useState(new Date(event?.start_date||""));
+    const [endDate, setEndDate] = useState(event?.end_date ? new Date(event.end_date) : new Date(event?.start_date??startDate.toISOString()+3600*1000));
     const [cEvent, setEvent] = useState<CalendarEvent>();
     const [approved, setApproved] = useState(0);
     const [pending, setPending] = useState(0);
     const [denied, setDenied] = useState(0);
     const total = pendingEvent?.approvals.length;
     useEffect(()=> {
+        
         if(event?.start_date)
         {
             setStartDate(new Date(event.start_date));
@@ -52,7 +55,6 @@ export default function EventModal({event, owner=false, pendingEvent, printDate,
                 setEndDate(new Date(startDate.toISOString() + 3600*1000));
             }
         }
-        console.log(pendingEvent);
         var a = 0;
         var p = 0;
         var d = 0; 
@@ -69,8 +71,79 @@ export default function EventModal({event, owner=false, pendingEvent, printDate,
         setApproved(a);
         setDenied(d);
         setPending(p);
-        console.log("HERE" + a + " " + d + " " + p);
+        getPrintDate();
     },[])
+    function getPrintDate() {
+        var date = "";
+        date += abbrMonth[startDate.getMonth()] + " ";
+        date += startDate.getDate();
+        var day = startDate.getDate()+"";
+        const st = new RegExp("$1|21|31^");
+        const nd = new RegExp("$2|22^");
+        const rd = new RegExp("$3|23^");
+        date +=  st.test(day)? "st" : 
+                nd.test(day)? "nd" :
+                rd.test(day)?"rd" :
+                "th";
+        date += " ";
+
+        if(startDate.getHours() == 0)
+        {
+            date += "12:" + startDate.getMinutes();
+        } else if(startDate.getHours() > 12) {
+            date += (startDate.getHours()%12) + ":"+ startDate.getMinutes();
+        } else {
+            date += startDate.getHours() + ":"+ startDate.getMinutes();
+        }
+        
+        if(startDate.getMinutes() === 0)
+        {
+            date += "0";
+        }
+        date += " ";
+        if(startDate.getHours() < 12)
+        {
+            date += "AM";
+        } else {
+            date += "PM";
+        }
+        date += " - ";
+        
+        if(startDate.getMonth() !== endDate.getMonth() || startDate.getDate() !== endDate.getDate())
+        {
+            date += abbrMonth[endDate.getMonth()] + " ";
+            date += endDate.getDate() ;
+            var endDay = endDate.getDay()+"";
+            date +=  st.test(endDay)? "st" : 
+                nd.test(endDay)? "nd" :
+                rd.test(endDay)?"rd" :
+                "th";
+            date += " ";
+        } 
+        
+        if(endDate.getHours() == 0)
+        {
+            date += "12:" + endDate.getMinutes();
+        } else if(endDate.getHours() > 12) {
+            date += (endDate.getHours()%12) + ":"+ endDate.getMinutes();
+        } else {
+            date += endDate.getHours() + ":"+ endDate.getMinutes();
+        }
+        
+        if(endDate.getMinutes() === 0)
+        {
+            date += "0";
+        }
+        date += " ";
+        if(endDate.getHours() < 12)
+        {
+            date += "AM";
+        } else {
+            date += "PM";
+        }
+        setPrintDate(date);
+    }
+
     function close() {
         setApprovalModalVisible(false);
         props.onClose();

@@ -61,18 +61,14 @@ export function EventTile({event, owner}:EventTileProps) {
         {
             date += abbrMonth[endDate.getMonth()] + " ";
             date += endDate.getDate() ;
-            if(endDate.getDate() === 1 || endDate.getDate() === 21 || endDate.getDate() === 31)
-            {
-                date += "st";
-            } else if (endDate.getDate() === 2 || endDate.getDate() === 22) {
-                date += "nd";
-            } else if(endDate.getDate() === 3 || endDate.getDate() === 23) {
-                date += "rd";
-            } else {
-                date += "th";
-            }
+            var endDay = endDate.getDay()+"";
+            date +=  st.test(endDay)? "st" : 
+                nd.test(endDay)? "nd" :
+                rd.test(endDay)?"rd" :
+                "th";
             date += " ";
         } 
+        
         if(endDate.getHours() == 0)
         {
             date += "12:" + endDate.getMinutes();
@@ -155,7 +151,7 @@ export function EventTile({event, owner}:EventTileProps) {
              </View>
         )}
         { eventDetails && (
-            <EventModal event={event} owner={owner} pendingEvent={pending} printDate={printDate}  onClose={() => setEventDetails(false)}/>
+            <EventModal event={event} owner={owner} pendingEvent={pending} onClose={() => setEventDetails(false)}/>
         )}
         
     </TouchableOpacity>

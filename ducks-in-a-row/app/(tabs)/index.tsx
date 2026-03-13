@@ -11,7 +11,8 @@ import CheckboxTile from '@/components/checkbox-tile';
 import { ThemedText } from '@/components/themed-text';
 
 import { getHouseholdName } from '@/api/household';
-import { listHouseholdEvents, listMyEvents, listNeedsApproval } from '../../api/calendar';
+import { CalendarEvent, EventDetails, getEventId, listHouseholdEvents, listMyEvents, listNeedsApproval } from '../../api/calendar';
+import EventModal from '@/components/modal-event';
 
 type ApprovalEvent = {
   id: string;
@@ -82,7 +83,8 @@ export default function HomeScreen() {
   const choreList = mockData.chores;
   const [upcomingEvents, setUpcomingEvents] = useState<HomeCalendarEvent[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
-
+  const [eventDetails, setEventDetails] = useState(false);
+  const [currEvent, setCurrEvent] = useState<EventDetails>()
   // Fetch Household Name
   const loadHomeData = async () => {
     try {
@@ -191,6 +193,11 @@ export default function HomeScreen() {
     loadUpcomingWeekEvents();
   }, []);
 
+  async function openEventDetails(event:any)
+  {
+     setCurrEvent(await getEventId(event.rawId));
+     setEventDetails(true);
+  }
   return (
     <SafeAreaView style={{flex: 1}}>
       <ScrollView style={{flex: 1}}>
@@ -251,10 +258,7 @@ export default function HomeScreen() {
               key={event.rawId ?? `${event.title}-${event.start.toISOString()}`}
               style={styles.eventCard}
               onPress={() =>
-                router.navigate({
-                  pathname: '/(tabs)/calendar',
-                  params: { mode: 'month' },
-                })
+                openEventDetails(event)
               }
             >
               <Text style={styles.eventTitle}>{event.title}</Text>
@@ -287,7 +291,11 @@ export default function HomeScreen() {
             <Text style={styles.subtitle2}>No events coming up this week.</Text>
           )}
         </View>
-        </View>    
+        { eventDetails && (
+              <EventModal event={currEvent ?? null} owner={false} pendingEvent={currEvent}   onClose={() => setEventDetails(false)}/>
+          )} 
+        </View>  
+         
       </ScrollView>
     </SafeAreaView>
   );
