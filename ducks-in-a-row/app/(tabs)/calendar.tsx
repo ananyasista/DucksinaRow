@@ -44,23 +44,18 @@ export default function CalendarPage () {
     useEffect(() => {
       onScreenLoad();
     }, [])
-
-    const onScreenLoad = async () => {
-      try {
-        const allEvents = await listHouseholdEvents();
-        console.log("All events: " );
-        console.log(allEvents);
-        const loadMyEvents = await listMyEvents();
-        const loadNeedMyApproval:APIApprovalEvent[] = await listNeedsApproval();
-        const calenEvents: CalendarEvent[] = 
-          allEvents.map((event) => ({
+    function APICalEventToCalEvent(event: APICalendarEvent) {
+        const calEvent: CalendarEvent = {
             start: new Date(event.start_date),
             end: new Date(event.end_date ? event.end_date : new Date(event.start_date + 3600*1000).toISOString()),
             title: event.title,
             id: event.id,
-          }));
-        const needMyApprovalEvents: APICalendarEvent[] = 
-          loadNeedMyApproval.map((e) => ({
+        }
+        return calEvent;
+    }
+    function APIApprovalEventToAPICalEvent(e:APIApprovalEvent)
+    {
+      const approvEvent: APICalendarEvent = {
             id: e.event.id,
             title: e.event.title,
             details: "",
@@ -70,12 +65,21 @@ export default function CalendarPage () {
             repeat: "",
             requires_approval: e.event.requires_approval,
             location: e.event.location,
-            event_owner_name: {
-              id: "",
-              full_name: e.event.event_owner_name ?? "",
-              email: "",
-            }
-        }))        
+            event_owner_name:  e.event.event_owner_name ?? "",
+      }
+      return approvEvent;
+    }
+    const onScreenLoad = async () => {
+      try {
+        const allEvents = await listHouseholdEvents();
+        const loadMyEvents = await listMyEvents();
+        const loadNeedMyApproval:APIApprovalEvent[] = await listNeedsApproval();
+        const calenEvents: CalendarEvent[] = 
+          allEvents.map((event:APICalendarEvent) => (
+            APICalEventToCalEvent(event)
+          ));
+        const needMyApprovalEvents: APICalendarEvent[] = 
+          loadNeedMyApproval.map((e) => (APIApprovalEventToAPICalEvent(e)));        
         setFullDetailEvents(allEvents);
         setEvents(calenEvents);
         setMyEvents(loadMyEvents);
@@ -84,14 +88,14 @@ export default function CalendarPage () {
         console.log("Home page error: " + e);
       }
     };
-
+    
     const calendarLayout = (e:LayoutChangeEvent) => {
       const{height} = e.nativeEvent.layout;
       setCalendarHeight(height);
     }
    
-    async function changeDateMode(date: Date) {
-        await setCurrentDate(date);
+    function changeDateMode(date: Date) {
+        setCurrentDate(date);
         setOpenDropdown(false);
         setCurrentMode(currentMode === 'week' ? 'month' : 'week');
     }
@@ -115,11 +119,12 @@ export default function CalendarPage () {
       setShowEvents(true);
       setOpenDropdown(false);
     }
+    
     async function showDetailModal(currEvent:CalendarEvent)
     {
+      console.log(currEvent);
       setEvent(currEvent);
       setOpenDropdown(false);
-      const myEvents = await listMyEvents();
       const pendingEvent = await getEventId(currEvent.id);
       setPendingEvent(pendingEvent);
       myEvents.forEach((e) => {
@@ -136,12 +141,34 @@ export default function CalendarPage () {
       })
       setDetailsModal(true);
     }
-    function showEditModal(event:CalendarEvent|null)
+    async function updateCalendar() 
     {
-        setEditModal(!editModal);
-        setEvent(event);
-        setOpenDropdown(false);
+      await updateEvents();
     }
+    async function closeDetailModal()
+    {
+      await updateEvents();
+      setShowCalendar(false);
+      setShowCalendar(true);
+      setDetailsModal(false);
+    }
+
+    async function updateEvents()
+    {
+      const allEvents = await listHouseholdEvents();
+       const calenEvents: CalendarEvent[] = 
+          allEvents.map((event) => ({
+            start: new Date(event.start_date),
+            end: new Date(event.end_date ? event.end_date : new Date(event.start_date + 3600*1000).toISOString()),
+            title: event.title,
+            id: event.id,
+          }));
+        await setEvents(calenEvents);
+        setFullDetailEvents(allEvents);
+        setMyEvents(await listMyEvents());
+    }
+
+   
     function toggleDropdown() {
         if (menuRef.current) {
           menuRef.current.measureInWindow((x, y, width, height) => {
@@ -255,12 +282,8 @@ export default function CalendarPage () {
         <ModalCalendarForm formTitle ="Create Event" edit={false} onClose={() => setEditModal(false)} />
 
         {detailsModal && (
-          <EventModal event={APIEvent} pendingEvent={pendingEvent} owner={isOwner} onClose={() => setDetailsModal(false)}/>
+          <EventModal event={APIEvent} pendingEvent={pendingEvent} owner={isOwner} onClose={() => closeDetailModal()} updateCal={() => updateCalendar()}/>
         )}
-
-        {/* {editModal && (
-          <ModalCalendarForm formTitle="Edit Event" edit={true}  onClose={() => setEditModal(false)}/>
-          )} */}
     </SafeAreaView>
   )
 }

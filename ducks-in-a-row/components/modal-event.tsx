@@ -15,13 +15,15 @@ import DateTimePicker, { DateTimePickerEvent, Event } from '@react-native-commun
 import RNDateTimePicker from '@react-native-community/datetimepicker';
 import { IconSymbol } from './ui/icon-symbol';
 import ModalCalendarForm from './modal-calendar-form';
-import {CalendarEvent as APICalendarEvent, EventDetails as APIEventDetails} from '@/api/calendar';
+import {CalendarEvent as APICalendarEvent, EventDetails as APIEventDetails, getEventId} from '@/api/calendar';
+import { useFocusEffect } from 'expo-router';
 
 type EventModalProps = PropsWithChildren<{
     event: APICalendarEvent|null;
     pendingEvent?: APIEventDetails|null;
     owner?: boolean;
     onClose?: any;
+    updateCal?: any;
 }>
 
 export interface CalendarEvent extends ICalendarEventBase {
@@ -36,15 +38,18 @@ export default function EventModal({event, owner=false, pendingEvent, ...props}:
     const[approvalModalVisible, setApprovalModalVisible] = useState(true);
     const[editModal, setEditModal] = useState(false);
     const [title, setTitle] = useState(event?.title || '');
+    const [details, setDetails] = useState(event?.details || "");
     const [startDate, setStartDate] = useState(new Date(event?.start_date||""));
     const [endDate, setEndDate] = useState(event?.end_date ? new Date(event.end_date) : new Date(event?.start_date??startDate.toISOString()+3600*1000));
+    const [location, setLocation] = useState("");
     const [cEvent, setEvent] = useState<CalendarEvent>();
     const [approved, setApproved] = useState(0);
     const [pending, setPending] = useState(0);
     const [denied, setDenied] = useState(0);
     const total = pendingEvent?.approvals.length;
     useEffect(()=> {
-        
+        setTitle(event?.title ?? "");
+        if(event?.details){setDetails(event.details);}
         if(event?.start_date)
         {
             setStartDate(new Date(event.start_date));
@@ -55,6 +60,7 @@ export default function EventModal({event, owner=false, pendingEvent, ...props}:
                 setEndDate(new Date(startDate.toISOString() + 3600*1000));
             }
         }
+        setLocation(event?.location ?? "");
         var a = 0;
         var p = 0;
         var d = 0; 
@@ -72,7 +78,10 @@ export default function EventModal({event, owner=false, pendingEvent, ...props}:
         setDenied(d);
         setPending(p);
         getPrintDate();
-    },[])
+    },[event, pendingEvent])
+
+    
+        
     function getPrintDate() {
         var date = "";
         date += abbrMonth[startDate.getMonth()] + " ";
@@ -149,10 +158,33 @@ export default function EventModal({event, owner=false, pendingEvent, ...props}:
         props.onClose();
     }
 
-    function showModal(approval: boolean, edit: boolean)
+    async function showModal(approval: boolean, edit: boolean)
     {
         setApprovalModalVisible(approval);
         setEditModal(edit);
+        if(props.updateCal)
+        {
+            props.updateCal();
+        }
+    
+        if(event)
+        {
+            event = await getEventId(event.id);
+            console.log("Updated event: " + event);
+            setTitle(event.title);
+            setDetails(event.details ?? "");
+            setStartDate(new Date(event.start_date));
+            setEndDate(new Date(event.end_date ?? event.start_date + 3600*1000));
+            getPrintDate();
+            setLocation(event.location ?? "");
+            
+        }
+        
+    }
+
+    function updateModal(title:string, detail:string, startDate: string, endDate: Date, location:string)
+    {
+        setTitle(title);
     }
     function notifyRoommate() 
     {
@@ -186,19 +218,19 @@ export default function EventModal({event, owner=false, pendingEvent, ...props}:
                 </View>
                 }
             </View>
-            <ThemedText type='title'>{event?.title}</ThemedText>
-            <ThemedText type='subtitle'>{event?.details}</ThemedText>
+            <ThemedText type='title'>{title}</ThemedText>
+            <ThemedText type='secondarySubtitle'>{details}</ThemedText>
             <View style={modalTheme.rowStart}>
                 <IconSymbol size={20} name="calendar" color='black'/>
                 <ThemedText>{printDate}</ThemedText>
             </View>
             <View style={modalTheme.rowStart}>
                 <IconSymbol size={20} name="pin" color='black'/>
-                <ThemedText>Location: {event?.location === "" ? "Living Room" : event?.location}</ThemedText>
+                <ThemedText>Location: {location}</ThemedText>
             </View>
             <View style={modalTheme.rowStart}>
                 <IconSymbol size={20} name="person" color='black'/>
-                <ThemedText>Created by: {owner? "You" : event?.event_owner_name?.full_name}</ThemedText>
+                <ThemedText>Created by: {owner? "You" : event?.event_owner_name}</ThemedText>
             </View>
             <View style={{width:'100%', marginTop: 50}}>
                 <View style={{borderBottomColor: 'rgba(215, 209, 209, 1)', borderBottomWidth: 1, marginTop: 10, marginBottom: 10}}/>

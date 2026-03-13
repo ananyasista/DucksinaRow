@@ -98,7 +98,6 @@ export function EventTile({event, owner}:EventTileProps) {
         setPending(currPending);
         setEventDetails(true);
     }
-    
     //TODO: Add in Created by, Approved by #, Waiting for #, Decline/Approve functionality
   return (
     <TouchableOpacity id={event.id} style={eventTileStyle.container} onPress={() => openEventDetails()}>
@@ -126,7 +125,7 @@ export function EventTile({event, owner}:EventTileProps) {
         {!owner && (
             <View style={{width:'100%'}}>
                 <View style={{borderBottomColor: 'rgba(215, 209, 209, 1)', borderBottomWidth: 1, marginTop: 10, marginBottom: 10}}/>
-                <ThemedText type='text'>Created By: {event.event_owner_name?.full_name}</ThemedText>
+                <ThemedText type='text'>Created By: {event.event_owner_name}</ThemedText>
                 <View style={eventTileStyle.buttonContainer}>
                         <TouchableOpacity style={eventTileStyle.declineButton}>
                             <Text style={eventTileStyle.cancelText}>Decline</Text>

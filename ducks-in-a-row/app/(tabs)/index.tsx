@@ -81,10 +81,12 @@ export default function HomeScreen() {
   const [calendarHeight, setCalendarHeight] = useState(0);
   const [groupName, setGroupName] = useState('Household');
   const choreList = mockData.chores;
+  const [myEvents, setMyEvents] = useState<CalendarEvent[]>([]);
   const [upcomingEvents, setUpcomingEvents] = useState<HomeCalendarEvent[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [eventDetails, setEventDetails] = useState(false);
-  const [currEvent, setCurrEvent] = useState<EventDetails>()
+  const [currEvent, setCurrEvent] = useState<EventDetails>();
+  const [isOwner, setIsOwner] = useState(false);
   // Fetch Household Name
   const loadHomeData = async () => {
     try {
@@ -122,7 +124,7 @@ export default function HomeScreen() {
     try {
       const currNeedsApproval = await listNeedsApproval();
       const currGiveApproval = await listMyEvents();
-
+      setMyEvents(currGiveApproval);
       setNeedsApproval(currNeedsApproval.length);
       setGiveApproval(currGiveApproval.length);
 
@@ -167,10 +169,7 @@ export default function HomeScreen() {
           end,
           details: event.details,
           location: event.location,
-          event_owner_name:
-            typeof event.event_owner_name === 'string'
-              ? event.event_owner_name
-              : event.event_owner_name?.full_name,
+          event_owner_name: event.event_owner_name,
           rawId: event.id,
         };
       })
@@ -195,8 +194,16 @@ export default function HomeScreen() {
 
   async function openEventDetails(event:any)
   {
-     setCurrEvent(await getEventId(event.rawId));
-     setEventDetails(true);
+    const currEvent = await getEventId(event.rawId);
+    setIsOwner(false);
+    myEvents.map((e) => {
+      if(e.id === currEvent.id)
+      {
+        setIsOwner(true);
+      }
+    })
+    setCurrEvent(currEvent);
+    setEventDetails(true);
   }
   return (
     <SafeAreaView style={{flex: 1}}>
@@ -292,7 +299,7 @@ export default function HomeScreen() {
           )}
         </View>
         { eventDetails && (
-              <EventModal event={currEvent ?? null} owner={false} pendingEvent={currEvent}   onClose={() => setEventDetails(false)}/>
+              <EventModal event={currEvent ?? null} owner={isOwner} pendingEvent={currEvent}   onClose={() => setEventDetails(false)}/>
           )} 
         </View>  
          
