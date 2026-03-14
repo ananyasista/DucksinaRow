@@ -191,7 +191,17 @@ export default function CalendarPage () {
         }
       }, [mode])
     );
-    
+    function remove(id: string)
+    {
+       var newNeedsApproval: APICalendarEvent[] = [];
+       needsMyApproval.map((e) => {
+        if(e.id !== id)
+        {
+          newNeedsApproval.push(e);
+        }
+       });
+       setNeedsMyApproval(newNeedsApproval);
+    }
       
     
   return (
@@ -252,16 +262,20 @@ export default function CalendarPage () {
               <ThemedText type='secondarySubtitle'>Needs Approval</ThemedText>
               {
                 needsMyApproval.map((event) => {
-                  return <EventTile key={event.id} event={event}  owner={false}/>
+                  return <EventTile key={event.id} event={event}  owner={false} remove={()=> remove(event.id)}/>
                 })
               }
+              {needsMyApproval.length === 0 && 
+                  <ThemedText type='text'>No events pending your approval!</ThemedText>
+              }
+              <View style={{padding:20}}></View>
               <ThemedText type='secondarySubtitle'>Your Events</ThemedText>
               {
                 
                 myEvents.map((event) => {
                     if(event.requires_approval && event.approval_counts && event.approval_counts?.approved < event.approval_counts?.total)
                     {
-                      return <EventTile key={event.id} event={event} owner={true}/>
+                      return <EventTile key={event.id} event={event} owner={true} />
                     }
                 })
                 

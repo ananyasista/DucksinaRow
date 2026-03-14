@@ -205,15 +205,16 @@ export default function EventModal({event, owner=false, pendingEvent, ...props}:
         >
             <View style ={modalTheme.container}>
             <View style={modalTheme.rowSpace}>
-                <TouchableOpacity onPress={() => close()}>
-                    <Octicons name='x-circle' size = {30} color='#000000'/> 
+                <TouchableOpacity style={modalTheme.containerButton} onPress={() => close()}>
+                    <Octicons name='x' size = {28} color='#000000'/> 
                 </TouchableOpacity>
-               {owner&& <View style={modalTheme.rowEnd}>
-                    <TouchableOpacity onPress={() => deleteEvent()}>
-                        <Octicons name='trash' size = {30} color='#000000' style={{margin:5}}/> 
+                <View style={{margin:30}}/>
+               {owner&& <View style={[modalTheme.rowEnd, {gap:10} ]}>
+                    <TouchableOpacity style={[modalTheme.containerButton, {borderColor:'#e91010'}]} onPress={() => deleteEvent()}>
+                        <Octicons name='trash' size = {28} color='#e91010' style={{margin:5}}/> 
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => showModal(false, true)}>
-                        <Octicons name='pencil' size = {30} color='#000000' style={{margin:5}}/> 
+                    <TouchableOpacity style={[modalTheme.containerButton, {borderColor:'#dda90e'}]} onPress={() => showModal(false, true)}>
+                        <Octicons name='pencil' size = {28} color='#dda90e' style={{margin:5}}/> 
                     </TouchableOpacity>
                 </View>
                 }
@@ -243,7 +244,7 @@ export default function EventModal({event, owner=false, pendingEvent, ...props}:
                     if(e.status === 'approved')
                     {
                         return <View style={[modalTheme.rowSpace, modalTheme.rowPadding]}>
-                                    <View  style={modalTheme.rowStart}>
+                                    <View style={modalTheme.rowStart}>
                                         <View style={modalTheme.avatarCircle}>
                                         <Text style={modalTheme.avatarText}>{e.user.name.charAt(0)}</Text>
                                         </View>
@@ -294,6 +295,15 @@ export default function EventModal({event, owner=false, pendingEvent, ...props}:
 const modalTheme = StyleSheet.create({
     container: {
         padding: 20,
+    },
+    containerButton: {
+        borderWidth: 1,
+        borderRadius: 30,
+        width: 45,
+        height: 45,
+        justifyContent: "center",
+        alignContent: "center",
+        alignItems: "center"
     },
     header: {
         justifyContent:"space-between",
@@ -379,6 +389,7 @@ const modalTheme = StyleSheet.create({
     backgroundColor: "#087d4b",
     justifyContent: "center",
     alignItems: "center",
+    marginRight: 10,
   },
   avatarCircleYellow: {
     width: 36,
@@ -387,6 +398,8 @@ const modalTheme = StyleSheet.create({
     backgroundColor: "#f8b118",
     justifyContent: "center",
     alignItems: "center",
+        marginRight: 10,
+
   },
   avatarCircleRed: {
     width: 36,
@@ -395,6 +408,8 @@ const modalTheme = StyleSheet.create({
     backgroundColor: "#f81818",
     justifyContent: "center",
     alignItems: "center",
+        marginRight: 10,
+
   },
   avatarText: {
     color: "#fff",
