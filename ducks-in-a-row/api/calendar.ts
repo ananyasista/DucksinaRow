@@ -14,6 +14,7 @@ export interface CalendarEvent {
     id: string;
     full_name: string;
     email: string;
+    display_color?: string | null;
   };
   notification_value?: number | null;
   notification_unit?: string | null;
@@ -51,6 +52,7 @@ export interface ApprovalEvent {
     location?: string;
     event_owner_name?: string;
     requires_approval: boolean;
+    display_color?: string | null;
   };
   approved: boolean;
   response_time?: string | null;

@@ -16,6 +16,7 @@ export interface ChoreCard {
     id: string,
     last_name: string,
     name: string,
+    display_color?: string | null;
   };
   roommates_involved: {
     email: string,
@@ -23,6 +24,7 @@ export interface ChoreCard {
     id: string,
     last_name: string,
     name: string,
+    display_color?: string | null;
   }[];
 }
 
@@ -40,6 +42,7 @@ export interface ChoreDetail extends ChoreCard {
     id: string,
     last_name: string,
     name: string,
+    display_color?: string | null;
   };
   pass_to_next_value: number;
   pass_to_next_unit: string;

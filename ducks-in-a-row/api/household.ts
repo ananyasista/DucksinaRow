@@ -1,25 +1,14 @@
 import { api } from "./client";
-
-export type LivingPreferences = {
-  cleanliness: number | null;
-  clean_up_your_space: boolean;
-  cook: boolean;
-  sharing_items: boolean;
-  pets: boolean;
-  guests: boolean;
-  personality_type: string;
-  sleep_schedule: string;
-  smoking: boolean;
-  drinking_alcohol: boolean;
-};
+import type { LivingPreferences } from "./auth";
 
 export type Roommate = {
   id: string;
-  full_name: string;
+  full_name?: string;
   first_name: string;
   last_name: string;
   email: string;
-  living_preferences: LivingPreferences;
+  display_color?: string | null;
+  living_preferences: LivingPreferences | null;
 };
 
 export type Household = {
@@ -29,16 +18,20 @@ export type Household = {
 };
 
 export async function getHouseholdRoommates(): Promise<Roommate[]> {
-  const res = await api.get("/household/roommates/");
+  const res = await api.get<Roommate[]>("/household/roommates/");
   return res.data;
 }
 
-export async function createHousehold(household_name: string): Promise<Household> {
-  const res = await api.post("/household/create/", { household_name });
+export async function createHousehold(
+  household_name: string
+): Promise<Household> {
+  const res = await api.post<Household>("/household/create/", {
+    household_name,
+  });
   return res.data;
 }
 
 export async function getHouseholdName(): Promise<Household> {
-  const res = await api.get("/household/get-name/");
+  const res = await api.get<Household>("/household/get-name/");
   return res.data;
 }

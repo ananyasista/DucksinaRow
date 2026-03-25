@@ -6,6 +6,7 @@ from rest_framework import status
 from django.contrib.auth import get_user_model
 from api.models import LivingPreferences
 from api.serializers.household_serializers import CreateHouseholdSerializer, HouseholdSerializer, RoommateSerializer
+from api.serializers.auth_serializers import assign_household_color
 
 User = get_user_model()
 
@@ -64,6 +65,7 @@ def create_household(request):
 
     if serializer.is_valid():
         household = serializer.save()
+        assign_household_color(request.user, household)
         return Response(HouseholdSerializer(household).data, status=status.HTTP_201_CREATED)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
