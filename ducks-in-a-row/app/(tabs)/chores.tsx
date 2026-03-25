@@ -127,7 +127,7 @@ export default function InventoryScreen() {
                   completed={item.completed}
                   due_date={item.due_date ?? new Date()}
                   repeat={item.repeat_unit}
-                  assignee={item.assignee}
+                  assignee={item.current_assignment?.assignee ?? undefined}
                   onPress={() => {
                     getChore(item.id);
                     setViewItemVisible(true);
@@ -156,7 +156,7 @@ export default function InventoryScreen() {
                 all_day: chore.all_day ?? true,
                 roommates_involved: chore.roommates_involved || [],
               })
-              refreshChores();
+              await refreshChores();
             }}
             allRoommates={roommatesList}
           />
@@ -190,7 +190,7 @@ export default function InventoryScreen() {
               save={async (chore) => {
                 if(!selectedItem) return;
                 await choreAPI.updateChore(selectedItem.id, chore);
-                refreshChores();
+                await refreshChores();
               }}
               allRoommates={roommatesList}
             />

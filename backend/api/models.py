@@ -2,6 +2,7 @@ import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
+from django.utils import timezone
 from datetime import timedelta
 
 
@@ -231,6 +232,10 @@ class Chore(models.Model):
         blank=True
     )
 
+    @property
+    def latest_assignment(self):
+        return self.assignments.order_by("-due_date").first()
+
     def __str__(self):
         return self.title
 
@@ -267,6 +272,10 @@ class ChoreAssignment(models.Model):
 
     def create_next_assignment(self):
         chore = self.chore
+        # Only create next assignment if current assignment is completed and due_date <= today
+        if not self.completed or self.due_date.date() > timezone.localdate():
+            return
+
         if ChoreAssignment.objects.filter(chore=chore, due_date__gt=self.due_date).exists():
             return
 

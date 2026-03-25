@@ -10,68 +10,33 @@ class ChoreAssignmentSerializer(serializers.ModelSerializer):
     chore_id = serializers.PrimaryKeyRelatedField(source="chore", read_only=True)
     due_date = serializers.DateTimeField(
         write_only=True,
-        required=True,
+        required=False,
         input_formats=['%Y-%m-%d', '%Y-%m-%dT%H:%M:%S.%fZ']
     )
+
+    completed = serializers.BooleanField(required=False) 
     class Meta:
         model = ChoreAssignment
         fields = ["id", "chore_id", "assignee", "next_assignee", "due_date", "completed", "all_day"]
 
-# class ChoreListSerializer(serializers.ModelSerializer):
-#     assignee = serializers.SerializerMethodField()
-#     due_date = serializers.SerializerMethodField()
-#     completed = serializers.SerializerMethodField()
-
-#     class Meta:
-#         model = Chore
-#         fields = [
-#             "id",
-#             "household",
-#             "title",
-#             "assignee",
-#             "due_date",
-#             "completed",
-#         ]
-#     def get_latest_assignment(self, obj):
-#         return obj.assignments.order_by("-due_date").first()
-
-#     def get_assignee(self, obj):
-#         assignment = self.get_latest_assignment(obj)
-#         if assignment and assignment.assignee:
-#             return SimpleUserSerializer(assignment.assignee).data
-#         return None
-
-#     def get_due_date(self, obj):
-#         assignment = self.get_latest_assignment(obj)
-#         return assignment.due_date if assignment else None
-
-#     def get_completed(self, obj):
-#         assignment = self.get_latest_assignment(obj)
-#         return assignment.completed if assignment else False
-
-    
-
 class ChoreSerializer(serializers.ModelSerializer):
-    assignee = serializers.SerializerMethodField()
-    next_assignee = serializers.SerializerMethodField()
-    current_due_date = serializers.SerializerMethodField()  # read
+    # Nested assignment
+    current_assignment = ChoreAssignmentSerializer(source="latest_assignment", read_only=False, required=False)
+
+    # Roommates
+    roommates_involved = SimpleUserSerializer(many=True, read_only=True)
+    roommates_involved_ids = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=User.objects.all(),
+        write_only=True,
+        required=False
+    )
+
+    # Only for creating/updating due_date of the chore itself
     due_date = serializers.DateTimeField(
         write_only=True,
         required=True,
         input_formats=['%Y-%m-%d', '%Y-%m-%dT%H:%M:%S.%fZ']
-    )
-    completed = serializers.SerializerMethodField()
-    all_day = serializers.SerializerMethodField()
-
-    # Use SimpleUserSerializer for read
-    roommates_involved = SimpleUserSerializer(many=True, read_only=True)
-
-    # Writable version for POST/PUT
-    roommates_involved_ids = serializers.PrimaryKeyRelatedField(
-        many=True, 
-        queryset=User.objects.all(), 
-        write_only=True, 
-        required=False
     )
 
     class Meta:
@@ -79,78 +44,51 @@ class ChoreSerializer(serializers.ModelSerializer):
         fields = "__all__"
         read_only_fields = ("id", "household")
 
-    def get_latest_assignment(self, obj):
-        return obj.assignments.order_by("-due_date").first()
-
-    def get_assignee(self, obj):
-        assignment = self.get_latest_assignment(obj)
-        if assignment and assignment.assignee:
-            return SimpleUserSerializer(assignment.assignee).data
-        return None
-
-    def get_next_assignee(self, obj):
-        assignment = self.get_latest_assignment(obj)
-        if assignment and assignment.next_assignee:
-            return SimpleUserSerializer(assignment.next_assignee).data
-        return None
-
-    def get_current_due_date(self, obj):
-        assignment = self.get_latest_assignment(obj)
-        return assignment.due_date if assignment else None
-
-    def get_completed(self, obj):
-        assignment = self.get_latest_assignment(obj)
-        return assignment.completed if assignment else False
-    
-    def get_all_day(self, obj):
-        assignment = self.get_latest_assignment(obj)
-        return assignment.all_day if assignment else False
-
     # Validation
     def validate(self, data):
         user = self.context["request"].user
 
+        # Validate assigned roommate only if present
         assigned = data.get("assigned_roommate")
         if assigned and assigned.household != user.household:
             raise serializers.ValidationError(
                 "Assigned roommate must belong to your household."
             )
 
-        # Rotation Logic
-        if data.get("is_rotating") and not data.get("roommates_involved"):
+        # Rotation logic: validate only if field is being updated
+        if data.get("is_rotating") and not data.get("roommates_involved") and self.instance is None:
             raise serializers.ValidationError(
                 "Rotating chores must include roommates."
             )
 
         # Pass-to-next logic
-        if data.get("pass_to_next_unit") and not data.get("pass_to_next_value"):
-            raise serializers.ValidationError(
-                "pass_to_next_value required if unit is set."
-            )
+        if "pass_to_next_unit" in data and data.get("pass_to_next_unit"):
+            if "pass_to_next_value" not in data or not data.get("pass_to_next_value"):
+                raise serializers.ValidationError(
+                    "pass_to_next_value required if unit is set."
+                )
 
         # Notification logic
-        if data.get("notification_unit") and not data.get("notification_value"):
-            raise serializers.ValidationError(
-                "Notification value required if unit is set."
-            )
+        if "notification_unit" in data and data.get("notification_unit"):
+            if "notification_value" not in data or not data.get("notification_value"):
+                raise serializers.ValidationError(
+                    "Notification value required if unit is set."
+                )
 
         return data
 
     # Create method
     def create(self, validated_data):
         roommates = validated_data.pop("roommates_involved_ids", [])
-
         if not roommates:
             raise serializers.ValidationError("Must have roommates involved")
 
         due_date = validated_data.pop("due_date")
         if validated_data.get("all_day", True):
-            due_date = due_date.date()  # only keep date
+            due_date = due_date.date()
 
         # Create chore
         chore = Chore.objects.create(**validated_data)
-
-        # Attach roommates
         chore.roommates_involved.set(roommates)
 
         # Determine first assignee & next assignee
@@ -168,3 +106,25 @@ class ChoreSerializer(serializers.ModelSerializer):
         )
 
         return chore
+
+    # Update method (handles nested assignment)
+    def update(self, instance, validated_data):
+        assignment_data = validated_data.pop("latest_assignment", None)
+
+        # Update chore fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        # Update the latest assignment
+        if assignment_data:
+            assignment = instance.latest_assignment
+            for attr, value in assignment_data.items():
+                setattr(assignment, attr, value)
+            assignment.save()
+
+            # Only create next assignment if completed and due_date <= today
+            if assignment.completed and assignment.due_date.date() <= timezone.localdate():
+                assignment.create_next_assignment()
+
+        return instance

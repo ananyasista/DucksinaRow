@@ -61,7 +61,7 @@ export default function ChoreViewModal(props: ModalProps) {
                             />
                         </View>
                         <Text style={styles.subHeading}>Pass chore to next roommate: <Text style={styles.text}>{props.chore.pass_to_next_value} {props.chore.pass_to_next_unit}</Text></Text>
-                        <Text style={styles.subHeading}>Next Up: <Text style={styles.text}>{props.chore.next_assignee?.first_name ?? ""}</Text></Text>
+                        <Text style={styles.subHeading}>Next Up: <Text style={styles.text}>{props.chore.current_assignment?.next_assignee?.first_name ?? ""}</Text></Text>
                         <View>
                             <Text style={styles.subHeading}>Roomates Involved:</Text>
                             <View style={styles.chipView}>

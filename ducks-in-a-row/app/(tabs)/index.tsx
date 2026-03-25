@@ -53,6 +53,7 @@ const getInitial = (fullName?: string) => {
   return fullName.trim().charAt(0).toUpperCase();
 };
 
+// Remove DUMMY data and add actual
 const mockData: UserData = {
   groupName: "Area 52",
   needApprovals: 10,
@@ -61,12 +62,12 @@ const mockData: UserData = {
   chores: [
     {
       key: 1,
-      title: "Take out trash",
+      title: "Vacuum",
       complete: false
     },
     {
       key: 2,
-      title: "Empty Dishwasher",
+      title: "Take out trash",
       complete: true
     }
   ]

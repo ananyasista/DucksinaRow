@@ -2,6 +2,7 @@ import {View, StyleSheet, Switch, Text, TouchableOpacity} from 'react-native';
 import { useState } from 'react';
 import { isEnabled } from 'react-native/Libraries/Performance/Systrace';
 import CircularCheckbox from './circle-checkbox';
+import { UserSummary } from '@/api/chores';
 
 type ChoreTileProps = {
     id: string;
@@ -9,13 +10,7 @@ type ChoreTileProps = {
     completed: boolean;
     due_date: Date;
     repeat: string;
-    assignee: {
-        email: string,
-        first_name: string,
-        id: string
-        last_name: string
-        name: string
-    };
+    assignee?: UserSummary;
     onChange: () => void;
     onPress: () => void;
 }
