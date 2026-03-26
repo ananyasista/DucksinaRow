@@ -34,8 +34,8 @@ export default function ChoreTile(props: ChoreTileProps){
                     <Text>{props.assignee?.first_name ?? "Unassigned"}</Text>
                 </View>
                 <CircularCheckbox 
-                    checked = {checked}
-                    onToggle={() => setChecked(!checked)}
+                    checked = {props.completed}
+                    onToggle={props.onChange}
                 />
             </View>
             

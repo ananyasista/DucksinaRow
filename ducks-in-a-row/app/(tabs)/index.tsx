@@ -12,6 +12,7 @@ import { ThemedText } from '@/components/themed-text';
 
 import { getHouseholdName } from '@/api/household';
 import { listHouseholdEvents, listMyEvents, listNeedsApproval } from '../../api/calendar';
+import { ChoreDetail, getChores, updateChore } from '@/api/chores';
 
 type ApprovalEvent = {
   id: string;
@@ -36,7 +37,7 @@ type UserData = {
 }
 
 type Chore = {
-  key: number
+  key: string
   title: string
   complete: boolean
 }
@@ -53,25 +54,7 @@ const getInitial = (fullName?: string) => {
   return fullName.trim().charAt(0).toUpperCase();
 };
 
-// Remove DUMMY data and add actual
-const mockData: UserData = {
-  groupName: "Area 52",
-  needApprovals: 10,
-  giveApprovals: 4,
-  pendingNum: 10,
-  chores: [
-    {
-      key: 1,
-      title: "Vacuum",
-      complete: false
-    },
-    {
-      key: 2,
-      title: "Take out trash",
-      complete: true
-    }
-  ]
-}
+
 
 
 export default function HomeScreen() {
@@ -80,7 +63,7 @@ export default function HomeScreen() {
   const [giveApproval, setGiveApproval] = useState(0);
   const [calendarHeight, setCalendarHeight] = useState(0);
   const [groupName, setGroupName] = useState('Household');
-  const choreList = mockData.chores;
+  const [choreList, setChoreList] = useState<ChoreDetail[]>([]);
   const [upcomingEvents, setUpcomingEvents] = useState<HomeCalendarEvent[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
 
@@ -92,6 +75,9 @@ export default function HomeScreen() {
     } catch (e: any) {
       console.log('Home page error:', e?.response?.data || e.message);
     }
+
+    const choreData = await getChores();
+    setChoreList(choreData);
   };
   
   useEffect(() => {
@@ -229,7 +215,17 @@ export default function HomeScreen() {
                 {choreList.map((chore) => (
                   <CheckboxTile
                     title={chore.title}
-                    complete={chore.complete}
+                    id={chore.id}
+                    complete={chore.completed}
+                    onPress={()=>{router.navigate({pathname:'/(tabs)/chores'})}}
+                    onToggle={async (item) => {
+                      try {
+                        await updateChore(chore.id, {...chore, ...item});
+                      } catch (err: any) {
+                        console.log("ERROR RESPONSE:", err.response?.data);
+                        console.log("STATUS:", err.response?.status);
+                      }
+                    }}
                   ></CheckboxTile>
                 ))}
               </>
@@ -341,7 +337,7 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#00664F',
     flex: 2,
-    aspectRatio: 2.5
+    aspectRatio: 0
   },
   
   eventCard: {

@@ -104,7 +104,7 @@ export default function InvItemModal(props: ModalProps) {
                     </TouchableOpacity>
                 </View>
 
-
+                {/* Item name field */}
                 <SafeAreaView style={styles.modalContent}>
                     <View style={styles.formField}>
                         <Text style={styles.subHeading}>Item Name</Text>
@@ -117,6 +117,7 @@ export default function InvItemModal(props: ModalProps) {
                         />
                     </View>
 
+                    {/* Item details field */}
                     <View style={styles.formField}>
                         <Text style={styles.subHeading}>Details</Text>
                         <TextInput 
@@ -129,6 +130,7 @@ export default function InvItemModal(props: ModalProps) {
                         />
                     </View>
                 
+                    {/* Item quantity field */}
                     <View style={styles.formField}>
                         <Text style={styles.subHeading}>Quantity</Text>
                         <Counter value={quantity} onChange={setQuantity} />

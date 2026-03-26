@@ -3,7 +3,6 @@ import Chip from './chip';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import { IconSymbol } from './ui/icon-symbol';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { ChoreDetail } from '@/api/chores';
 
 type ModalProps = {
@@ -49,17 +48,14 @@ export default function ChoreViewModal(props: ModalProps) {
                     <View style={{gap: 10}}>
                         <Text style={styles.title}>{props.chore.title}</Text>
                         <Text style={styles.text}>{props.chore.details}</Text>
+                        <Text style={styles.subHeading}>Current Assignee: <Text style={styles.text}>{props.chore.current_assignment?.assignee.first_name}</Text></Text>
                         <View style={{flexDirection: 'row'}}>
                             <IconSymbol name='calendar' size={30} color="#000"/>
-                            <DateTimePicker
-                                testID="dateTimePicker"
-                                value={props.chore.due_date}
-                                is24Hour={true}
-                                mode={'date'}
-                                display = 'default'
-                                themeVariant='light'
-                            />
+                            <Text style={styles.subHeading}>Chore Due: <Text style={styles.text}>{props.chore.due_date.toLocaleDateString()}</Text></Text>
                         </View>
+                        {props.chore.is_rotating && (
+                            <>
+                        
                         <Text style={styles.subHeading}>Pass chore to next roommate: <Text style={styles.text}>{props.chore.pass_to_next_value} {props.chore.pass_to_next_unit}</Text></Text>
                         <Text style={styles.subHeading}>Next Up: <Text style={styles.text}>{props.chore.current_assignment?.next_assignee?.first_name ?? ""}</Text></Text>
                         <View>
@@ -74,7 +70,10 @@ export default function ChoreViewModal(props: ModalProps) {
                             </View>
                             
                         </View>
-                        <Text style={styles.subHeading}>Locations: <Text style={styles.text}>{props.chore.location}</Text></Text>
+                            </>
+                        )}
+                        
+                        <Text style={styles.subHeading}>Location: <Text style={styles.text}>{props.chore.location}</Text></Text>
                         
                     </View>
                     

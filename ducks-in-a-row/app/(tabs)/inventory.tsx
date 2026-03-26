@@ -61,7 +61,7 @@ export default function InventoryScreen() {
  
   return (
     <SafeAreaView>
-      <ScrollView>
+      <ScrollView contentContainerStyle={{paddingBottom: 40}}>
         <View style={styles.fullLayout}>
           <Text style={styles.title}>Items</Text>
           <View style={{flexDirection: 'row', gap: 13}}>
@@ -107,12 +107,6 @@ export default function InventoryScreen() {
                 />
               ))
             }
-          </View>
-
-          <View style={styles.addButton}>
-            <TouchableOpacity onPress={() => setAddItemVisible(true)}>
-              <Octicons name='plus' size = {30} color='#fff'/>
-            </TouchableOpacity>
           </View>
 
           <InvItemModal 
@@ -165,6 +159,11 @@ export default function InventoryScreen() {
           
         </View>    
       </ScrollView>
+          <View style={styles.addButton}>
+            <TouchableOpacity onPress={() => setAddItemVisible(true)}>
+              <Octicons name='plus' size = {30} color='#fff'/>
+            </TouchableOpacity>
+          </View>
     </SafeAreaView>
   );
 }
@@ -191,7 +190,16 @@ const styles = StyleSheet.create({
         height: 50,
         borderRadius: 30,
         justifyContent: 'center',
-        alignItems: 'center'
+        alignItems: 'center',
+        position: 'absolute',
+        bottom: 25,
+        right: 25,
+        zIndex: 100,
+        shadowColor: '#000',
+        shadowOffset: {width: 0, height: 2},
+        shadowOpacity: 0.3,
+        shadowRadius: 3,
+        elevation: 5
     },
   
   input: {
