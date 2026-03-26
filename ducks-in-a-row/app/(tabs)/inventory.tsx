@@ -12,6 +12,7 @@ import InvItemTile from '@/components/inv-item-tile';
 import InvViewModal from '@/components/inv-view-modal';
 
 import * as invAPI from '@/api/inventory';
+import { ThemedText } from '@/components/themed-text';
 
 export default function InventoryScreen() {
   const [itemList, setItemList] = useState<invAPI.InventoryDetails[]>([]);
@@ -63,7 +64,7 @@ export default function InventoryScreen() {
     <SafeAreaView>
       <ScrollView contentContainerStyle={{paddingBottom: 40}}>
         <View style={styles.fullLayout}>
-          <Text style={styles.title}>Items</Text>
+          <ThemedText type="title">Items</ThemedText>
           <View style={{flexDirection: 'row', gap: 13}}>
             <InvFilterModal 
               title='Filters'
@@ -82,7 +83,7 @@ export default function InventoryScreen() {
                 onChangeText={setSearchText}
                 value={searchText}
                 placeholder='Search'
-                placeholderTextColor='#ABA4A461'
+                placeholderTextColor='rgba(171, 164, 164, 0.58)'
             />
           </View>
           
@@ -203,7 +204,7 @@ const styles = StyleSheet.create({
     },
   
   input: {
-    borderWidth: 2,
+    borderWidth: 1,
     padding: 5,
     borderColor: '#ABA4A461',
     backgroundColor: '#F6F4F4C4',

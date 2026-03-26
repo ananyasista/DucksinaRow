@@ -5,6 +5,8 @@ import { useState } from 'react';
 import Counter from './counter';
 import { InventoryDetails } from '@/api/inventory';
 import { IconSymbol } from './ui/icon-symbol';
+import { ThemedText } from './themed-text';
+import { ThemedSwitch } from './themed-switch';
 
 type ModalProps = {
     item: InventoryDetails;
@@ -48,20 +50,18 @@ export default function InvViewModal(props: ModalProps) {
 
 
                 <SafeAreaView style={styles.modalContent}>
-                    <Text style={styles.title}>{props.item.name}</Text>
-                    <Text style={styles.text}>{props.item.details}</Text>
-                    <Text style={styles.subHeading}>Location: <Text style={styles.text}>{props.item.location}</Text></Text>
-                    <Text style={styles.subHeading}>Last Purchased By: <Text style={styles.text}>{props.item.last_purchased_by.first_name}</Text></Text>
-                    <Text style={styles.subHeading}>Purchase Date: <Text style={styles.text}>{props.item.last_purchased_date.toDateString()}</Text></Text>
-                    <View>
-                        <View style={{flexDirection: 'row', gap: 12}}>
-                            <Text style={styles.subHeading}>Restock Needed?</Text>
-                            <Switch 
-                                trackColor={{false: 'red', true: 'green'}}
-                                thumbColor={'white'}
-                            />
-                        </View>
-                        <Text style={styles.subtitle}>Toggle when this item needs to be restocked</Text>
+                    <ThemedText type="title">{props.item.name}</ThemedText>
+                    <ThemedText type="secondarySubtitle">{props.item.details}</ThemedText>
+                    <View style={styles.rowStart}> 
+                        <IconSymbol size={20} name="pin" color="#000"/>
+                        <ThemedText type="subtitle">Location: <ThemedText type="secondarySubtitle">{props.item.location}</ThemedText></ThemedText>
+                    </View>
+                    
+                    <ThemedText type="subtitle">Last Purchased By: <ThemedText type="secondarySubtitle">{props.item.last_purchased_by.first_name}</ThemedText></ThemedText>
+                    <ThemedText type="subtitle">Purchase Date: <ThemedText type="secondarySubtitle">{props.item.last_purchased_date.toDateString()}</ThemedText></ThemedText>
+                    <View>                            
+                        <ThemedSwitch label="Restock Needed?" onChangeSwitch={props.onClose}/>
+                        <ThemedText type="text">Toggle when this item needs to be restocked</ThemedText>
                     </View>
                     
                 </SafeAreaView>
@@ -104,6 +104,13 @@ const styles = StyleSheet.create({
     subtitle: {
         fontSize: 18,
         fontWeight: 300
+    },
+
+    rowStart: {
+        justifyContent: 'flex-start',
+        flexDirection: 'row',
+        alignItems: "center",
+        gap: 5
     }
 
 });

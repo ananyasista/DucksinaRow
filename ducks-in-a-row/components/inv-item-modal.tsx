@@ -6,6 +6,8 @@ import DropDownPicker from 'react-native-dropdown-picker'
 import DateTimePicker, { DateTimePickerEvent, Event } from '@react-native-community/datetimepicker';
 import Counter from './counter';
 import { InventoryDetails, InventoryCard } from '@/api/inventory';
+import { ThemedTextInput } from './text-input';
+import { ThemedText } from './themed-text';
 
 type ModalProps = {
     visible: boolean;
@@ -107,37 +109,36 @@ export default function InvItemModal(props: ModalProps) {
                 {/* Item name field */}
                 <SafeAreaView style={styles.modalContent}>
                     <View style={styles.formField}>
-                        <Text style={styles.subHeading}>Item Name</Text>
-                        <TextInput 
-                            style={styles.input}
+                        <ThemedText type="boldText">Item Name</ThemedText>
+                        <ThemedTextInput 
                             onChangeText={setItemName}
-                            value={itemName}
+                            defaultValue={itemName}
                             placeholder='Item Name'
-                            placeholderTextColor='#ABA4A461'
                         />
                     </View>
 
                     {/* Item details field */}
                     <View style={styles.formField}>
-                        <Text style={styles.subHeading}>Details</Text>
-                        <TextInput 
-                            style={styles.input}
+                        <ThemedText type="boldText">Details</ThemedText>
+                        <ThemedTextInput
                             onChangeText={setItemDetails}
-                            value={itemDetails}
+                            defaultValue={itemDetails}
                             placeholder='Add Details'
-                            placeholderTextColor='#ABA4A461'
                             multiline
+                            size="large"
                         />
                     </View>
                 
                     {/* Item quantity field */}
                     <View style={styles.formField}>
-                        <Text style={styles.subHeading}>Quantity</Text>
-                        <Counter value={quantity} onChange={setQuantity} />
+                        <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: "space-between"}}>
+                            <ThemedText type="boldText">Quantity</ThemedText>
+                            <Counter value={quantity} onChange={setQuantity} />
+                        </View>
                     </View>
 
                     <View style={styles.formField}>
-                        <Text style={styles.subHeading}>Location</Text>
+                        <ThemedText type="boldText">Location</ThemedText>
                         <DropDownPicker 
                             open={openDropdown}
                             value={itemLocation}
@@ -168,7 +169,7 @@ const styles = StyleSheet.create({
     },
 
     title: {
-        fontSize: 48,
+        fontSize: 24,
         fontWeight: 600
     },
 
@@ -187,26 +188,28 @@ const styles = StyleSheet.create({
     header: {
         justifyContent: "space-between",
         flexDirection: 'row',
-        alignItems: 'flex-end',
-        padding: 12
+        alignItems: 'center',
+        padding: 12,
     },
 
     cancelButton: {
-        backgroundColor: '#fff',
+         backgroundColor: '#fff',
         borderWidth: 2,
-        borderRadius: 20,
+        borderRadius: 10,
         color: '#000',
         justifyContent: 'center',
         alignItems: 'center',
-        padding:7
+        width: 100,
+        height: 50
     },
 
     cancelText: {
-        fontSize: 20
+        fontSize: 16,
+        fontWeight: 500
     },
     
     input: {
-        borderWidth: 2,
+        borderWidth: 1,
         padding: 5,
         borderColor: '#ABA4A461',
         backgroundColor: '#F6F4F4C4',
@@ -236,11 +239,12 @@ const styles = StyleSheet.create({
     },
 
     dropdownMenu: {
-        borderWidth: 2,
+        borderWidth: 1,
         padding: 5,
         borderColor: '#ABA4A461',
-        backgroundColor: '#F6F4F4',
-        borderRadius: 13,
-        fontSize: 16
+        backgroundColor: '#F6F4F4C4',
+        borderRadius: 10,
+        fontSize: 16,
+        lineHeight: 24
     }
 });
