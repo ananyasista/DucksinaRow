@@ -8,9 +8,10 @@ import EventModal from './modal-event';
 interface EventTileProps {
   event: APICalendarEvent;
   owner: boolean;
+  details?: boolean;
   remove?: any;
 }
-export function EventTile({event, owner, ...props}:EventTileProps) {
+export function EventTile({event, owner,details= false, ...props}:EventTileProps) {
     const abbrMonth = ["Jan","Feb","Mar","Apr","May","June","July","Aug","Sept","Oct","Nov","Dec"];
     const [printDate, setPrintDate] = useState("");
     const [showModal, setShowModal] = useState(false);
@@ -143,7 +144,7 @@ export function EventTile({event, owner, ...props}:EventTileProps) {
             }
             
         </View>
-        {!owner && (
+        {!owner && !details && (
             <View style={{width:'100%'}}>
                 <View style={{borderBottomColor: 'rgba(215, 209, 209, 1)', borderBottomWidth: 1, marginTop: 10, marginBottom: 10}}/>
                 <ThemedText type='text'>Created By: {event.event_owner_name}</ThemedText>
@@ -157,21 +158,21 @@ export function EventTile({event, owner, ...props}:EventTileProps) {
                 </View>
             </View>
         )}
-        { owner && event.approval_status && (event.approval_status === "approved" ||(event.approval_counts &&event.approval_counts?.approved >= event.approval_counts.total)) && (
+        { (owner || details )&& event.approval_status && (event.approval_status === "approved" ||(event.approval_counts &&event.approval_counts?.approved >= event.approval_counts.total)) && (
            <View style={eventTileStyle.titleContainer}>
             <IconSymbol size={20} name="checkmark" color='black'/>
             <Text style={eventTileStyle.approvedText}>Approved by all roommates</Text>
          </View>
         )}
        
-        { owner && event.approval_status && ((event.approval_counts &&event.approval_counts?.approved < event.approval_counts.total))&&  (
+        { (owner||details) && event.approval_status && ((event.approval_counts &&event.approval_counts?.approved < event.approval_counts.total))&&  (
             <View style={eventTileStyle.titleContainer}>
                 <IconSymbol size={20} name="hourglass" color='black'/>
                 <Text style={eventTileStyle.pendingText}>Waiting for approval ({(event.approval_counts?.total ?? 0) - (event.approval_counts?.approved ?? 0)}/{event.approval_counts?.total} remaining)</Text>
              </View>
         )}
         { eventDetails && (
-            <EventModal event={event} owner={owner} pendingEvent={pending} onClose={() => setEventDetails(false)}/>
+            <EventModal event={event} owner={owner && !details} pendingEvent={pending} onClose={() => setEventDetails(false)}/>
         )}
         
     </TouchableOpacity>

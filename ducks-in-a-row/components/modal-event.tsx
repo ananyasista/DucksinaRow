@@ -210,11 +210,11 @@ export default function EventModal({event, owner=false, pendingEvent, ...props}:
                 </TouchableOpacity>
                 <View style={{margin:30}}/>
                {owner&& <View style={[modalTheme.rowEnd, {gap:10} ]}>
-                    <TouchableOpacity style={[modalTheme.containerButton, {borderColor:'#e91010'}]} onPress={() => deleteEvent()}>
-                        <Octicons name='trash' size = {28} color='#e91010' style={{margin:5}}/> 
+                    <TouchableOpacity style={[modalTheme.containerButton, {borderColor:'black'}]} onPress={() => deleteEvent()}>
+                        <Octicons name='trash' size = {28} color='black' style={{margin:5}}/> 
                     </TouchableOpacity>
-                    <TouchableOpacity style={[modalTheme.containerButton, {borderColor:'#dda90e'}]} onPress={() => showModal(false, true)}>
-                        <Octicons name='pencil' size = {28} color='#dda90e' style={{margin:5}}/> 
+                    <TouchableOpacity style={[modalTheme.containerButton, {borderColor:'black'}]} onPress={() => showModal(false, true)}>
+                        <Octicons name='pencil' size = {28} color='black' style={{margin:5}}/> 
                     </TouchableOpacity>
                 </View>
                 }
@@ -250,9 +250,7 @@ export default function EventModal({event, owner=false, pendingEvent, ...props}:
                                         </View>
                                         <ThemedText type='boldText'>{e.user.name}</ThemedText>
                                     </View>
-                                    <TouchableOpacity  style={modalTheme.rowEnd} onPress={() => notifyRoommate()}>
-                                        <Octicons size={30} name='check-circle' color='black'/>
-                                    </TouchableOpacity>
+                                    <Octicons size={30} name='check-circle' color='black'/>
                                 </View>
                     }  else if(e.status === 'declined') {
                         return <View style={[modalTheme.rowSpace, modalTheme.rowPadding]}>
@@ -262,9 +260,7 @@ export default function EventModal({event, owner=false, pendingEvent, ...props}:
                                     </View>
                                     <ThemedText type='boldText'>{e.user.name}</ThemedText>
                                 </View>
-                                <TouchableOpacity  style={modalTheme.rowEnd} onPress={() => notifyRoommate()}>
-                                    <Octicons size={30} name='x' color='black'/>
-                                </TouchableOpacity>
+                                <Octicons size={30} name='x' color='black'/>
                             </View>
                     } else {
                       return  <View style={[modalTheme.rowSpace, modalTheme.rowPadding]}>
@@ -274,15 +270,11 @@ export default function EventModal({event, owner=false, pendingEvent, ...props}:
                                     </View>
                                     <ThemedText type='boldText'>{e.user.name}</ThemedText>
                                 </View>
-                                <TouchableOpacity  style={modalTheme.rowEnd} onPress={() => notifyRoommate()}>
-                                    <Octicons size={30} name='bell' color='black'/>
-                                </TouchableOpacity>
+                                <IconSymbol size={30} name='hourglass' color='black'/>
                             </View>
                     }
                 })
             }
-            
-            
             </View>
         </Modal>
         {editModal && (

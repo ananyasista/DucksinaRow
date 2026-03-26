@@ -13,6 +13,9 @@ import { CalendarEvent as APICalendarEvent, ApprovalEvent as APIApprovalEvent, E
 import { CalendarContainerProps } from 'react-native-big-calendar/build/components/CalendarContainer';
 import CreateHouseholdScreen from '../create-household';
 import EventModal from '@/components/modal-event';
+import ChoreFilterModal from '@/components/chore-filter-modal';
+import { getHouseholdRoommates, Roommate } from '@/api/household';
+import Chip from '@/components/chip';
 
 
 export interface CalendarEvent extends ICalendarEventBase {
@@ -23,7 +26,9 @@ export default function CalendarPage () {
     const { mode } = useLocalSearchParams();
     const [events, setEvents] = useState<ICalendarEventBase[]>([]);
     const [fullDetailEvent, setFullDetailEvents] = useState<APICalendarEvent[]>([]);
+    const [allMyEvents, setAllMyEvents] = useState<APICalendarEvent[]>([]);
     const [myEvents, setMyEvents] = useState<APICalendarEvent[]>([]);
+    const [allNeedsMyApproval, setAllNeedsMyApproval]= useState<APICalendarEvent[]>([])
     const [needsMyApproval, setNeedsMyApproval] = useState<APICalendarEvent[]>([]);
     const month = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -41,13 +46,30 @@ export default function CalendarPage () {
     const [detailsModal, setDetailsModal] = useState(false);
     const [pendingEvent, setPendingEvent] = useState<APIEventDetails|null>(null); 
     const [isOwner, setIsOwner] = useState(false);
+    const [roommates, setRoommates] = useState<Roommate[]>([]);
+    const [showMyEvents, setShowMyEvents] = useState(true);
+    const [showFilters, setShowFilters] = useState(false);
+    const [showNeedsApproval, setShowNeedsApproval] = useState(true);
+    const [showUpcomingEvents, setShowUpcomingEvents] = useState(true);
+    const [upcomingEvents, setUpcomingEvents] = useState<APICalendarEvent[]>([]);
+    const [filtersByEvent, setFiltersByEvent] = useState<String[]>([]);
+    const [filtersByRoommate, setFiltersByRoommate] = useState<String[]>([]);
     useEffect(() => {
       onScreenLoad();
     }, [])
     function APICalEventToCalEvent(event: APICalendarEvent) {
+
+        var startDate = new Date(event.start_date);
+        var endDate = new Date(event.end_date ? event.end_date : new Date(event.start_date + 3600*1000).toISOString());
+        
+        if(startDate.getMonth() !== endDate.getMonth() || startDate.getDate() != endDate.getDate())
+        {
+           startDate.setHours(0,0,0,0);
+           endDate.setHours(0,0,0,0);
+        }
         const calEvent: CalendarEvent = {
-            start: new Date(event.start_date),
-            end: new Date(event.end_date ? event.end_date : new Date(event.start_date + 3600*1000).toISOString()),
+            start:startDate,
+            end: endDate,
             title: event.title,
             id: event.id,
         }
@@ -74,6 +96,8 @@ export default function CalendarPage () {
         const allEvents = await listHouseholdEvents();
         const loadMyEvents = await listMyEvents();
         const loadNeedMyApproval:APIApprovalEvent[] = await listNeedsApproval();
+        const loadRoommates = await getHouseholdRoommates();
+        setRoommates(loadRoommates);
         const calenEvents: CalendarEvent[] = 
           allEvents.map((event:APICalendarEvent) => (
             APICalEventToCalEvent(event)
@@ -83,7 +107,10 @@ export default function CalendarPage () {
         setFullDetailEvents(allEvents);
         setEvents(calenEvents);
         setMyEvents(loadMyEvents);
+        setAllMyEvents(loadMyEvents);
+        setAllNeedsMyApproval(needMyApprovalEvents);
         setNeedsMyApproval(needMyApprovalEvents);
+        setUpcomingEvents(allEvents);
       } catch (e: any) {
         console.log("Home page error: " + e);
       }
@@ -122,7 +149,6 @@ export default function CalendarPage () {
     
     async function showDetailModal(currEvent:CalendarEvent)
     {
-      console.log(currEvent);
       setEvent(currEvent);
       setOpenDropdown(false);
       const pendingEvent = await getEventId(currEvent.id);
@@ -156,16 +182,14 @@ export default function CalendarPage () {
     async function updateEvents()
     {
       const allEvents = await listHouseholdEvents();
-       const calenEvents: CalendarEvent[] = 
-          allEvents.map((event) => ({
-            start: new Date(event.start_date),
-            end: new Date(event.end_date ? event.end_date : new Date(event.start_date + 3600*1000).toISOString()),
-            title: event.title,
-            id: event.id,
-          }));
+        const calenEvents: CalendarEvent[] = 
+          allEvents.map((event:APICalendarEvent) => (
+            APICalEventToCalEvent(event)
+          ));
         await setEvents(calenEvents);
         setFullDetailEvents(allEvents);
-        setMyEvents(await listMyEvents());
+        setAllMyEvents(await listMyEvents());
+        setMyEvents(allMyEvents);
     }
 
    
@@ -202,7 +226,52 @@ export default function CalendarPage () {
        });
        setNeedsMyApproval(newNeedsApproval);
     }
-      
+    function filterBy(name: String)
+    {
+        if(name === "all")
+        {
+          setFiltersByEvent([]);
+          setFiltersByRoommate([]);
+          setUpcomingEvents(fullDetailEvent);
+          
+          setShowMyEvents(true);
+          setShowNeedsApproval(true);
+          setShowUpcomingEvents(true);
+
+          return;
+        }
+       if(filtersByRoommate.includes(name))
+       {
+          filtersByRoommate.splice(filtersByRoommate.indexOf(name),1);
+       } else {
+          filtersByRoommate.push(name);
+       }
+       applyFiltersByRoommate();
+    }
+    function applyFiltersByRoommate()
+    {
+        if(filtersByRoommate.length === 0)
+        {
+
+          const calenEvents: CalendarEvent[] = 
+          fullDetailEvent.map((event:APICalendarEvent) => (
+            APICalEventToCalEvent(event)
+          ));
+          setEvents(calenEvents);
+          return;
+        } else {
+          const filteredCalenEvents: APICalendarEvent[] = [];
+          const calenEvents: CalendarEvent[] = [];
+
+          fullDetailEvent.map((event:APICalendarEvent) => {
+            if(filtersByRoommate.includes(event.event_owner_name)){
+              calenEvents.push(APICalEventToCalEvent(event));
+            }
+        });
+            setEvents(calenEvents);
+              return;
+        }
+    }
     
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.background}}>
@@ -219,7 +288,9 @@ export default function CalendarPage () {
               <AntDesign name="menu" size={32} color="black" />
            </TouchableOpacity>
         </View>
+        
         {openDropdown && (
+        
             <View style={[
                 calendarTheme.dropdown,
                 { top: dropdownPos.top, right: dropdownPos.right }
@@ -231,7 +302,6 @@ export default function CalendarPage () {
               <TouchableOpacity style={calendarTheme.item} onPress={() => switchToCalendar('month')}><ThemedText type='boldText'>Month</ThemedText></TouchableOpacity>
               <TouchableOpacity style={calendarTheme.item} onPress={()=> switchToEvents()}><ThemedText type='boldText'>All Events</ThemedText></TouchableOpacity>
             </View>
-            
         )}
         
         {/*Calendar*/}
@@ -239,18 +309,35 @@ export default function CalendarPage () {
           style={{ flex: 1 }}
           onLayout={calendarLayout}
         >
-          {showCalendar && (<Calendar
+          {showCalendar && (
+            <View>
+              <View style={calendarTheme.rowFilter}>
+                 <TouchableOpacity style={filtersByRoommate.length === 0  ? calendarTheme.filter  : calendarTheme.filterSelected} onPress={() => filterBy("all")}><Text style={filtersByRoommate.length === 0 ? calendarTheme.filterText : calendarTheme.filterTextSelected}>All</Text></TouchableOpacity>
+              {
+                  roommates.map((roommate) => {
+                  if(roommate.first_name)
+                  {
+                      return <TouchableOpacity id={roommate.id} style={filtersByRoommate.includes(roommate.full_name) ? calendarTheme.filter  : calendarTheme.filterSelected} onPress={() => filterBy(roommate.full_name)}><Text style={filtersByRoommate.includes(roommate.full_name) ? calendarTheme.filterText : calendarTheme.filterTextSelected}>{roommate.first_name}</Text></TouchableOpacity>
+                  } 
+                  })
+              }
+              </View>
+              <Calendar
               events={events}
               height={calendarHeight}
               date = {currentDate}
+              maxVisibleEventCount={2}
               eventCellStyle = {calendarTheme.eventStyle}
               mode={currentMode}
               onPressCell={(date:Date) =>changeDateMode(date)}
               onPressDateHeader={(date:Date) =>changeDateMode(date)}
               onSwipeEnd = {(date:Date) => setCurrentDate(date)}
               theme = {theme.calendar}
+              verticalScrollEnabled={true}
+              showAllDayEventCell = {true}
               onPressEvent={(event) => showDetailModal(event as CalendarEvent)}
-          />)
+          />
+          </View>)
           }
           {/* Event View - Approval vs Approved*/}
           {/*
@@ -259,35 +346,60 @@ export default function CalendarPage () {
           */}
           {showEvents && (
             <ScrollView style={calendarTheme.indent}>
-              <ThemedText type='secondarySubtitle'>Needs Approval</ThemedText>
-              {
-                needsMyApproval.map((event) => {
-                  return <EventTile key={event.id} event={event}  owner={false} remove={()=> remove(event.id)}/>
-                })
-              }
-              {needsMyApproval.length === 0 && 
-                  <ThemedText type='text'>No events pending your approval!</ThemedText>
-              }
-              <View style={{padding:20}}></View>
-              <ThemedText type='secondarySubtitle'>Your Events</ThemedText>
-              {
-                
-                myEvents.map((event) => {
-                    if(event.requires_approval && event.approval_counts && event.approval_counts?.approved < event.approval_counts?.total)
+              
+              {showNeedsApproval && 
+                <View> 
+                  <ThemedText type='secondarySubtitle'>Needs Approval</ThemedText>
                     {
-                      return <EventTile key={event.id} event={event} owner={true} />
+                      needsMyApproval.map((event) => {
+                        return <EventTile key={event.id} event={event}  owner={false} remove={()=> remove(event.id)}/>
+                      })
                     }
-                })
-                
+                    {needsMyApproval.length === 0 && 
+                        <ThemedText type='text'>No events pending your approval!</ThemedText>
+                    }
+                    <View style={{padding:20}}></View>
+                </View>
               }
-              {
-                myEvents.map((event) => {
-                    if(event.requires_approval && event.approval_counts && event.approval_counts?.approved >= event.approval_counts?.total)
+              
+              
+              { showMyEvents && 
+                  <View>
+                    <ThemedText type='secondarySubtitle'>Your Events</ThemedText>
                     {
-                      return <EventTile key={event.id} event={event} owner={true}/>
+                      
+                      myEvents.map((event) => {
+                          if(event.requires_approval && event.approval_counts && event.approval_counts?.approved < event.approval_counts?.total)
+                          {
+                            return <EventTile key={event.id} event={event} owner={true} />
+                          }
+                      })
+                      
                     }
-                })
+                    {
+                      myEvents.map((event) => {
+                          if(event.requires_approval && event.approval_counts && event.approval_counts?.approved >= event.approval_counts?.total)
+                          {
+                            return <EventTile key={event.id} event={event} owner={true}/>
+                          }
+                      })
+                    }
+                    <View style={{padding:20}}></View>
+                  </View>
               }
+              
+              {showUpcomingEvents && 
+                <View> 
+                    <ThemedText type='secondarySubtitle'>Upcoming Events in Your House</ThemedText>
+                    {
+                      upcomingEvents.map((event) => {
+                          return <EventTile key = {event.id} event = {event} owner= {false} details ={true} />
+                      })
+                    }
+                </View>
+
+              }
+              
             </ScrollView>
           )}
           
@@ -298,6 +410,8 @@ export default function CalendarPage () {
         {detailsModal && (
           <EventModal event={APIEvent} pendingEvent={pendingEvent} owner={isOwner} onClose={() => closeDetailModal()} updateCal={() => updateCalendar()}/>
         )}
+
+        
     </SafeAreaView>
   )
 }
@@ -328,7 +442,7 @@ const calendarTheme = StyleSheet.create({
     justifyContent: 'space-between',
     paddingLeft: 15,
     paddingRight: 15,
-    paddingBottom: 20
+    paddingBottom: 10
   },
   dateContainer: {
     flexDirection: 'row',
@@ -414,5 +528,46 @@ const calendarTheme = StyleSheet.create({
     padding: 12,
     borderBottomWidth: 1,
     borderBottomColor: "#eee"
+  },
+  filter: {
+    padding: 5,
+    height: 30,
+    margin: 5,   
+    backgroundColor: '#FF7648',
+    borderRadius: 30,
+    flexGrow: 1,
+    textAlign: 'center',
+    justifyContent: 'center'    
+  },
+  filterText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 600,
+    alignSelf: 'center',
+    textAlign: 'center',
+  },
+  filterSelected: {
+    padding: 5,
+    margin: 5,   
+    height: 30,
+    backgroundColor: '#fff',
+    borderColor: '#FF7648',
+    borderWidth: 1,
+    borderRadius: 30,
+    flexGrow: 1,
+    textAlign: 'center',
+    justifyContent: 'center'  
+  }, 
+  filterTextSelected: {
+    color: '#FF7648',
+    fontSize: 12,
+    fontWeight: 600,
+    alignSelf: 'center',
+    textAlign: 'center',
+  },
+  rowFilter: {
+    flexDirection: 'row', 
+    flexWrap: 'wrap',
+    paddingBottom: 10
   }
 })
