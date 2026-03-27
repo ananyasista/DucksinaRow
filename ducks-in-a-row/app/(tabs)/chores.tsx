@@ -173,11 +173,9 @@ export default function ChoreScreen() {
                 await choreAPI.createChore({
                   title: chore.title ?? "",
                   details: chore.details ?? "",
-                  latest_assignment: {
-                    due_date: chore.latest_assignment?.due_date ?? new Date(),
-                    all_day: chore.latest_assignment?.all_day ?? true
-                  },
-                  repeat_unit: chore.repeat_unit ?? "daily",
+                  due_date: chore.latest_assignment?.due_date ?? new Date(),
+                  all_day: chore.latest_assignment?.all_day ?? true, 
+                  repeat_unit: chore.repeat_unit ?? "days",
                   repeat_value: chore.repeat_value ?? 1,
                   location: chore.location ?? "",
                   is_rotating: chore.is_rotating ?? false,

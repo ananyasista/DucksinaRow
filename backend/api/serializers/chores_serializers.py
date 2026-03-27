@@ -44,7 +44,7 @@ class ChoreAssignmentSerializer(serializers.ModelSerializer):
 class ChoreSerializer(serializers.ModelSerializer):
     latest_assignment = ChoreAssignmentSerializer(required=False)
     all_assignments = serializers.SerializerMethodField()
-    
+
     roommates_involved = SimpleUserSerializer(many=True, read_only=True)
     roommates_involved_ids = serializers.PrimaryKeyRelatedField(
         many=True,
@@ -52,6 +52,9 @@ class ChoreSerializer(serializers.ModelSerializer):
         write_only=True,
         required=False
     )
+
+    due_date = serializers.DateTimeField(required=True, write_only=True)
+    all_day = serializers.BooleanField(default=True, write_only=True)
 
     class Meta:
         model = Chore
@@ -97,6 +100,8 @@ class ChoreSerializer(serializers.ModelSerializer):
         user = self.context["request"].user
         roommates = validated_data.pop("roommates_involved_ids", [])
 
+        print(validated_data)
+
         # Extract Chore fields
         title = validated_data.pop("title")
         details = validated_data.pop("details", "")
@@ -106,8 +111,7 @@ class ChoreSerializer(serializers.ModelSerializer):
         repeat_value = validated_data.pop("repeat_value", None)
         pass_to_next_unit = validated_data.pop("pass_to_next_unit", None)
         pass_to_next_value = validated_data.pop("pass_to_next_value", None)
-        all_day = validated_data.get("all_day", True)
-
+        all_day = validated_data.pop("all_day", True)
         # Due date
         due_date = validated_data.pop("due_date")
         due_date = ensure_aware_datetime(due_date, all_day=all_day)
@@ -122,19 +126,18 @@ class ChoreSerializer(serializers.ModelSerializer):
             repeat_value=repeat_value,
             pass_to_next_unit=pass_to_next_unit,
             pass_to_next_value=pass_to_next_value,
-            all_day=all_day,
             household=user.household,
-            due_date=due_date
         )
 
         # Set roommates involved
         if roommates:
-            chore.roommates_involved.set(roommates)
+            users = User.objects.filter(id__in=roommates)
+            chore.roommates_involved.set(users)
         else:
             roommates = [user]  # default assignee if no roommates
 
         # Determine first assignee & next assignee
-        assignee = roommates[0] if roomates else user
+        assignee = roommates[0] if roommates else user
         next_assignee = roommates[1] if len(roommates) > 1 else user
 
         # Create first assignment

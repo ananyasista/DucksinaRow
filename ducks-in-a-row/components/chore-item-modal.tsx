@@ -83,7 +83,6 @@ export default function ChoreItemModal(props: ModalProps) {
                 details: choreDetails,
                 location: choreLocation,
                 latest_assignment: {
-
                     all_day: allDay,
                     due_date: dueDate instanceof Date ? dueDate : new Date(dueDate)  
                 },
@@ -145,13 +144,13 @@ export default function ChoreItemModal(props: ModalProps) {
                                 setChoreDetails(''),
                                 setChoreLocation(null),
                                 setRoommatesInvolved([]),
-                                setRepeatUnit('weekly'),
+                                setRepeatUnit('Weeks'),
                                 setDate(new Date()),
                                 setChoreRotate(false),
                                 setDueDate(new Date()),
                                 setAllDay(true),
                                 setRepeatValue(1),
-                                setPassToNextUnit('weekly'),
+                                setPassToNextUnit('Weeks'),
                                 setPassToNextValue(1),
                                 props.onClose()
                             )

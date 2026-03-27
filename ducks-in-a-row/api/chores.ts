@@ -151,26 +151,32 @@ export const updateChore = async (id: string, data: PartialChoreUpdate) => {
 };
 
 export type ChoreCreateInput = Omit<
-  Chore, | "id" | "latest_assignment" | "all_assignments"  
-  > & {
-  latest_assignment?: Omit<ChoreAssignment, | "id" | "assignee" | "next_assignee" | "completed" | "completed_date">;
+  Chore,
+  "id" | "latest_assignment" | "all_assignments"
+> & {
+  due_date?: string | Date;
+  all_day?: boolean;
+  latest_assignment?: never;
 };
 
 export const createChore = async (data: ChoreCreateInput) => {
+  console.log("INITIAL CREATE:", data);
+
+  // Format due_date if provided
+  // Format due_date if provided
   let formattedDueDate: string | null = null;
-  if (data.latest_assignment?.due_date) {
-    const dateObj = new Date(data.latest_assignment.due_date);
-    formattedDueDate = data.latest_assignment.all_day
-      ? dateObj.toISOString().slice(0, 10)
-      : dateObj.toISOString();
+  if (data.due_date) {
+    const dateObj = new Date(data.due_date);
+    formattedDueDate = data.all_day ? dateObj.toISOString().slice(0, 10) : dateObj.toISOString();
   }
 
   const payload = {
     ...data,
     due_date: formattedDueDate,
-    all_day: data.latest_assignment?.all_day ?? true,
     roommates_involved_ids: data.roommates_involved?.map(r => r.id) ?? [],
   };
+
+  console.log("CREATE DATA", payload);
 
   const response = await api.post("/chore/", payload);
   return parseChore(response.data);

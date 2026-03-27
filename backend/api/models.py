@@ -8,9 +8,9 @@ from datetime import timedelta
 
 class RepeatChoices(models.TextChoices):
     NONE = "none", "None"
-    DAILY = "days", "Days"
-    WEEKLY = "week", "Weeks"
-    MONTHLY = "months", "Months"
+    DAYS = "days", "Days"
+    WEEKS = "weeks", "Weeks"
+    MONTHS = "months", "Months"
 
 
 class NotificationUnitChoices(models.TextChoices):
@@ -26,11 +26,11 @@ class PassToUnitChoices(models.TextChoices):
     MONTHS = "months", "Months"
 
 class LocationChoices(models.TextChoices):
-    LIVINGROOM = "living room", "Living Room"
-    BEDROOM = "bedroom", "Bedroom"
-    KITCHEN = "kitchen", "Kitchen"
-    BATHROOM = "bathroom", "Bathroom"
-    OTHER = "other", "OTHER"
+    LIVINGROOM = "Living Room", "Living Room"
+    BEDROOM = "Bedroom", "Bedroom"
+    KITCHEN = "Kitchen", "Kitchen"
+    BATHROOM = "Bathroom", "Bathroom"
+    OTHER = "Other", "Other"
 
 # Household Table
 class Household(models.Model):
@@ -304,11 +304,11 @@ class ChoreAssignment(models.Model):
 
         # Repeat same user logic
         elif chore.repeat_unit:
-            if chore.repeat_unit == "daily":
+            if chore.repeat_unit == "days":
                 next_due_date += timedelta(days=chore.repeat_value)
-            elif chore.repeat_unit == "weekly":
+            elif chore.repeat_unit == "weeks":
                 next_due_date += timedelta(weeks=chore.repeat_value)
-            elif chore.repeat_unit == "monthly":
+            elif chore.repeat_unit == "months":
                 next_due_date += timedelta(days=30*chore.repeat_value)
 
         # Determine next assignee
