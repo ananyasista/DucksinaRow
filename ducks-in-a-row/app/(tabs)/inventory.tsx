@@ -59,6 +59,15 @@ export default function InventoryScreen() {
     item.last_purchased_date = new Date(item.last_purchased_date);
     setSelectedItem(item);
   }
+
+  const handleRestockToggle = async (restock: boolean, item: invAPI.InventoryCard) => {
+  
+    await invAPI.updateItem(item.id, {
+      ...item,
+      restock_needed: restock,
+      
+    })
+  }
  
   return (
     <SafeAreaView>
@@ -95,12 +104,13 @@ export default function InventoryScreen() {
                 })
                 .map((item) => (
                 <InvItemTile
+                  key={item.id}
                   id={item.id}
                   title={item.name} 
                   category={item.location ?? ''}
                   restock={item.restock_needed}
                   quantity={item.quantity}
-                  onChange={() => setRestock(!restock)}
+                  onChange={(restock) => handleRestockToggle(restock,item)}
                   onPress={() => {
                     getItem(item.id);
                     setViewItemVisible(true);

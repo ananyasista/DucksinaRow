@@ -7,7 +7,7 @@ import { Chore } from '@/api/chores';
 
 type ModalProps = {
     chore: Chore;
-    //toggleRestock: () => void;
+    onComplete: (completed: boolean) => void;
     visible: boolean;
     onClose: () => void;
     onEdit: () => void;
@@ -16,6 +16,16 @@ type ModalProps = {
 }
 
 export default function ChoreViewModal(props: ModalProps) {
+
+    const [complete, setComplete] = useState(props.chore.latest_assignment.completed ?? false);
+
+    const handleComplete = () => {
+        const newValue = !complete;
+        setComplete(newValue);
+
+        props.onComplete(newValue);
+        props.onClose;
+    }
 
     return (
             <Modal
@@ -76,7 +86,7 @@ export default function ChoreViewModal(props: ModalProps) {
                         
                     </View>
                     
-                    <TouchableOpacity style={styles.completeButton} onPress={() => props.onClose()}>
+                    <TouchableOpacity style={styles.completeButton} onPress={handleComplete}>
                         <Text style={styles.subHeading}>Mark as Complete</Text>
                     </TouchableOpacity>
                      

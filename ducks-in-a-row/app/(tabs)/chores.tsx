@@ -141,24 +141,45 @@ export default function ChoreScreen() {
 
           <View style={styles.section}>
             {choresList
-                .filter(item => {
+                .filter(chore => {
                   if(!searchText) return true;
-                  return item.title.toLowerCase().includes(searchText.toLowerCase());
+                  return chore.title.toLowerCase().includes(searchText.toLowerCase());
                 })
-                .map((item) => (
+                .map((chore) => (
                 <ChoreTile
-                  id={item.id}
-                  title={item.title} 
-                  completed={item.latest_assignment.completed ?? false}
-                  due_date={item.latest_assignment.due_date ?? new Date}
-                  repeat={item.repeat_unit}
-                  assignee={item.latest_assignment.assignee ?? undefined}
+                  key={chore.id}
+                  id={chore.id}
+                  title={chore.title} 
+                  completed={chore.latest_assignment.completed ?? false}
+                  due_date={chore.latest_assignment.due_date ?? new Date}
+                  repeat={chore.repeat_unit}
+                  assignee={chore.latest_assignment.assignee ?? undefined}
                   onPress={() => {
-                    getChore(item.id);
-                    setSelectedItem(item);
+                    getChore(chore.id);
+                    setSelectedItem(chore);
                     setViewItemVisible(true);
                   }}
-                  onChange={() => console.log("changed")}
+                  onChange={async (completed) => {
+                    try {
+                        await choreAPI.updateChore(chore.id, choreAPI.buildChorePatch(chore, {
+                          title: chore.title,
+                          details: chore.details,
+                          location: chore.location,
+                          allDay: chore.latest_assignment.all_day,
+                          dueDate: chore.latest_assignment.due_date,
+                          completed: completed,
+                          repeatUnit: chore.repeat_unit,
+                          repeatValue: chore.repeat_value,
+                          passToNextUnit: chore.pass_to_next_unit ?? "weeks",
+                          passToNextValue: chore.pass_to_next_value ?? 1,
+                          isRotating: chore.is_rotating,
+                          roommates: chore.roommates_involved
+                        }));
+                      } catch (err: any) {
+                        console.log("ERROR RESPONSE:", err.response?.data);
+                        console.log("STATUS:", err.response?.status);
+                      }
+                    }}
                 />
               ))
             }
@@ -210,6 +231,27 @@ export default function ChoreScreen() {
                 setViewItemVisible(false);
                 refreshChores();
               }}
+              onComplete={async (completed) => {
+                    try {
+                        await choreAPI.updateChore(selectedItem.id, choreAPI.buildChorePatch(selectedItem, {
+                          title: selectedItem.title,
+                          details: selectedItem.details,
+                          location: selectedItem.location,
+                          allDay: selectedItem.latest_assignment.all_day,
+                          dueDate: selectedItem.latest_assignment.due_date,
+                          completed: completed,
+                          repeatUnit: selectedItem.repeat_unit,
+                          repeatValue: selectedItem.repeat_value,
+                          passToNextUnit: selectedItem.pass_to_next_unit ?? "weeks",
+                          passToNextValue: selectedItem.pass_to_next_value ?? 1,
+                          isRotating: selectedItem.is_rotating,
+                          roommates: selectedItem.roommates_involved
+                        }));
+                      } catch (err: any) {
+                        console.log("ERROR RESPONSE:", err.response?.data);
+                        console.log("STATUS:", err.response?.status);
+                      }
+                    }}
             />
           )}
 

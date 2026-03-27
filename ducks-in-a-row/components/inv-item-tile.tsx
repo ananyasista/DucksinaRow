@@ -1,5 +1,5 @@
 import {View, StyleSheet, Switch, Text, TouchableOpacity} from 'react-native';
-import { useState } from 'react';
+import { use, useState } from 'react';
 import { isEnabled } from 'react-native/Libraries/Performance/Systrace';
 import { ThemedText } from './themed-text';
 import { ThemedSwitch } from './themed-switch';
@@ -10,12 +10,20 @@ type InvItemTileProps = {
     restock: boolean;
     category: string;
     quantity?: number;
-    onChange: () => void;
+    onChange: (restock: boolean) => void;
     onPress: () => void;
 }
 
 export default function InvItemTile(props: InvItemTileProps){
-    
+    const [restock, setRestock] = useState(props.restock);
+
+    const handleToggle = () => {
+        const newValue = !restock;
+        setRestock(newValue);
+
+        props.onChange(newValue);
+    }
+
     return (
         <TouchableOpacity onPress={props.onPress}>
         <View 
@@ -27,7 +35,7 @@ export default function InvItemTile(props: InvItemTileProps){
             <View style={styles.subView}>
                 <ThemedText type="secondarySubtitle">Stock: {props.quantity}</ThemedText>
                 <View>
-                    <ThemedSwitch label="Restock?" onChangeSwitch={props.onChange}/>
+                    <ThemedSwitch label="Restock?" onChangeSwitch={handleToggle}/>
                 </View>
             </View>
         </View>

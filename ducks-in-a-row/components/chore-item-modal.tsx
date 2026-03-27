@@ -36,10 +36,6 @@ export default function ChoreItemModal(props: ModalProps) {
     const [passToNextUnit, setPassToNextUnit] = useState(props.chore?.pass_to_next_unit ?? 'weeks');
     const [roommatesInvolved, setRoommatesInvolved] = useState<Chore['roommates_involved']>(props.chore?.roommates_involved || []);
     
-    // const [nextAssignee, setNextAssignee] = useState<Chore['latest_assignment'] | null>(props.chore?.next_assignee ?? null);
-
-    // const [roommateOwnerList, setRoommateOwnerList] = useState<string[]>(props.chore ? props.chore.roommates : []);
-    
 
     const [repeatInt, setRepeatInt] = useState([
         {label: 'Days', value: 'days'},
@@ -266,6 +262,7 @@ export default function ChoreItemModal(props: ModalProps) {
                         <View style={styles.chipView}>
                             {locationList.map((name => (
                                 <Chip
+                                    key={name}
                                     title = {name}
                                     onPress = {() => setChoreLocation(name)}
                                     selected = {choreLocation === name} 
@@ -393,7 +390,8 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         gap: 12,
         paddingTop: 10,
-        paddingBottom: 10
+        paddingBottom: 10,
+        flexWrap: 'wrap'
     },
     
     header: {
@@ -427,7 +425,8 @@ const styles = StyleSheet.create({
     },
 
     formField: {
-        gap: 5
+        gap: 5,
+        flexWrap: 'wrap'
     },
 
     picker: {

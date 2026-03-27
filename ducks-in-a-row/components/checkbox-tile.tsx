@@ -2,13 +2,12 @@ import {View, StyleSheet, TouchableOpacity} from 'react-native';
 import { ThemedText } from './themed-text';
 import CircularCheckbox from './circle-checkbox';
 import { useState } from 'react';
-import { ChoreDetail } from '@/api/chores';
 type CheckboxTileProps = {
     title: string;
     complete: boolean;
     id: string;
     onPress: () => void;
-    onToggle: (chore: Partial<ChoreDetail>) => void;
+    onToggle: (completed: boolean) => void;
 }
 
 export default function CheckboxTile(props: CheckboxTileProps){
@@ -17,12 +16,8 @@ export default function CheckboxTile(props: CheckboxTileProps){
     const handleToggle = () => {
         const newValue = !isChecked;
         setChecked(newValue);
-        const udpatedChore: Partial<ChoreDetail> = {
-            id: props.id,
-            completed: newValue
-        }
 
-        props.onToggle(udpatedChore);
+        props.onToggle(newValue);
     }
 
     return (

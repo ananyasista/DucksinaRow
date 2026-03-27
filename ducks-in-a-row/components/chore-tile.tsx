@@ -11,12 +11,19 @@ type ChoreTileProps = {
     due_date: Date;
     repeat: string;
     assignee?: UserSummary;
-    onChange: () => void;
+    onChange: (completed: boolean) => void;
     onPress: () => void;
 }
 
 export default function ChoreTile(props: ChoreTileProps){
     const [checked, setChecked] = useState(props.completed);
+
+    const handleToggle = () => {
+        const newValue = !checked;
+        setChecked(newValue);
+
+        props.onChange(newValue);
+    }
 
     return (
         <TouchableOpacity onPress={props.onPress}>
@@ -34,8 +41,8 @@ export default function ChoreTile(props: ChoreTileProps){
                     <Text>{props.assignee?.first_name ?? "Unassigned"}</Text>
                 </View>
                 <CircularCheckbox 
-                    checked = {props.completed}
-                    onToggle={props.onChange}
+                    checked = {checked}
+                    onToggle={handleToggle}
                 />
             </View>
             

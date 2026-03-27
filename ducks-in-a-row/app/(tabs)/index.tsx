@@ -221,11 +221,12 @@ export default function HomeScreen() {
               <>
                 {choreList.map((chore) => (
                   <CheckboxTile
+                    key={chore.id}
                     title={chore.title}
                     id={chore.id}
                     complete={chore.latest_assignment?.completed ?? false}
                     onPress={()=>{router.navigate({pathname:'/(tabs)/chores'})}}
-                    onToggle={async (item) => {
+                    onToggle={async (completed) => {
                       try {
                         await updateChore(chore.id, buildChorePatch(chore, {
                           title: chore.title,
@@ -233,7 +234,7 @@ export default function HomeScreen() {
                           location: chore.location,
                           allDay: chore.latest_assignment.all_day,
                           dueDate: chore.latest_assignment.due_date,
-                          completed: !chore.latest_assignment.completed,
+                          completed: completed,
                           repeatUnit: chore.repeat_unit,
                           repeatValue: chore.repeat_value,
                           passToNextUnit: chore.pass_to_next_unit ?? "weeks",
