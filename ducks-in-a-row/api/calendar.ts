@@ -10,7 +10,8 @@ export interface CalendarEvent {
   repeat: string;
   requires_approval: boolean; 
   location?: string;
-  event_owner_name:string;
+  event_owner_name: string;
+  display_color?: string | null;
   notification_value?: number | null;
   notification_unit?: string | null;
   approval_status?: "approved"|"pending"|"declined";
@@ -47,6 +48,7 @@ export interface ApprovalEvent {
     location?: string;
     event_owner_name?: string;
     requires_approval: boolean;
+    display_color?: string | null;
   };
   approved: boolean;
   response_time?: string | null;

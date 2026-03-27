@@ -12,7 +12,7 @@ class RoommateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ("id", "full_name", "first_name", "last_name", "email", "living_preferences")
+        fields = ("id", "full_name", "first_name", "last_name", "email", "display_color", "living_preferences")
 
     def get_full_name(self, obj):
         name = f"{obj.first_name} {obj.last_name}".strip()
@@ -43,8 +43,5 @@ class CreateHouseholdSerializer(serializers.ModelSerializer):
             household_name=validated_data["household_name"],
             join_code=generate_unique_join_code(),
         )
-
-        user.household = household
-        user.save()
 
         return household

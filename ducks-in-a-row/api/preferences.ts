@@ -1,15 +1,16 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { api } from "./client";
+import type { LivingPreferences } from "./auth";
 
-// Fetch living preferences data 
-export async function getLivingPreferences() {
-  const res = await api.get("/preferences/living/");
+// Fetch living preferences
+export async function getLivingPreferences(): Promise<LivingPreferences> {
+  const res = await api.get<LivingPreferences>("/preferences/living/");
   return res.data;
 }
 
 // Allow user to edit living preferences
-export async function updateLivingPreferences(data: any) {
-  console.log("TOKEN:", await AsyncStorage.getItem("accessToken"));
-  const res = await api.patch("/preferences/living/", data);
+export async function updateLivingPreferences(
+  data: Partial<LivingPreferences>
+): Promise<LivingPreferences> {
+  const res = await api.patch<LivingPreferences>("/preferences/living/", data);
   return res.data;
 }
