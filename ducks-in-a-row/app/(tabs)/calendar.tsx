@@ -317,7 +317,7 @@ export default function CalendarPage () {
                   roommates.map((roommate) => {
                   if(roommate.first_name)
                   {
-                      return <TouchableOpacity id={roommate.id} style={filtersByRoommate.includes(roommate.full_name) ? calendarTheme.filter  : calendarTheme.filterSelected} onPress={() => filterBy(roommate.full_name)}><Text style={filtersByRoommate.includes(roommate.full_name) ? calendarTheme.filterText : calendarTheme.filterTextSelected}>{roommate.first_name}</Text></TouchableOpacity>
+                      return <TouchableOpacity id={roommate.id} style={filtersByRoommate.includes(roommate.first_name) ? calendarTheme.filter  : calendarTheme.filterSelected} onPress={() => filterBy(roommate.first_name)}><Text style={filtersByRoommate.includes(roommate.first_name) ? calendarTheme.filterText : calendarTheme.filterTextSelected}>{roommate.first_name}</Text></TouchableOpacity>
                   } 
                   })
               }
