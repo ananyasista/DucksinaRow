@@ -14,7 +14,7 @@ import { ThemedSwitch } from './themed-switch';
 import DateTimePicker, { DateTimePickerEvent, Event } from '@react-native-community/datetimepicker';
 import RNDateTimePicker from '@react-native-community/datetimepicker';
 import { IconSymbol } from './ui/icon-symbol';
-import {CalendarEvent as APICalendarEvent, createEvent, updateEvent} from '@/api/calendar';
+import {CalendarEvent as APICalendarEvent, createEvent, updateEvent, CalendarEventCreateInput} from '@/api/calendar';
 
 type ModalProps = PropsWithChildren<{
     formTitle:string;
@@ -34,11 +34,11 @@ export default function ModalCalendarForm({edit = false,event, onClose, ...props
     const [startDateError, setStartDateError] = useState(false);
     const [endDateBeforeStartError, setEndDateBeforeStartError] = useState(false);
     const [endDateError, setEndDateError] = useState(false);
-    const [eventTitle, setEventTitle] = useState("");
-    const [eventDescription, setEventDescription] = useState("");
-    const [eventLocation, setEventLocation] = useState("");
+    const [eventTitle, setEventTitle] = useState(event?.title);
+    const [eventDescription, setEventDescription] = useState(event?.details);
+    const [eventLocation, setEventLocation] = useState(event?.location);
     const [allDay, setAllDay] = useState(false);
-    const [needsApproval, setNeedsApproval] =useState(false);
+    const [needsApproval, setNeedsApproval] = useState(true);
 
     const onChangeStart = (event:DateTimePickerEvent, selectedDate?:Date) => {
       const currentDate = selectedDate ? selectedDate : new Date(todayInMinutes());
@@ -69,44 +69,41 @@ export default function ModalCalendarForm({edit = false,event, onClose, ...props
     };
 
     const close = () => {
-        // var errors = checkErrors();
-        // if(!errors){return;}
         setAddVisible(false);
         onClose();
     }
     
-    const save = () => {
-        var noErrors = checkErrors();
-        if(!noErrors)
+    const save = async () => {
+        console.log("inside save");
+        var errors = setErrors();
+        if(!errors)
         {
-            return;
+            return; //Errors -> not ready to save;
         }
         try {
-            const eventToSave: APICalendarEvent = {
-                id: event?.id ??"",
-                title: eventTitle,
+            const cal: CalendarEventCreateInput = {
+                title: eventTitle ?? "",
                 details: eventDescription,
-                all_day: allDay,
+                location: eventLocation,
                 start_date: startDate.toISOString(),
                 end_date: endDate.toISOString(),
-                repeat: "",
-                requires_approval: true,
-                location: eventLocation,
+                all_day: allDay,
+                repeat: "none",
+                requires_approval: needsApproval,
             }
-            close(); //COME BACK!!
-            return;
-            // if(event)
-            // {
-            //     console.log('update');
-            //     updateEvent(event.id, eventToSave);
-            // } else {
-            //     console.log('create');
-            //     createEvent(eventToSave);
-            // }
+            if(event)
+            {
+                await updateEvent(event.id, cal);
 
-        } catch (e: any) {
-            console.log("ERROR Saving Event Modal: " + e);
+            } else {
+                await createEvent(cal);
+                console.log("Succesful create");
+            }
+            
+        } catch (e:any) {
+            console.log("Error saving event modal: " + e);
         }
+        close();
     }
     
     const showDatepicker = () => {
@@ -117,7 +114,7 @@ export default function ModalCalendarForm({edit = false,event, onClose, ...props
         showMode('time');
     };
     
-    function checkErrors() {
+    function setErrors() {
         var error = false
         if(eventTitle === "")
         {
