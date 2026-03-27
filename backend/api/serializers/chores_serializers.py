@@ -3,6 +3,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime, parse_date
 from ..models import Chore, ChoreAssignment
 from .serializers import SimpleUserSerializer, User
+from datetime import timedelta
 import datetime
 
 def ensure_aware_datetime(value, all_day=False):
@@ -44,6 +45,7 @@ class ChoreAssignmentSerializer(serializers.ModelSerializer):
 class ChoreSerializer(serializers.ModelSerializer):
     latest_assignment = ChoreAssignmentSerializer(required=False)
     all_assignments = serializers.SerializerMethodField()
+    
 
     roommates_involved = SimpleUserSerializer(many=True, read_only=True)
     roommates_involved_ids = serializers.PrimaryKeyRelatedField(
@@ -55,6 +57,7 @@ class ChoreSerializer(serializers.ModelSerializer):
 
     due_date = serializers.DateTimeField(required=True, write_only=True)
     all_day = serializers.BooleanField(default=True, write_only=True)
+    completed = serializers.BooleanField(required=False, write_only=True)
 
     class Meta:
         model = Chore
@@ -74,25 +77,48 @@ class ChoreSerializer(serializers.ModelSerializer):
         return ChoreAssignmentSerializer(qs, many=True).data
 
     def update(self, instance, validated_data):
-        assignment_data = validated_data.pop("latest_assignment", None)
+        print(validated_data)
+        due_date = validated_data.pop("due_date", None)
+        all_day = validated_data.pop("all_day", None)
+        completed = validated_data.pop("completed", None)
 
         # Update Chore fields
         for attr, value in validated_data.items():
-            if attr == "due_date" and value:
-                value = ensure_aware_datetime(value, all_day=instance.all_day)
             setattr(instance, attr, value)
         instance.save()
-        instance.refresh_from_db()
 
         # Update latest_assignment
-        if assignment_data:
-            assignment = getattr(instance, "latest_assignment", None)
-            if assignment:
-                for attr, value in assignment_data.items():
-                    if attr == "due_date" and value:
-                        value = ensure_aware_datetime(value, all_day=assignment.all_day)
-                    setattr(assignment, attr, value)
-                assignment.save()
+        latest_assignment = instance.latest_assignment
+
+        if not latest_assignment:
+            return instance
+
+        # Update assignment fields
+        if due_date is not None:
+            latest_assignment.due_date = ensure_aware_datetime(
+                due_date,
+                all_day=all_day if all_day is not None else latest_assignment.all_day
+            )
+
+        if all_day is not None:
+            latest_assignment.all_day = all_day
+
+        if completed is not None:
+            latest_assignment.completed = completed
+            if completed:
+                latest_assignment.completed_date = timezone.now()
+
+        latest_assignment.save()
+
+        # Decide if we should create next assignment
+        if completed is True:
+            should_create_next = (
+                latest_assignment.due_date and
+                latest_assignment.due_date <= timezone.now()
+            )
+
+            if should_create_next:
+                self._create_next_assignment(instance, latest_assignment)
 
         return instance
     
@@ -100,7 +126,7 @@ class ChoreSerializer(serializers.ModelSerializer):
         user = self.context["request"].user
         roommates = validated_data.pop("roommates_involved_ids", [])
 
-        print(validated_data)
+        # print(validated_data)
 
         # Extract Chore fields
         title = validated_data.pop("title")
@@ -115,6 +141,7 @@ class ChoreSerializer(serializers.ModelSerializer):
         # Due date
         due_date = validated_data.pop("due_date")
         due_date = ensure_aware_datetime(due_date, all_day=all_day)
+        completed = False
 
         # Create Chore
         chore = Chore.objects.create(
@@ -146,8 +173,42 @@ class ChoreSerializer(serializers.ModelSerializer):
             assignee=assignee,
             next_assignee=next_assignee,
             due_date=due_date,
-            completed=False,
+            completed=completed,
             all_day=all_day
         )
 
         return chore
+    
+    def _create_next_assignment(self, chore, current_assignment):
+        if not chore.repeat_unit:
+            return
+        
+        # Prevent duplicate creation
+        if chore.assignments.filter(completed=False).exists():
+            return
+
+        # --- Calculate next due date ---
+        # Calculate next due date
+        next_due_date = current_assignment.due_date
+
+        if chore.repeat_unit == "days":
+            next_due_date += timedelta(days=chore.repeat_value or 1)
+        elif chore.repeat_unit == "weeks":
+            next_due_date += timedelta(weeks=chore.repeat_value or 1)
+
+        # Rotation logic
+        if chore.is_rotating:
+            assignee = current_assignment.next_assignee
+            next_assignee = current_assignment.assignee
+        else:
+            assignee = current_assignment.assignee
+            next_assignee = current_assignment.next_assignee
+
+        ChoreAssignment.objects.create(
+            chore=chore,
+            assignee=assignee,
+            next_assignee=next_assignee,
+            due_date=next_due_date,
+            all_day=current_assignment.all_day,
+            completed=False
+        )

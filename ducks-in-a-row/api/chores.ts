@@ -123,30 +123,85 @@ export const getChoreById = async (id: string): Promise<Chore> => {
   return parseChore(response.data);
 };
 
+export const buildChorePatch = (original: Chore, current: {
+  title: string;
+  details: string;
+  location: string | null;
+  allDay: boolean;
+  dueDate: Date;
+  repeatUnit: string;
+  repeatValue: number;
+  passToNextUnit: string;
+  passToNextValue: number;
+  isRotating: boolean;
+  roommates: Chore["roommates_involved"];
+}) => {
+  const payload: any = {};
+
+  if (original.title !== current.title) payload.title = current.title;
+  if (original.details !== current.details) payload.details = current.details;
+  if (original.location !== current.location) payload.location = current.location;
+
+  if (original.is_rotating !== current.isRotating) {
+    payload.is_rotating = current.isRotating;
+  }
+
+  if (original.repeat_unit !== current.repeatUnit) {
+    payload.repeat_unit = current.repeatUnit;
+  }
+
+  if (original.repeat_value !== current.repeatValue) {
+    payload.repeat_value = current.repeatValue;
+  }
+
+  if (original.pass_to_next_unit !== current.passToNextUnit) {
+    payload.pass_to_next_unit = current.passToNextUnit;
+  }
+
+  if (original.pass_to_next_value !== current.passToNextValue) {
+    payload.pass_to_next_value = current.passToNextValue;
+  }
+
+  // Assignment diff
+  const originalAssignment = original.latest_assignment;
+
+  if (current.dueDate) {
+    const originalDate = originalAssignment.due_date
+      ? new Date(originalAssignment.due_date).toISOString()
+      : null;
+
+    const currentDate = current.allDay
+      ? current.dueDate.toISOString().slice(0, 10)
+      : current.dueDate.toISOString();
+
+    if (originalDate !== currentDate) {
+      payload.due_date = currentDate;
+    }
+  }
+
+  if (originalAssignment.all_day !== current.allDay) {
+    payload.all_day = current.allDay;
+  }
+
+  // Roommates diff
+  const originalIds = original.roommates_involved.map(r => r.id).sort();
+  const newIds = current.roommates.map(r => r.id).sort();
+
+  if (JSON.stringify(originalIds) !== JSON.stringify(newIds)) {
+    payload.roommates_involved_ids = newIds;
+  }
+
+  return payload;
+};
+
 export type PartialChoreUpdate = Partial<Chore> & {
   latest_assignment?: Partial<ChoreAssignment>; // allow partial assignment
 }
 
 export const updateChore = async (id: string, data: PartialChoreUpdate) => {
-  const payload: any = {
-    title: data.title,
-    details: data.details,
-    location: data.location,
-  };
+  console.log("INITIAL DATA: ", data);
 
-  if (data.latest_assignment) {
-    const { due_date, all_day, completed } = data.latest_assignment;
-    if (due_date) {
-      const dateObj = new Date(due_date);
-      payload.due_date = all_day
-        ? dateObj.toISOString().slice(0, 10)
-        : dateObj.toISOString();
-    }
-    payload.completed = completed;
-    payload.all_day = all_day;
-  }
-
-  const response = await api.patch(`/chore/${id}/`, payload);
+  const response = await api.patch(`/chore/${id}/`, data);
   return parseChore(response.data); // always parse nested assignments
 };
 

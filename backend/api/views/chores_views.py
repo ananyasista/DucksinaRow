@@ -63,7 +63,6 @@ class ChoreViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(household=self.request.user.household)
-
    
     def destroy(self, request, *args, **kwargs):
         assignment = self.get_object()

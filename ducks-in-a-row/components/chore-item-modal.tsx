@@ -6,7 +6,7 @@ import DropDownPicker from 'react-native-dropdown-picker'
 import DateTimePicker, { DateTimePickerEvent, Event } from '@react-native-community/datetimepicker';
 import Counter from './counter';
 import { IconSymbol } from './ui/icon-symbol';
-import { Chore, ChoreAssignment, PartialChoreUpdate } from '@/api/chores';
+import { Chore, ChoreAssignment, PartialChoreUpdate, buildChorePatch } from '@/api/chores';
 import CircularCheckbox from './circle-checkbox';
 import { ThemedText } from './themed-text';
 
@@ -77,22 +77,20 @@ export default function ChoreItemModal(props: ModalProps) {
     };
 
     const handleSave = () => {
-        const updatedItem: PartialChoreUpdate = {
-                id: props.chore?.id,
+        if (!props.chore) return;
+        const updatedItem = buildChorePatch(props.chore, {
                 title: choreTitle,
                 details: choreDetails,
                 location: choreLocation,
-                latest_assignment: {
-                    all_day: allDay,
-                    due_date: dueDate instanceof Date ? dueDate : new Date(dueDate)  
-                },
-                is_rotating: choreRotate, // or controlled by a switch
-                repeat_value: repeatValue,
-                repeat_unit: repeatUnit,
-                roommates_involved: roommatesInvolved,
-                pass_to_next_value: passToNextValue,
-                pass_to_next_unit: passToNextUnit,
-            };
+                allDay,
+                dueDate,
+                repeatUnit,
+                repeatValue,
+                passToNextUnit,
+                passToNextValue,
+                isRotating: choreRotate,
+                roommates: roommatesInvolved,
+            });
             
             // console.log(repeatDate);
             // console.log(repeatInt[repeatDate]);
@@ -216,7 +214,9 @@ export default function ChoreItemModal(props: ModalProps) {
                                     mode={'date'}
                                     display = 'default'
                                     themeVariant='light'
-                                    onChange={() => setDueDate}
+                                    onChange={(event, selectedDate) => {
+                                        if (selectedDate) setDueDate(selectedDate);
+                                    }}
                                 /> 
                             ) : (
                                 <DateTimePicker
@@ -226,7 +226,9 @@ export default function ChoreItemModal(props: ModalProps) {
                                     mode={'datetime'}
                                     display = 'default'
                                     themeVariant='light'
-                                    onChange={() => setDueDate}
+                                    onChange={(event, selectedDate) => {
+                                        if (selectedDate) setDueDate(selectedDate);
+                                    }}
                                 />
                             )}
                             
