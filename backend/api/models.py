@@ -70,6 +70,7 @@ class User(AbstractUser):
         blank=True,
         related_name="members"
     )
+    display_color = models.CharField(max_length=7, null=True, blank=True)
 
     # Use email as login field
     USERNAME_FIELD = "email"

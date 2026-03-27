@@ -59,7 +59,7 @@ export default function ProfileScreen() {
 
       setProfile(data);
       setLivingPrefs(prefs);
-      setRoommates(rms);
+      setRoommates(rms.filter((rm) => rm.id !== data.id));
     } catch (e: any) {
       console.log("PROFILE LOAD ERROR:", e?.response?.data || e?.message || e);
       setError("Couldn't load profile. Showing demo data.");
@@ -121,11 +121,16 @@ export default function ProfileScreen() {
                       style={styles.avatar}
                       onPress={() => setSelectedRoommate(rm)}
                     >
-                      <View style={styles.avatarCircle}>
-                        <Text style={styles.avatarText}>{initials(rm.full_name)}</Text>
-                      </View>
+                      <View
+                      style={[
+                        styles.avatarCircle,
+                        { backgroundColor: rm.display_color || PRIMARY },
+                      ]}
+                    >
+                      <Text style={styles.avatarText}>{initials(rm.full_name)}</Text>
+                    </View>
                       <Text style={styles.avatarName} numberOfLines={1}>
-                        {rm.full_name}
+                        {rm.first_name}
                       </Text>
                     </Pressable>
                   ))}
@@ -163,11 +168,6 @@ export default function ProfileScreen() {
               )}
             </View>
 
-            
-
-            <Pressable style={styles.btnOutline} onPress={loadProfile}>
-              <Text style={styles.btnOutlineText}>Refresh</Text>
-            </Pressable>
 
             <Pressable style={styles.btnDanger} onPress={onLogout}>
               <Text style={styles.btnDangerText}>Log out</Text>

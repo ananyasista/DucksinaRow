@@ -30,7 +30,7 @@ export default function Chip({
         {iconName && (
         <IconSymbol
           style={styles.icon}
-          size={30}
+          size={24}
           name={iconName}
           color={
             selected
@@ -58,7 +58,8 @@ const styles = StyleSheet.create({
     chip: {
         backgroundColor: '#EC8534',
         borderRadius: 16,
-        padding: 10,
+        padding: 3,
+        width: 100,
         flexDirection: 'row',
         alignSelf: 'flex-start',
         justifyContent: 'center',
