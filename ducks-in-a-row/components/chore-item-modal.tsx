@@ -6,7 +6,7 @@ import DropDownPicker from 'react-native-dropdown-picker'
 import DateTimePicker, { DateTimePickerEvent, Event } from '@react-native-community/datetimepicker';
 import Counter from './counter';
 import { IconSymbol } from './ui/icon-symbol';
-import { Chore, ChoreAssignment, PartialChoreUpdate, buildChorePatch } from '@/api/chores';
+import { Chore, ChoreCreateInput, buildChorePatch } from '@/api/chores';
 import CircularCheckbox from './circle-checkbox';
 import { ThemedText } from './themed-text';
 
@@ -77,28 +77,53 @@ export default function ChoreItemModal(props: ModalProps) {
     };
 
     const handleSave = () => {
-        if (!props.chore) return;
-        const updatedItem = buildChorePatch(props.chore, {
+        console.log("Trying to reach here");
+
+        if (!props.chore) {
+            const createdItem: ChoreCreateInput = {
                 title: choreTitle,
                 details: choreDetails,
+                due_date: dueDate instanceof Date ? dueDate : new Date(dueDate),
                 location: choreLocation,
-                allDay,
-                dueDate,
-                repeatUnit,
-                repeatValue,
-                passToNextUnit,
-                passToNextValue,
-                isRotating: choreRotate,
-                roommates: roommatesInvolved,
-            });
+                all_day: allDay,
+                is_rotating: false, // or controlled by a switch
+                roommates_involved: roommatesInvolved,
+                repeat_value: repeatValue,
+                repeat_unit: repeatUnit,
+                pass_to_next_value: passToNextValue,
+                pass_to_next_unit: passToNextUnit,
+            };
+
+            console.log("SENDING:", {
+                ...createdItem,
+                roommates_involved_ids: roommatesInvolved.map(r => r.id)
+            })
+            props.save(createdItem);
+        } else {
+            const updatedItem = buildChorePatch(props.chore, {
+                    title: choreTitle,
+                    details: choreDetails,
+                    location: choreLocation,
+                    allDay,
+                    dueDate,
+                    completed: props.chore?.latest_assignment.completed ?? false,
+                    repeatUnit,
+                    repeatValue,
+                    passToNextUnit,
+                    passToNextValue,
+                    isRotating: choreRotate,
+                    roommates: roommatesInvolved,
+                });
+                console.log("SENDING:", {
+                    ...updatedItem,
+                    roommates_involved_ids: roommatesInvolved.map(r => r.id)
+                })
+                props.save(updatedItem);
+        }
             
             // console.log(repeatDate);
             // console.log(repeatInt[repeatDate]);
-            console.log("SENDING:", {
-                ...updatedItem,
-                roommates_involved_ids: roommatesInvolved.map(r => r.id)
-            })
-            props.save(updatedItem);
+            
             props.onClose();
         };
     

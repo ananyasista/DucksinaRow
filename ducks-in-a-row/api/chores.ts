@@ -31,7 +31,7 @@ export interface Chore {
   pass_to_next_value: number | null;
   pass_to_next_unit: string | null;
 
-  latest_assignment: Partial<ChoreAssignment>;
+  latest_assignment: ChoreAssignment;
   all_assignments: ChoreAssignment[] | [];
 }
 
@@ -128,7 +128,8 @@ export const buildChorePatch = (original: Chore, current: {
   details: string;
   location: string | null;
   allDay: boolean;
-  dueDate: Date;
+  dueDate: Date | undefined;
+  completed: boolean | undefined;
   repeatUnit: string;
   repeatValue: number;
   passToNextUnit: string;
@@ -167,7 +168,9 @@ export const buildChorePatch = (original: Chore, current: {
 
   if (current.dueDate) {
     const originalDate = originalAssignment.due_date
-      ? new Date(originalAssignment.due_date).toISOString()
+      ? current.allDay
+        ? new Date(originalAssignment.due_date).toISOString().slice(0, 10)
+        : new Date(originalAssignment.due_date).toISOString()
       : null;
 
     const currentDate = current.allDay
@@ -181,6 +184,10 @@ export const buildChorePatch = (original: Chore, current: {
 
   if (originalAssignment.all_day !== current.allDay) {
     payload.all_day = current.allDay;
+  }
+
+  if (originalAssignment.completed !== current.completed) {
+    payload.completed = current.completed
   }
 
   // Roommates diff

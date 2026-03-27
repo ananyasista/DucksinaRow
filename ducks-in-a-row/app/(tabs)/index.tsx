@@ -12,7 +12,7 @@ import { ThemedText } from '@/components/themed-text';
 
 import { getHouseholdName } from '@/api/household';
 import { listHouseholdEvents, listMyEvents, listNeedsApproval } from '../../api/calendar';
-import { ChoreDetail, getChores, updateChore } from '@/api/chores';
+import { Chore, getChores, updateChore, buildChorePatch } from '@/api/chores';
 import { me } from '@/api/auth';
 
 type ApprovalEvent = {
@@ -34,10 +34,10 @@ type UserData = {
   giveApprovals?: number
   pendingNum?: number
   groupName: string
-  chores: Chore[]
+  chores: ChoreMinimalTile[]
 }
 
-type Chore = {
+type ChoreMinimalTile = {
   key: string
   title: string
   complete: boolean
@@ -64,7 +64,7 @@ export default function HomeScreen() {
   const [giveApproval, setGiveApproval] = useState(0);
   const [calendarHeight, setCalendarHeight] = useState(0);
   const [groupName, setGroupName] = useState('Household');
-  const [choreList, setChoreList] = useState<ChoreDetail[]>([]);
+  const [choreList, setChoreList] = useState<Chore[]>([]);
   const [upcomingEvents, setUpcomingEvents] = useState<HomeCalendarEvent[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
 
@@ -78,7 +78,7 @@ export default function HomeScreen() {
       const choreData = await getChores();
 
       const myChores = choreData.filter(
-        (chore) => chore.current_assignment?.assignee?.id === user.id
+        (chore) => chore.latest_assignment?.assignee?.id === user.id
       );
 
       setChoreList(myChores);
@@ -223,11 +223,24 @@ export default function HomeScreen() {
                   <CheckboxTile
                     title={chore.title}
                     id={chore.id}
-                    complete={chore.completed}
+                    complete={chore.latest_assignment?.completed ?? false}
                     onPress={()=>{router.navigate({pathname:'/(tabs)/chores'})}}
                     onToggle={async (item) => {
                       try {
-                        await updateChore(chore.id, {...chore, ...item});
+                        await updateChore(chore.id, buildChorePatch(chore, {
+                          title: chore.title,
+                          details: chore.details,
+                          location: chore.location,
+                          allDay: chore.latest_assignment.all_day,
+                          dueDate: chore.latest_assignment.due_date,
+                          completed: !chore.latest_assignment.completed,
+                          repeatUnit: chore.repeat_unit,
+                          repeatValue: chore.repeat_value,
+                          passToNextUnit: chore.pass_to_next_unit ?? "weeks",
+                          passToNextValue: chore.pass_to_next_value ?? 1,
+                          isRotating: chore.is_rotating,
+                          roommates: chore.roommates_involved
+                        }));
                       } catch (err: any) {
                         console.log("ERROR RESPONSE:", err.response?.data);
                         console.log("STATUS:", err.response?.status);
