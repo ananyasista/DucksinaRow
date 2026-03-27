@@ -3,10 +3,10 @@ import Chip from './chip';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import { IconSymbol } from './ui/icon-symbol';
-import { ChoreDetail } from '@/api/chores';
+import { Chore } from '@/api/chores';
 
 type ModalProps = {
-    chore: ChoreDetail;
+    chore: Chore;
     //toggleRestock: () => void;
     visible: boolean;
     onClose: () => void;
@@ -16,7 +16,6 @@ type ModalProps = {
 }
 
 export default function ChoreViewModal(props: ModalProps) {
-    
 
     return (
             <Modal
@@ -48,16 +47,16 @@ export default function ChoreViewModal(props: ModalProps) {
                     <View style={{gap: 10}}>
                         <Text style={styles.title}>{props.chore.title}</Text>
                         <Text style={styles.text}>{props.chore.details}</Text>
-                        <Text style={styles.subHeading}>Current Assignee: <Text style={styles.text}>{props.chore.current_assignment?.assignee.first_name}</Text></Text>
+                        <Text style={styles.subHeading}>Current Assignee: <Text style={styles.text}>{props.chore.latest_assignment.assignee?.first_name}</Text></Text>
                         <View style={{flexDirection: 'row'}}>
                             <IconSymbol name='calendar' size={30} color="#000"/>
-                            <Text style={styles.subHeading}>Chore Due: <Text style={styles.text}>{props.chore.due_date.toLocaleDateString()}</Text></Text>
+                            <Text style={styles.subHeading}>Chore Due: <Text style={styles.text}>{props.chore.latest_assignment.due_date?.toLocaleDateString()}</Text></Text>
                         </View>
                         {props.chore.is_rotating && (
                             <>
                         
                         <Text style={styles.subHeading}>Pass chore to next roommate: <Text style={styles.text}>{props.chore.pass_to_next_value} {props.chore.pass_to_next_unit}</Text></Text>
-                        <Text style={styles.subHeading}>Next Up: <Text style={styles.text}>{props.chore.current_assignment?.next_assignee?.first_name ?? ""}</Text></Text>
+                        <Text style={styles.subHeading}>Next Up: <Text style={styles.text}>{props.chore.latest_assignment.next_assignee?.first_name ?? ""}</Text></Text>
                         <View>
                             <Text style={styles.subHeading}>Roomates Involved:</Text>
                             <View style={styles.chipView}>

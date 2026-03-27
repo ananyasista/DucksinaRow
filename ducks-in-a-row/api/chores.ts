@@ -8,194 +8,179 @@ export interface UserSummary {
   name: string;
 }
 
-export interface ChoreAssignmentDetail {
+export interface ChoreAssignment {
+  id: string;
   assignee: UserSummary;
   next_assignee: UserSummary | null;
   due_date: Date;
-  all_day: boolean;
   completed: boolean;
-  completed_date: Date | null;
+  completed_date: Date;
+  all_day: boolean;
 }
 
-export interface ChoreCard {
+export interface Chore {
   id: string;
   title: string;
   details: string;
   location: string | null;
-  all_day: boolean;
-  due_date: Date;
+
   is_rotating: boolean;
   repeat_value: number;
   repeat_unit: string;
-  assignee: UserSummary;
   roommates_involved: UserSummary[];
+  pass_to_next_value: number | null;
+  pass_to_next_unit: string | null;
+
+  latest_assignment: Partial<ChoreAssignment>;
+  all_assignments: ChoreAssignment[] | [];
 }
 
-export interface ChoreDetail extends ChoreCard {
-  completed: boolean;
-  created_at: Date | undefined;
+// --- Raw API type ---
+interface RawAssignment {
+  id: string;
+  assignee: UserSummary;
   next_assignee: UserSummary | null;
-  pass_to_next_value: number;
-  pass_to_next_unit: string;
-  completed_date: Date | null;
-  current_assignment?: ChoreAssignmentDetail;
+  due_date: string;
+  completed: boolean;
+  completed_date: string | null;
+  all_day: boolean;
 }
 
-// --- Raw API data ---
 interface RawChore {
   id: string;
   title: string;
   details: string;
   location: string | null;
-  all_day: boolean;
-  due_date: string; 
   is_rotating: boolean;
   repeat_value: number;
   repeat_unit: string;
-  assignee: UserSummary;
-  roommates_involved: UserSummary[];
-  // Optional fields
-  completed?: boolean;
-  created_at?: string;
-  next_assignee?: UserSummary;
-  pass_to_next_value?: number;
-  pass_to_next_unit?: string;
-  completed_date?: string | null;
-  current_assignment?: {
-    assignee: UserSummary;
-    next_assignee: UserSummary | null;
-    due_date: string;
-    all_day: boolean;
-    completed: boolean;
-    completed_date: string | null;
-  };
+  roommates_involved: {
+    email: string,
+    first_name: string,
+    id: string,
+    last_name: string,
+    name: string,
+  }[];
+  pass_to_next_value: number | null;
+  pass_to_next_unit: string | null;
+
+  latest_assignment: RawAssignment;
+  all_assignments: RawAssignment[];
 }
 
-// utils inside your API file or top of the file
+// Utils functions
 function parseDate(d?: string | null, all_day = false): Date {
-  if (!d) return new Date(); // fallback if API sent nothing
+  if (!d) return new Date();
 
-  if (all_day || !d.includes("T")) {
-    // plain YYYY-MM-DD → Date at local midnight
-    const [year, month, day] = d.split("-").map(Number);
+  if (all_day) {
+    const [year, month, day] = d.split("T")[0].split("-").map(Number);
     return new Date(year, month - 1, day);
   }
 
-  // ISO datetime
   return new Date(d);
 }
 
-function parseChore(raw: RawChore): ChoreDetail {
-  const currentAssignment = raw.current_assignment
-    ? {
-        ...raw.current_assignment,
-        due_date: parseDate(raw.current_assignment.due_date, raw.current_assignment.all_day)!,
-        completed_date: parseDate(raw.current_assignment.completed_date),
-      }
-    : undefined;
-  
+function parseAssignment(raw: RawAssignment): ChoreAssignment {
   return {
     ...raw,
-    due_date: parseDate(raw.due_date, raw.all_day)!,
-    created_at: parseDate(raw.created_at),
-    completed_date: parseDate(raw.completed_date) ?? null,
-    completed: raw.completed ?? currentAssignment?.completed ?? false,
-    next_assignee: raw.next_assignee ?? currentAssignment?.next_assignee ?? null,
-    pass_to_next_value: raw.pass_to_next_value ?? 0,
-    pass_to_next_unit: raw.pass_to_next_unit ?? "",
-    current_assignment: currentAssignment,
+    due_date: parseDate(raw.due_date, raw.all_day),
+    completed_date: parseDate(raw.completed_date),
   };
 }
 
+function parseChore(raw: RawChore): Chore {
+  return {
+    ...raw,
+    latest_assignment: parseAssignment(raw.latest_assignment),
+    all_assignments: raw.all_assignments.map(parseAssignment),
+    roommates_involved: raw.roommates_involved ?? [],
+  };
+}
+
+// --- API calls ---
 export const getChores = async (filters?: {
   completed?: boolean;
   assignee?: string[];
   location?: string[];
   start_date?: Date;
   end_date?: Date;
-}): Promise<ChoreDetail[]> => {
+}): Promise<Chore[]> => {
   const params = {
-    completed: filters?.completed,
-    last_purchased_by: filters?.assignee?.join(","),
+    completed: filters?.completed === true ? "true" : filters?.completed === false ? "false" : undefined,
+    assignee: filters?.assignee?.join(","),
     location: filters?.location?.join(","),
-    start_date: filters?.start_date?.toISOString(),
-    end_date: filters?.end_date?.toISOString(),
+    start: filters?.start_date?.toISOString(),
+    end: filters?.end_date?.toISOString(),
   };
 
   const response = await api.get<RawChore[]>("/chore/", { params });
-  // console.log(response.data);
-  const chore_detail = response.data.map(parseChore);
-  // console.log(chore_detail);
-  return chore_detail;
+  return response.data.map(parseChore);
 };
 
-export const getChoreById = async (id: string): Promise<ChoreDetail> => {
+export const getChoreById = async (id: string): Promise<Chore> => {
   const response = await api.get<RawChore>(`/chore/${id}/`);
+  console.log(response.data.latest_assignment.due_date);
   return parseChore(response.data);
 };
 
-export type ChoreCreateInput = Omit<
-  ChoreDetail,
-  "id" | "assignee" | "next_assignee" | "completed_date" | "created_at" | "completed" | "current_assignment"
->;
+export type PartialChoreUpdate = Partial<Chore> & {
+  latest_assignment?: Partial<ChoreAssignment>; // allow partial assignment
+}
 
-export const createChore = async (data: ChoreCreateInput) => {
-  const { roommates_involved, ...rest } = data;
-  let formattedDueDate: string | null = null;
-
-  if (data.due_date) {
-    const dateObj = new Date(data.due_date);
-    formattedDueDate = data.all_day
-      ? dateObj.toISOString().slice(0, 10) // all-day
-      : dateObj.toISOString(); // exact time
-  }
-
-  const payload = {
-    ...rest,
-    due_date: formattedDueDate,
-    roommates_involved_ids: roommates_involved?.map(r => r.id) ?? [],
-    pass_to_next_unit: data.pass_to_next_unit?.toLowerCase(),
-    location: data.location?.toLowerCase(),
-  };
-
-  const response = await api.post("/chore/", payload);
-  return response.data;
-};
-
-export const updateChore = async (id: string, data: Partial<ChoreDetail>) => {
-  const { roommates_involved, completed, due_date, all_day, ...rest } = data;
-
-  let formattedDueDate: string | null = null;
-  if (due_date) {
-    const dateObj = new Date(due_date);
-    formattedDueDate = all_day ? dateObj.toISOString().slice(0, 10) : dateObj.toISOString();
-  }
-
+export const updateChore = async (id: string, data: PartialChoreUpdate) => {
   const payload: any = {
-    ...rest,
-    due_date: formattedDueDate,
-    roommates_involved_ids: roommates_involved?.map(r => r.id) ?? [],
-    pass_to_next_unit: data.pass_to_next_unit?.toLowerCase(),
-    location: data.location?.toLowerCase(),
+    title: data.title,
+    details: data.details,
+    location: data.location,
   };
 
-  // Handle assignment updates
-  if (completed !== undefined || due_date || all_day !== undefined) {
-    payload.current_assignment = {};
-    if (completed !== undefined) payload.current_assignment.completed = completed;
-    if (due_date) payload.current_assignment.due_date = formattedDueDate;
-    if (all_day !== undefined) payload.current_assignment.all_day = all_day;
+  if (data.latest_assignment) {
+    const { due_date, all_day, completed } = data.latest_assignment;
+    if (due_date) {
+      const dateObj = new Date(due_date);
+      payload.due_date = all_day
+        ? dateObj.toISOString().slice(0, 10)
+        : dateObj.toISOString();
+    }
+    payload.completed = completed;
+    payload.all_day = all_day;
   }
 
   const response = await api.patch(`/chore/${id}/`, payload);
-  return response.data;
+  return parseChore(response.data); // always parse nested assignments
 };
 
-export const deleteChore = async (id: string) => {
-  await api.delete(`/chore/${id}/`);
+export type ChoreCreateInput = Omit<
+  Chore, | "id" | "latest_assignment" | "all_assignments"  
+  > & {
+  latest_assignment?: Omit<ChoreAssignment, | "id" | "assignee" | "next_assignee" | "completed" | "completed_date">;
 };
 
-export const getChoreFilterOptions = async () => {
-  const response = await api.get("/chore/filters/");
+export const createChore = async (data: ChoreCreateInput) => {
+  let formattedDueDate: string | null = null;
+  if (data.latest_assignment?.due_date) {
+    const dateObj = new Date(data.latest_assignment.due_date);
+    formattedDueDate = data.latest_assignment.all_day
+      ? dateObj.toISOString().slice(0, 10)
+      : dateObj.toISOString();
+  }
+
+  const payload = {
+    ...data,
+    due_date: formattedDueDate,
+    all_day: data.latest_assignment?.all_day ?? true,
+    roommates_involved_ids: data.roommates_involved?.map(r => r.id) ?? [],
+  };
+
+  const response = await api.post("/chore/", payload);
+  return parseChore(response.data);
+};
+
+export const deleteChoreAssignment = async (assignmentId: string) => {
+  await api.delete(`/chore-assignment/${assignmentId}/`);
+};
+
+export const getAssignmentFilterOptions = async () => {
+  const response = await api.get("/chore-assignment/filters/");
   return response.data;
 };

@@ -16,7 +16,7 @@ import { getHouseholdRoommates } from '@/api/household';
 
 
 export default function ChoreScreen() {
-  const [choresList, setChoresList] = useState<choreAPI.ChoreDetail[]>([]);
+  const [choresList, setChoresList] = useState<choreAPI.Chore[]>([]);
   const [roommatesList, setRoommatesList] = useState<{
     email: string,
     first_name: string,
@@ -29,7 +29,7 @@ export default function ChoreScreen() {
   const [viewItemVisible, setViewItemVisible] = useState(false);
   const [editItemVisible, setEditItemVisible] = useState(false);
   const [complete, setComplete] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<choreAPI.ChoreDetail | null>(null);
+  const [selectedItem, setSelectedItem] = useState<choreAPI.Chore | null>(null);
   const [searchText, setSearchText] = useState('');
 
   const [locationFilterList, setLocationFilterList] = useState<string[]>([]);
@@ -42,11 +42,11 @@ export default function ChoreScreen() {
   // TODO: have to create function that triggers when restock toggle is pressed
   useEffect(() => {
       const loadData = async () => {
-        const filterData = await choreAPI.getChoreFilterOptions();
+        const filterData = await choreAPI.getAssignmentFilterOptions();
         const choreData = await choreAPI.getChores();
         const choresWithDates = choreData.map(chore => ({
           ...chore,
-          due_date: new Date(chore.due_date),
+          due_date: chore.latest_assignment.due_date ? new Date(chore.latest_assignment.due_date) : new Date(),
         }));
         getRoommates();
   
@@ -69,7 +69,7 @@ export default function ChoreScreen() {
 
       const choresWithDates = data.map(chore => ({
         ...chore,
-        due_date: new Date(chore.due_date),
+        due_date: chore.latest_assignment.due_date ? new Date(chore.latest_assignment.due_date) : new Date(),
       }));
 
       console.log(assigneeFilterList);
@@ -77,22 +77,20 @@ export default function ChoreScreen() {
       console.log(locationFilterList);
       console.log(data);
       setChoresList(choresWithDates);
-
-  
     }
   
     const refreshChores = async () => {
       const data = await choreAPI.getChores();
       const choresWithDates = data.map(chore => ({
         ...chore,
-        due_date: new Date(chore.due_date),
+        due_date: chore.latest_assignment.due_date ? new Date(chore.latest_assignment.due_date) : new Date(),
       }));
       setChoresList(choresWithDates);
     }
   
     const getChore = async (id: string) => {
       const chore = await choreAPI.getChoreById(id);
-      chore.due_date = new Date(chore.due_date);
+      chore.latest_assignment.due_date = chore.latest_assignment.due_date ? new Date(chore.latest_assignment.due_date) : new Date();
       setSelectedItem(chore);
     }
 
@@ -151,12 +149,13 @@ export default function ChoreScreen() {
                 <ChoreTile
                   id={item.id}
                   title={item.title} 
-                  completed={item.completed}
-                  due_date={item.due_date ?? new Date()}
+                  completed={item.latest_assignment.completed ?? false}
+                  due_date={item.latest_assignment.due_date ?? new Date}
                   repeat={item.repeat_unit}
-                  assignee={item.current_assignment?.assignee ?? undefined}
+                  assignee={item.latest_assignment.assignee ?? undefined}
                   onPress={() => {
                     getChore(item.id);
+                    setSelectedItem(item);
                     setViewItemVisible(true);
                   }}
                   onChange={() => console.log("changed")}
@@ -174,14 +173,16 @@ export default function ChoreScreen() {
                 await choreAPI.createChore({
                   title: chore.title ?? "",
                   details: chore.details ?? "",
-                  due_date: chore.due_date ?? new Date(),
+                  latest_assignment: {
+                    due_date: chore.latest_assignment?.due_date ?? new Date(),
+                    all_day: chore.latest_assignment?.all_day ?? true
+                  },
                   repeat_unit: chore.repeat_unit ?? "daily",
                   repeat_value: chore.repeat_value ?? 1,
                   location: chore.location ?? "",
                   is_rotating: chore.is_rotating ?? false,
                   pass_to_next_unit: chore.pass_to_next_unit ?? "None",
                   pass_to_next_value: chore.pass_to_next_value ?? 0,
-                  all_day: chore.all_day ?? true,
                   roommates_involved: chore.roommates_involved || [],
                 })
               } catch (err: any){
@@ -202,11 +203,12 @@ export default function ChoreScreen() {
                 setSelectedItem(null);
               }}
               onEdit={() => {
+                console.log(selectedItem);
                 setViewItemVisible(false);
                 setEditItemVisible(true);
               }}
               onDelete={() => {
-                choreAPI.deleteChore(selectedItem.id);
+                choreAPI.deleteChoreAssignment(selectedItem.id);
                 setViewItemVisible(false);
                 refreshChores();
               }}

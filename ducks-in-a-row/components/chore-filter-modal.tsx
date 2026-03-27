@@ -47,6 +47,7 @@ export default function ChoreFilterModal(props: ModalProps) {
     };
 
     const onClear = () => {
+        console.log("Assignee Filter IDs: ", props.assigneeFilterList);
         props.setLocationFilterList([]);
         props.setAssigneeFilterList([]);
         props.setCompletedFilter(true);
@@ -88,14 +89,13 @@ export default function ChoreFilterModal(props: ModalProps) {
                                 title={name.first_name} 
                                 onPress={() => {
                                     props.setAssigneeFilterList(prev => {
-                                        if(prev.includes(name.first_name)) {
-                                            return prev.filter(item => item !== name.first_name);
+                                        if(prev.includes(name.id)) {
+                                            return prev.filter(item => item !== name.id);
                                         } else {
-                                            return [...prev, name.first_name];
+                                            return [...prev, name.id];
                                         }
                                     })                                }}
-                                selected = {props.assigneeFilterList.includes(name.first_name)}
-                            
+                                selected = {props.assigneeFilterList.includes(name.id)}
                             />
                         )))}
 

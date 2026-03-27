@@ -30,7 +30,7 @@ export default function ChoreTile(props: ChoreTileProps){
                     <Text>Due on {props.due_date.toDateString()}</Text>
                 </View>
                 <View style={{flexDirection: 'row', gap: 10, alignItems: 'center'}}>
-                    <View style={styles.profile}><Text style={{color: '#fff'}}>{props.assignee?.first_name.charAt(0) ?? "U"}</Text></View>
+                    <View style={styles.profile}><Text style={{color: '#fff'}}>{(props.assignee?.first_name ?? "U").charAt(0)}</Text></View>
                     <Text>{props.assignee?.first_name ?? "Unassigned"}</Text>
                 </View>
                 <CircularCheckbox 

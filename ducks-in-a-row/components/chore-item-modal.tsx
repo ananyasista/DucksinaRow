@@ -6,49 +6,47 @@ import DropDownPicker from 'react-native-dropdown-picker'
 import DateTimePicker, { DateTimePickerEvent, Event } from '@react-native-community/datetimepicker';
 import Counter from './counter';
 import { IconSymbol } from './ui/icon-symbol';
-import { ChoreDetail, ChoreCard } from '@/api/chores';
+import { Chore, ChoreAssignment, PartialChoreUpdate } from '@/api/chores';
 import CircularCheckbox from './circle-checkbox';
+import { ThemedText } from './themed-text';
 
 type ModalProps = {
     visible: boolean;
     onClose: () => void;
     title: string;
-    save: (chore: Partial<ChoreDetail>) => void;
-    chore?: ChoreDetail;
-    allRoommates: ChoreDetail['roommates_involved']; 
+    save: (chore: Partial<Chore>) => void;
+    chore?: Chore;
+    allRoommates: Chore['roommates_involved']; 
 }
 
 export default function ChoreItemModal(props: ModalProps) {
-    const [choreTitle, setChoreTitle] = useState(props.chore ? props.chore.title : '');
-    const [choreDetails, setChoreDetails] = useState(props.chore ? props.chore.details : '');
-    const [choreLocation, setChoreLocation] = useState(props.chore ? props.chore.location : null);
+    const [choreTitle, setChoreTitle] = useState(props.chore?.title ?? '');
+    const [choreDetails, setChoreDetails] = useState(props.chore?.details ?? '');
+    const [choreLocation, setChoreLocation] = useState(props.chore?.location ?? null);
     const [repeatUnit, setRepeatUnit] = useState(props.chore?.repeat_unit ?? 'weeks');
     const [repeatValue, setRepeatValue] = useState(props.chore?.repeat_value ?? 1);
-    const [choreRotate, setChoreRotate] = useState(props.chore ? props.chore.is_rotating : false);
+    const [choreRotate, setChoreRotate] = useState(props.chore?.is_rotating ?? false);
 
-    const [repeatQuantity, setRepeatQuantity] = useState(props.chore ? props.chore.repeat_value : 1);
-    const [allDay, setAllDay] = useState(props.chore ? props.chore.all_day : true);
-    const [dueDate, setDueDate] = useState<Date>(props.chore?.due_date ? new Date(props.chore.due_date) : new Date());
+    const [allDay, setAllDay] = useState(props.chore?.latest_assignment.all_day ?? true);
+    const [dueDate, setDueDate] = useState<Date>(props.chore?.latest_assignment.due_date ? new Date(props.chore.latest_assignment.due_date) : new Date());
     
-    const [assignee, setAssignee] = useState(props.chore ? props.chore.assignee : null);
+    // const [assignee, setAssignee] = useState<UserSummary>(props.chore?.current_assignment ? props.chore?.current_assignment?.assignee : null);
     
-    const [passToNextValue, setPassToNextValue] = useState(props.chore ? props.chore.pass_to_next_value : 1);
+    const [passToNextValue, setPassToNextValue] = useState(props.chore?.pass_to_next_value ?? 1);
     const [passToNextUnit, setPassToNextUnit] = useState(props.chore?.pass_to_next_unit ?? 'weeks');
-    const [roommatesInvolved, setRoommatesInvolved] = useState<ChoreDetail['roommates_involved']>(props.chore?.roommates_involved || []);
+    const [roommatesInvolved, setRoommatesInvolved] = useState<Chore['roommates_involved']>(props.chore?.roommates_involved || []);
     
-    const [nextAssignee, setNextAssignee] = useState<ChoreDetail['next_assignee'] | null>(
-        props.chore ? props.chore.next_assignee : null
-    );
+    // const [nextAssignee, setNextAssignee] = useState<Chore['latest_assignment'] | null>(props.chore?.next_assignee ?? null);
 
     // const [roommateOwnerList, setRoommateOwnerList] = useState<string[]>(props.chore ? props.chore.roommates : []);
     
 
     const [repeatInt, setRepeatInt] = useState([
-        {label: 'Days', value: 'daily'},
+        {label: 'Days', value: 'days'},
         {label: "Weeks", value: 'weeks'},
-        {label: "Months", value: "monthly"}
+        {label: "Months", value: 'months'}
     ])
-    const locationList: string[] = ["Kitchen", "Living Room", "Bathroom"]
+    const locationList: string[] = ["Kitchen", "Living Room", "Bathroom", "Bedroom", "Other"]
 
     const [date, setDate] = useState(new Date());
     const [mode, setMode] = useState('date');
@@ -79,17 +77,20 @@ export default function ChoreItemModal(props: ModalProps) {
     };
 
     const handleSave = () => {
-        const updatedItem: Partial<ChoreDetail> = {
+        const updatedItem: PartialChoreUpdate = {
                 id: props.chore?.id,
                 title: choreTitle,
                 details: choreDetails,
-                due_date: dueDate instanceof Date ? dueDate : new Date(dueDate),
                 location: choreLocation,
-                all_day: allDay,
+                latest_assignment: {
+
+                    all_day: allDay,
+                    due_date: dueDate instanceof Date ? dueDate : new Date(dueDate)  
+                },
                 is_rotating: choreRotate, // or controlled by a switch
-                roommates_involved: roommatesInvolved,
                 repeat_value: repeatValue,
                 repeat_unit: repeatUnit,
+                roommates_involved: roommatesInvolved,
                 pass_to_next_value: passToNextValue,
                 pass_to_next_unit: passToNextUnit,
             };
@@ -109,31 +110,30 @@ export default function ChoreItemModal(props: ModalProps) {
                 setChoreTitle(props.chore.title);
                 setChoreDetails(props.chore.details);
                 setChoreLocation(props.chore.location);
-                setDueDate(props.chore.due_date);
-                setAllDay(props.chore.all_day);
-                setAssignee(props.chore.assignee);
+                setDueDate(props.chore.latest_assignment.due_date ?? new Date());
+                setAllDay(props.chore.latest_assignment.all_day ?? true);
                 setRoommatesInvolved(props.chore.roommates_involved);
                 setRepeatValue(props.chore.repeat_value);
                 setRepeatUnit(props.chore.repeat_unit);
-                setPassToNextUnit(props.chore.pass_to_next_unit);
-                setPassToNextValue(props.chore.pass_to_next_value);
+                setPassToNextUnit(props.chore.pass_to_next_unit ?? "None");
+                setPassToNextValue(props.chore.pass_to_next_value  ?? 0);
                 setChoreRotate(props.chore.is_rotating);
             }
         }, [props.chore]);
 
 
     return (
-        <View>
-
+        <View  style={{flex: 1, paddingBottom: 50}}>
             <Modal
                 animationType='slide'
                 visible={props.visible}
                 presentationStyle='formSheet'
                 allowSwipeDismissal={true}
                 onRequestClose={props.onClose}
+                style={{flex: 1}}
             >
-            <TouchableWithoutFeedback onPress={() => {setOpenPassDropdown(false); setOpenRepeatDropdown(false);}}>
-                <View>
+            <TouchableWithoutFeedback onPress={() => {setOpenPassDropdown(false); setOpenRepeatDropdown(false);}}  style={{flex: 1}}>
+                <View style={{flex: 1}}>
                     <View style={{height: 20}}></View>
                 <View style={styles.header}>
                     <TouchableOpacity style={styles.cancelButton} 
@@ -144,7 +144,6 @@ export default function ChoreItemModal(props: ModalProps) {
                                 setChoreTitle(''),
                                 setChoreDetails(''),
                                 setChoreLocation(null),
-                                setRepeatQuantity(1),
                                 setRoommatesInvolved([]),
                                 setRepeatUnit('weekly'),
                                 setDate(new Date()),
@@ -162,16 +161,16 @@ export default function ChoreItemModal(props: ModalProps) {
                         <Text style={styles.cancelText}>Cancel</Text>
                     </TouchableOpacity>
                     <Text style={styles.title}>{props.title}</Text>
-                    <TouchableOpacity style={styles.cancelButton} onPress={handleSave}>
+                    <TouchableOpacity style={styles.cancelButton} onPress={() => handleSave()}>
                         <Text style={styles.cancelText}>Save</Text>
                     </TouchableOpacity>
                 </View>
 
 
-                {/* CHORE NAME FIELD */}
-                <SafeAreaView style={{flex: 1}}>
+                {/* CHORE NAME FIELD */}                    
+                <SafeAreaView  style={{flex: 1}}>
                     <ScrollView 
-                        contentContainerStyle={{padding: 20, gap: 20, flexGrow: 1}}
+                        contentContainerStyle={{padding: 20, gap: 20, flexGrow: 1, flex: 1}}
                         keyboardShouldPersistTaps="handled"
                     >
                         <View style={styles.formField}>
@@ -253,7 +252,7 @@ export default function ChoreItemModal(props: ModalProps) {
                     {/* CHORE REPEAT TIME */}
                     <View style={styles.formField}>
                         <Text style={styles.subHeading}>Repeat chore after?</Text>
-                        <View style={{flexDirection: 'row', gap: 20}}>
+                        <View style={{flexDirection: 'row', gap: 20, flexGrow: 1}}>
                             <Counter value={repeatValue} onChange={setRepeatValue} />
                             <View style={{flex: 1}}>
                                 <DropDownPicker
@@ -265,7 +264,6 @@ export default function ChoreItemModal(props: ModalProps) {
                                     setItems={setRepeatInt}
                                     style={styles.input}
                                     dropDownContainerStyle={styles.dropdownMenu}
-
                                 />
                             </View>
                             
@@ -282,7 +280,6 @@ export default function ChoreItemModal(props: ModalProps) {
 
                     </View>
 
- 
                     {choreRotate && ( <>
                     {/* CHORE ROOMMATES */}
                     <View style={styles.formField}>
@@ -313,8 +310,8 @@ export default function ChoreItemModal(props: ModalProps) {
                     {/* CHORE PASS TIME */}
                     <View style={styles.formField}>
                         <Text style={styles.subHeading}>Pass chore to the next roommate after?</Text>
-                        <View style={{flexDirection: 'row', gap: 20}}>
-                            <Counter value={repeatQuantity} onChange={setRepeatQuantity} />
+                        <View style={{flexDirection: 'row', gap: 20, flexGrow: 1}}>
+                            <Counter value={passToNextValue} onChange={setPassToNextValue} />
                             <View style={{flex: 1}}>
                                 <DropDownPicker 
                                     open={openPassDropdown}

@@ -8,9 +8,9 @@ from datetime import timedelta
 
 class RepeatChoices(models.TextChoices):
     NONE = "none", "None"
-    DAILY = "daily", "Daily"
-    WEEKLY = "weekly", "Weekly"
-    MONTHLY = "monthly", "Monthly"
+    DAILY = "days", "Days"
+    WEEKLY = "week", "Weeks"
+    MONTHLY = "months", "Months"
 
 
 class NotificationUnitChoices(models.TextChoices):
@@ -193,11 +193,13 @@ class Chore(models.Model):
     title = models.CharField(max_length=255)
     details = models.TextField(blank=True)
 
-    repeat = models.CharField(
+    repeat_unit = models.CharField(
         max_length=20,
         choices=RepeatChoices.choices,
         default=RepeatChoices.NONE
     )
+
+    repeat_value = models.IntegerField(null=True, blank=True)
 
     pass_to_next_value = models.IntegerField(null=True, blank=True)
 
@@ -262,7 +264,7 @@ class ChoreAssignment(models.Model):
         related_name='next_assignments'
     )
 
-    due_date = models.DateField()
+    due_date = models.DateTimeField()
 
     completed = models.BooleanField(default=False)
 
@@ -282,6 +284,8 @@ class ChoreAssignment(models.Model):
         # Rotate assignees
         next_user = self.next_assignee or self.assignee
         next_due_date = self.due_date
+        if timezone.is_naive(next_due_date):
+            next_due_date = timezone.make_aware(next_due_date)
 
         roommates = list(chore.roommates_involved.all())
         if chore.is_rotating and roommates:
@@ -299,13 +303,13 @@ class ChoreAssignment(models.Model):
                 next_due_date += timedelta(weeks=chore.pass_to_next_value)
 
         # Repeat same user logic
-        elif chore.repeat:
-            if chore.repeat == "daily":
-                next_due_date += timedelta(days=1)
-            elif chore.repeat == "weekly":
-                next_due_date += timedelta(weeks=1)
-            elif chore.repeat == "monthly":
-                next_due_date += timedelta(days=30)
+        elif chore.repeat_unit:
+            if chore.repeat_unit == "daily":
+                next_due_date += timedelta(days=chore.repeat_value)
+            elif chore.repeat_unit == "weekly":
+                next_due_date += timedelta(weeks=chore.repeat_value)
+            elif chore.repeat_unit == "monthly":
+                next_due_date += timedelta(days=30*chore.repeat_value)
 
         # Determine next assignee
         if roommates:
