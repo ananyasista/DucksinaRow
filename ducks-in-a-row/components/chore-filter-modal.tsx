@@ -9,36 +9,50 @@ import DateTimePicker, { DateTimePickerEvent, Event } from '@react-native-commun
 
 type ModalProps = PropsWithChildren<{
     title: string;
+    locationFilterList: string[];
+    assigneeFilterList: string[];
+    completedFilter: boolean;
+    startDateFilter: Date;
+    endDateFilter: Date;
+    setLocationFilterList: React.Dispatch<React.SetStateAction<string[]>>;
+    setAssigneeFilterList: React.Dispatch<React.SetStateAction<string[]>>;
+    setCompletedFilter: React.Dispatch<React.SetStateAction<boolean>>;
+    setEndDateFilter: React.Dispatch<React.SetStateAction<Date>>;
+    setStartDateFilter: React.Dispatch<React.SetStateAction<Date>>;
+
+    assigneeList: {
+        email: string,
+        first_name: string,
+        id: string,
+        last_name: string,
+        name: string,
+    }[];
+
+    locationList: string[];
+
+    onApply: () => void;
 }>;
 
 export default function ChoreFilterModal(props: ModalProps) {
     const [visible, setVisible] = useState(false);
-    const locationList: string[] = ["Kitchen", "Living Room"];
-    const roommateList: string[] = ["Ananya", "Elle", "Sofia", "Leyna"];
-
-    const [locationFilterList, setLocationFilterList] = useState<string[]>([]);
-    const [roommateFilterList, setRoommateFilterList] = useState<string[]>([]);
-    const [showCompleted, setShowCompleted] = useState(true);
-
-    const [startDate, setStartDate] = useState(new Date());
-    const [endDate, setEndDate] = useState(new Date());
     
     const onChangeStartDate = (event: DateTimePickerEvent, selectedDate?: Date) => {
         const currentDate = selectedDate ? selectedDate : new Date();
-        setStartDate(currentDate);
+        props.setStartDateFilter(currentDate);
     };
 
     const onChangeEndDate = (event: DateTimePickerEvent, selectedDate?: Date) => {
         const currentDate = selectedDate ? selectedDate : new Date();
-        setEndDate(currentDate);
+        props.setEndDateFilter(currentDate);
     };
 
     const onClear = () => {
-        setLocationFilterList([]);
-        setRoommateFilterList([]);
-        setShowCompleted(true);
-        setStartDate(new Date());
-        setEndDate(new Date());
+        console.log("Assignee Filter IDs: ", props.assigneeFilterList);
+        props.setLocationFilterList([]);
+        props.setAssigneeFilterList([]);
+        props.setCompletedFilter(true);
+        props.setStartDateFilter(new Date());
+        props.setEndDateFilter(new Date());
     }
 
     return (
@@ -69,27 +83,27 @@ export default function ChoreFilterModal(props: ModalProps) {
                     <View style={{gap: 10}}>
                     <Text style={styles.subHeading}>Assignee</Text>
                     <View style={styles.chipView}>
-                        {roommateList.map((name => (
+                        {props.assigneeList.map((name => (
                             <Chip 
-                                title={name} 
+                                key={name.id}
+                                title={name.first_name} 
                                 onPress={() => {
-                                    setRoommateFilterList(prev => {
-                                        if(prev.includes(name)) {
-                                            return prev.filter(item => item !== name);
+                                    props.setAssigneeFilterList(prev => {
+                                        if(prev.includes(name.id)) {
+                                            return prev.filter(item => item !== name.id);
                                         } else {
-                                            return [...prev, name];
+                                            return [...prev, name.id];
                                         }
                                     })                                }}
-                                selected = {roommateFilterList.includes(name)}
-                            
+                                selected = {props.assigneeFilterList.includes(name.id)}
                             />
                         )))}
 
                     </View>
 
                     <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
-                        <Text style={styles.subHeading}>Show Completed</Text>
-                        <Switch onValueChange={() => setShowCompleted(!showCompleted)} value={showCompleted}/>
+                        {/* <Text style={styles.subHeading}>Show Completed</Text> */}
+                        <ThemedSwitch label="Show Completed" value={props.completedFilter} onChangeSwitch={() => props.setCompletedFilter(prev => !prev)}/>
                     </View>
 
                     <View>
@@ -101,7 +115,7 @@ export default function ChoreFilterModal(props: ModalProps) {
                                     <IconSymbol name='calendar' size={30} color="#000"/>
                                     <DateTimePicker
                                         testID="dateTimePicker"
-                                        value={startDate}
+                                        value={props.startDateFilter}
                                         is24Hour={true}
                                         onChange={onChangeStartDate}
                                         mode={'date'}
@@ -116,7 +130,7 @@ export default function ChoreFilterModal(props: ModalProps) {
                                     <IconSymbol name='calendar' size={30} color="#000"/>
                                     <DateTimePicker
                                         testID="dateTimePicker"
-                                        value={endDate}
+                                        value={props.endDateFilter}
                                         is24Hour={true}
                                         onChange={onChangeEndDate}
                                         mode={'date'}
@@ -131,18 +145,18 @@ export default function ChoreFilterModal(props: ModalProps) {
 
                     <Text style={styles.subHeading}>Location</Text>
                     <View style={styles.chipView}>
-                        {locationList.map((name => (
+                        {props.locationList.map((name => (
                             <Chip 
                                 title={name} 
                                 onPress={() => {
-                                    setLocationFilterList(prev => {
+                                    props.setLocationFilterList(prev => {
                                         if(prev.includes(name)) {
                                             return prev.filter(item => item !== name);
                                         } else {
                                             return [...prev, name];
                                         }
                                     })                                }}
-                                selected = {locationFilterList.includes(name)}
+                                selected = {props.locationFilterList.includes(name)}
                             />
                         )))}
 
@@ -151,7 +165,12 @@ export default function ChoreFilterModal(props: ModalProps) {
                     
 
                     <View style={{flexDirection: 'row', justifyContent: 'space-evenly'}}>
-                        <TouchableOpacity style={styles.stateButtons} onPress={() => setVisible(false)}>
+                        <TouchableOpacity 
+                            style={styles.stateButtons} 
+                            onPress={() => {
+                                props.onApply();
+                                setVisible(false);
+                            }}>
                             <Text style={styles.stateText}>Apply</Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.stateButtons} onPress={() => onClear()}>

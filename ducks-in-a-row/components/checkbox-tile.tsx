@@ -1,23 +1,36 @@
-import {View, StyleSheet} from 'react-native';
+import {View, StyleSheet, TouchableOpacity} from 'react-native';
 import { ThemedText } from './themed-text';
 import CircularCheckbox from './circle-checkbox';
 import { useState } from 'react';
 type CheckboxTileProps = {
     title: string;
     complete: boolean;
+    id: string;
+    onPress: () => void;
+    onToggle: (completed: boolean) => void;
 }
 
 export default function CheckboxTile(props: CheckboxTileProps){
     const [isChecked, setChecked] = useState(props.complete);
 
+    const handleToggle = () => {
+        const newValue = !isChecked;
+        setChecked(newValue);
+
+        props.onToggle(newValue);
+    }
+
     return (
-        <View style={styles.tile}>
+        <TouchableOpacity onPress={props.onPress}>
+            <View style={styles.tile}>
             <ThemedText style={styles.titleHeading}>{props.title}</ThemedText>
             <CircularCheckbox
                 checked={isChecked}
-                onToggle={() => setChecked(!isChecked)}
+                onToggle={handleToggle}
             />          
         </View>
+        </TouchableOpacity>
+        
     )
 }
 

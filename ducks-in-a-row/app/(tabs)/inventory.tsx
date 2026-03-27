@@ -12,6 +12,7 @@ import InvItemTile from '@/components/inv-item-tile';
 import InvViewModal from '@/components/inv-view-modal';
 
 import * as invAPI from '@/api/inventory';
+import { ThemedText } from '@/components/themed-text';
 
 export default function InventoryScreen() {
   const [itemList, setItemList] = useState<invAPI.InventoryDetails[]>([]);
@@ -40,6 +41,8 @@ export default function InventoryScreen() {
     };
 
     loadData();
+    itemList.map(item => console.log("ITEM:", item.name, item.restock_needed));
+    
   }, []);
 
   const applyFilterChanges = async () => {
@@ -58,12 +61,22 @@ export default function InventoryScreen() {
     item.last_purchased_date = new Date(item.last_purchased_date);
     setSelectedItem(item);
   }
+
+  const handleRestockToggle = async (newValue: boolean, item: string) => {
+    const id = item;
+    setItemList(prev => prev.map(i => i.id === id ? { ...i, restock_needed: restock } : i));
+
+    await invAPI.updateItem(item, {
+      restock_needed: newValue,
+    })
+    await refreshItems();
+  }
  
   return (
     <SafeAreaView>
-      <ScrollView>
+      <ScrollView contentContainerStyle={{paddingBottom: 40}}>
         <View style={styles.fullLayout}>
-          <Text style={styles.title}>Items</Text>
+          <ThemedText type="title">Items</ThemedText>
           <View style={{flexDirection: 'row', gap: 13}}>
             <InvFilterModal 
               title='Filters'
@@ -82,7 +95,7 @@ export default function InventoryScreen() {
                 onChangeText={setSearchText}
                 value={searchText}
                 placeholder='Search'
-                placeholderTextColor='#ABA4A461'
+                placeholderTextColor='rgba(171, 164, 164, 0.58)'
             />
           </View>
           
@@ -94,12 +107,13 @@ export default function InventoryScreen() {
                 })
                 .map((item) => (
                 <InvItemTile
+                  key={item.id}
                   id={item.id}
                   title={item.name} 
                   category={item.location ?? ''}
                   restock={item.restock_needed}
                   quantity={item.quantity}
-                  onChange={() => setRestock(!restock)}
+                  onChange={(newValue) => handleRestockToggle(newValue, item.id)}
                   onPress={() => {
                     getItem(item.id);
                     setViewItemVisible(true);
@@ -107,12 +121,6 @@ export default function InventoryScreen() {
                 />
               ))
             }
-          </View>
-
-          <View style={styles.addButton}>
-            <TouchableOpacity onPress={() => setAddItemVisible(true)}>
-              <Octicons name='plus' size = {30} color='#fff'/>
-            </TouchableOpacity>
           </View>
 
           <InvItemModal 
@@ -136,7 +144,10 @@ export default function InventoryScreen() {
             <InvViewModal 
               item = {selectedItem}
               visible = {viewItemVisible}
-              onClose={() => setViewItemVisible(false)}
+              onClose={() => {
+                setViewItemVisible(false)
+                refreshItems();
+              }}
               onEdit = {() => {
                 setViewItemVisible(false);
                 setEditItemVisible(true);
@@ -146,6 +157,7 @@ export default function InventoryScreen() {
                 setViewItemVisible(false);
                 refreshItems();
               }}
+              onRestockChange={handleRestockToggle}
             />
           )}
 
@@ -165,6 +177,11 @@ export default function InventoryScreen() {
           
         </View>    
       </ScrollView>
+          <View style={styles.addButton}>
+            <TouchableOpacity onPress={() => setAddItemVisible(true)}>
+              <Octicons name='plus' size = {30} color='#fff'/>
+            </TouchableOpacity>
+          </View>
     </SafeAreaView>
   );
 }
@@ -191,11 +208,20 @@ const styles = StyleSheet.create({
         height: 50,
         borderRadius: 30,
         justifyContent: 'center',
-        alignItems: 'center'
+        alignItems: 'center',
+        position: 'absolute',
+        bottom: 25,
+        right: 25,
+        zIndex: 100,
+        shadowColor: '#000',
+        shadowOffset: {width: 0, height: 2},
+        shadowOpacity: 0.3,
+        shadowRadius: 3,
+        elevation: 5
     },
   
   input: {
-    borderWidth: 2,
+    borderWidth: 1,
     padding: 5,
     borderColor: '#ABA4A461',
     backgroundColor: '#F6F4F4C4',

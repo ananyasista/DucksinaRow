@@ -1,6 +1,8 @@
 import {View, StyleSheet, Switch, Text, TouchableOpacity} from 'react-native';
-import { useState } from 'react';
+import { use, useState } from 'react';
 import { isEnabled } from 'react-native/Libraries/Performance/Systrace';
+import { ThemedText } from './themed-text';
+import { ThemedSwitch } from './themed-switch';
 
 type InvItemTileProps = {
     id: string;
@@ -8,30 +10,31 @@ type InvItemTileProps = {
     restock: boolean;
     category: string;
     quantity?: number;
-    onChange: () => void;
+    onChange: (restock: boolean) => void;
     onPress: () => void;
 }
 
 export default function InvItemTile(props: InvItemTileProps){
-    
+    // const [restock, setRestock] = useState(props.restock);
+
+    // const handleToggle = (value: boolean) => {
+    //     const newValue = !value;
+
+    //     props.onChange(newValue);
+    // }
+
     return (
         <TouchableOpacity onPress={props.onPress}>
         <View 
             style={[styles.tile, props.restock && styles.restockTile]}
             
         >
-            <Text style={styles.titleHeading}>{props.title}</Text>
-            <Text style={styles.subheading}>Category: {props.category}</Text>
+            <ThemedText type="subtitle">{props.title}</ThemedText>
+            <ThemedText type="secondarySubtitle">Category: {props.category}</ThemedText>
             <View style={styles.subView}>
-                <Text style={styles.subheading}>Stock: {props.quantity}</Text>
-                <View style={{flexDirection: 'row'}}>
-                    <Text style={styles.subheading}>Restock? </Text>
-                    <Switch 
-                        trackColor={{false: 'red', true: 'green'}}
-                        thumbColor={'white'}
-                        onValueChange={props.onChange}
-                        value={props.restock}
-                    />
+                <ThemedText type="secondarySubtitle">Stock: {props.quantity}</ThemedText>
+                <View>
+                    <ThemedSwitch label="Restock?" value={!!props.restock} onChangeSwitch={props.onChange}/>
                 </View>
             </View>
         </View>

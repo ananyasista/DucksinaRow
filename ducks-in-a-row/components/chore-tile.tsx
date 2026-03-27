@@ -2,6 +2,7 @@ import {View, StyleSheet, Switch, Text, TouchableOpacity} from 'react-native';
 import { useState } from 'react';
 import { isEnabled } from 'react-native/Libraries/Performance/Systrace';
 import CircularCheckbox from './circle-checkbox';
+import { UserSummary } from '@/api/chores';
 
 type ChoreTileProps = {
     id: string;
@@ -9,19 +10,20 @@ type ChoreTileProps = {
     completed: boolean;
     due_date: Date;
     repeat: string;
-    assignee: {
-        email: string,
-        first_name: string,
-        id: string
-        last_name: string
-        name: string
-    };
-    onChange: () => void;
+    assignee?: UserSummary;
+    onChange: (completed: boolean) => void;
     onPress: () => void;
 }
 
 export default function ChoreTile(props: ChoreTileProps){
     const [checked, setChecked] = useState(props.completed);
+
+    const handleToggle = () => {
+        const newValue = !checked;
+        setChecked(newValue);
+
+        props.onChange(newValue);
+    }
 
     return (
         <TouchableOpacity onPress={props.onPress}>
@@ -35,12 +37,12 @@ export default function ChoreTile(props: ChoreTileProps){
                     <Text>Due on {props.due_date.toDateString()}</Text>
                 </View>
                 <View style={{flexDirection: 'row', gap: 10, alignItems: 'center'}}>
-                    <View style={styles.profile}><Text style={{color: '#fff'}}>{props.assignee?.first_name.charAt(0) ?? "U"}</Text></View>
+                    <View style={styles.profile}><Text style={{color: '#fff'}}>{(props.assignee?.first_name ?? "U").charAt(0)}</Text></View>
                     <Text>{props.assignee?.first_name ?? "Unassigned"}</Text>
                 </View>
                 <CircularCheckbox 
                     checked = {checked}
-                    onToggle={() => setChecked(!checked)}
+                    onToggle={handleToggle}
                 />
             </View>
             

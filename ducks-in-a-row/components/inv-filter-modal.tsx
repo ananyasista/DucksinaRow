@@ -3,6 +3,8 @@ import React, { useState, PropsWithChildren } from 'react'
 import { Button, Header } from '@react-navigation/elements'
 import Chip from './chip';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { ThemedText } from './themed-text';
+import { IconSymbol } from './ui/icon-symbol';
 
 type ModalProps = PropsWithChildren<{
     title: string;
@@ -47,16 +49,16 @@ export default function InvFilterModal(props: ModalProps) {
                 onRequestClose={() => setVisible(false)}
             >
                 <View style={styles.header}>
-                    <Text style={styles.title}>{props.title}</Text>
-                    <TouchableOpacity style={styles.cancelButton} onPress={() => setVisible(false)}>
-                        <Text style={styles.cancelText}>Close</Text>
+                    <ThemedText type="title">{props.title}</ThemedText>
+                    <TouchableOpacity onPress={() => setVisible(false)}>
+                        <IconSymbol size={30} name="multiply" color="#000"/>
                     </TouchableOpacity>
                 </View>
 
 
                 <SafeAreaView style={styles.modalContent}>
                     <View>
-                        <Text style={styles.subHeading}>Location</Text>
+                        <ThemedText type="subtitle">Location</ThemedText>
                         <View style={styles.chipView}>
                             {props.locationList.map((name => (
                                 <Chip 
@@ -75,7 +77,7 @@ export default function InvFilterModal(props: ModalProps) {
 
                         </View>
 
-                        <Text style={styles.subHeading}>Stock</Text>
+                        <ThemedText type="subtitle">Stock</ThemedText>
                         <View style={styles.chipView}>
                             {stockList.map((name => (
                                 <Chip 
@@ -89,7 +91,7 @@ export default function InvFilterModal(props: ModalProps) {
 
                         </View>
 
-                        <Text style={styles.subHeading}>Last Purchased By</Text>
+                        <ThemedText type="subtitle">Last Purchased By</ThemedText>
                         <View style={styles.chipView}>
                             {props.purchaseList.map(user => (
                                 <Chip
@@ -138,7 +140,7 @@ const styles = StyleSheet.create({
     modalContent: {
         margin: 20,
         flex: 1,
-        justifyContent: 'space-between'
+        justifyContent: 'space-between',
     },
 
     title: {
@@ -167,7 +169,7 @@ const styles = StyleSheet.create({
     },
 
     cancelButton: {
-        backgroundColor: '#fff',
+         backgroundColor: '#fff',
         borderWidth: 2,
         borderRadius: 10,
         color: '#000',
@@ -178,7 +180,8 @@ const styles = StyleSheet.create({
     },
 
     cancelText: {
-        fontSize: 20
+        fontSize: 16,
+        fontWeight: 500
     },
 
     stateButtons: {
@@ -191,7 +194,7 @@ const styles = StyleSheet.create({
     },
 
     stateText: {
-        fontSize: 30,
+        fontSize: 24,
         marginVertical: 10,
         marginHorizontal: 40
     }

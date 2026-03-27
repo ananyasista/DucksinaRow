@@ -3,12 +3,12 @@ import Chip from './chip';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import { IconSymbol } from './ui/icon-symbol';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { ChoreDetail } from '@/api/chores';
+import { Chore } from '@/api/chores';
+import { ThemedText } from './themed-text';
 
 type ModalProps = {
-    chore: ChoreDetail;
-    //toggleRestock: () => void;
+    chore: Chore;
+    onComplete: (completed: boolean) => void;
     visible: boolean;
     onClose: () => void;
     onEdit: () => void;
@@ -17,7 +17,16 @@ type ModalProps = {
 }
 
 export default function ChoreViewModal(props: ModalProps) {
-    
+
+    const [complete, setComplete] = useState(props.chore.latest_assignment.completed ?? false);
+
+    const handleComplete = () => {
+        const newValue = !complete;
+        setComplete(newValue);
+
+        props.onComplete(newValue);
+        props.onClose;
+    }
 
     return (
             <Modal
@@ -49,19 +58,16 @@ export default function ChoreViewModal(props: ModalProps) {
                     <View style={{gap: 10}}>
                         <Text style={styles.title}>{props.chore.title}</Text>
                         <Text style={styles.text}>{props.chore.details}</Text>
+                        <Text style={styles.subHeading}>Current Assignee: <Text style={styles.text}>{props.chore.latest_assignment.assignee?.first_name}</Text></Text>
                         <View style={{flexDirection: 'row'}}>
                             <IconSymbol name='calendar' size={30} color="#000"/>
-                            <DateTimePicker
-                                testID="dateTimePicker"
-                                value={props.chore.due_date}
-                                is24Hour={true}
-                                mode={'date'}
-                                display = 'default'
-                                themeVariant='light'
-                            />
+                            <Text style={styles.subHeading}>Chore Due: <Text style={styles.text}>{props.chore.latest_assignment.due_date?.toLocaleDateString()}</Text></Text>
                         </View>
+                        {props.chore.is_rotating && (
+                            <>
+                        
                         <Text style={styles.subHeading}>Pass chore to next roommate: <Text style={styles.text}>{props.chore.pass_to_next_value} {props.chore.pass_to_next_unit}</Text></Text>
-                        <Text style={styles.subHeading}>Next Up: <Text style={styles.text}>{props.chore.next_assignee?.first_name ?? ""}</Text></Text>
+                        <Text style={styles.subHeading}>Next Up: <Text style={styles.text}>{props.chore.latest_assignment.next_assignee?.first_name ?? ""}</Text></Text>
                         <View>
                             <Text style={styles.subHeading}>Roomates Involved:</Text>
                             <View style={styles.chipView}>
@@ -74,13 +80,22 @@ export default function ChoreViewModal(props: ModalProps) {
                             </View>
                             
                         </View>
-                        <Text style={styles.subHeading}>Locations: <Text style={styles.text}>{props.chore.location}</Text></Text>
+                            </>
+                        )}
+                        
+                        <Text style={styles.subHeading}>Location: <Text style={styles.text}>{props.chore.location}</Text></Text>
                         
                     </View>
-                    
-                    <TouchableOpacity style={styles.completeButton} onPress={() => props.onClose()}>
-                        <Text style={styles.subHeading}>Mark as Complete</Text>
-                    </TouchableOpacity>
+                    {!props.chore.latest_assignment?.completed &&
+                        <TouchableOpacity style={styles.completeButton} onPress={handleComplete}>
+                            <Text style={styles.subHeading}>Mark as Complete</Text>
+                        </TouchableOpacity>
+                    } 
+                    { props.chore.latest_assignment?.completed && 
+                        <TouchableOpacity style={styles.completeButton} onPress={handleComplete}>
+                            <ThemedText style={styles.subHeading}>Chore Completed!</ThemedText>
+                        </TouchableOpacity>
+                    }
                      
                 </SafeAreaView>
 
