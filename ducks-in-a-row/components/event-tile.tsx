@@ -3,13 +3,15 @@ import {Switch, StyleSheet, View, TouchableOpacity} from 'react-native';
 import { ThemedText } from './themed-text';
 import { Text } from '@react-navigation/elements';
 import { IconSymbol } from './ui/icon-symbol';
-import {CalendarEvent as APICalendarEvent, ApprovalEvent as APIApprovalEvent, CalendarEvent, getEventId, EventDetails as APIEventDetails} from '@/api/calendar';
+import {CalendarEvent as APICalendarEvent, ApprovalEvent as APIApprovalEvent, CalendarEvent, getEventId, EventDetails as APIEventDetails, respondApproval} from '@/api/calendar';
 import EventModal from './modal-event';
 interface EventTileProps {
   event: APICalendarEvent;
   owner: boolean;
+  details?: boolean;
+  remove?: any;
 }
-export function EventTile({event, owner}:EventTileProps) {
+export function EventTile({event, owner,details= false, ...props}:EventTileProps) {
     const abbrMonth = ["Jan","Feb","Mar","Apr","May","June","July","Aug","Sept","Oct","Nov","Dec"];
     const [printDate, setPrintDate] = useState("");
     const [showModal, setShowModal] = useState(false);
@@ -61,18 +63,14 @@ export function EventTile({event, owner}:EventTileProps) {
         {
             date += abbrMonth[endDate.getMonth()] + " ";
             date += endDate.getDate() ;
-            if(endDate.getDate() === 1 || endDate.getDate() === 21 || endDate.getDate() === 31)
-            {
-                date += "st";
-            } else if (endDate.getDate() === 2 || endDate.getDate() === 22) {
-                date += "nd";
-            } else if(endDate.getDate() === 3 || endDate.getDate() === 23) {
-                date += "rd";
-            } else {
-                date += "th";
-            }
+            var endDay = endDate.getDay()+"";
+            date +=  st.test(endDay)? "st" : 
+                nd.test(endDay)? "nd" :
+                rd.test(endDay)?"rd" :
+                "th";
             date += " ";
         } 
+        
         if(endDate.getHours() == 0)
         {
             date += "12:" + endDate.getMinutes();
@@ -102,7 +100,26 @@ export function EventTile({event, owner}:EventTileProps) {
         setPending(currPending);
         setEventDetails(true);
     }
-    
+
+    function decline()
+    {
+        try {
+            respondApproval(event.id, false);
+            props.remove();
+        } catch (e:any) {
+            console.log("Error trying to decline event: " + e);
+        }
+    }
+
+    function approve() 
+    {
+        try {
+            respondApproval(event.id, true);
+            props.remove();
+        } catch (e:any) {
+            console.log("error approving event: " + e);
+        }
+    }
     //TODO: Add in Created by, Approved by #, Waiting for #, Decline/Approve functionality
   return (
     <TouchableOpacity id={event.id} style={eventTileStyle.container} onPress={() => openEventDetails()}>
@@ -127,35 +144,35 @@ export function EventTile({event, owner}:EventTileProps) {
             }
             
         </View>
-        {!owner && (
+        {!owner && !details && (
             <View style={{width:'100%'}}>
                 <View style={{borderBottomColor: 'rgba(215, 209, 209, 1)', borderBottomWidth: 1, marginTop: 10, marginBottom: 10}}/>
-                <ThemedText type='text'>Created By: {event.event_owner_name?.full_name}</ThemedText>
+                <ThemedText type='text'>Created By: {event.event_owner_name}</ThemedText>
                 <View style={eventTileStyle.buttonContainer}>
-                        <TouchableOpacity style={eventTileStyle.declineButton}>
+                        <TouchableOpacity style={eventTileStyle.declineButton} onPress={() => decline()}>
                             <Text style={eventTileStyle.cancelText}>Decline</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity style={eventTileStyle.approveButton}>
+                        <TouchableOpacity style={eventTileStyle.approveButton} onPress={() => approve()}>
                             <Text style={eventTileStyle.saveText}>Approve</Text>
                         </TouchableOpacity>
                 </View>
             </View>
         )}
-        { owner && event.approval_status && (event.approval_status === "approved" ||(event.approval_counts &&event.approval_counts?.approved >= event.approval_counts.total)) && (
+        { (owner || details )&& event.approval_status && (event.approval_status === "approved" ||(event.approval_counts &&event.approval_counts?.approved >= event.approval_counts.total)) && (
            <View style={eventTileStyle.titleContainer}>
             <IconSymbol size={20} name="checkmark" color='black'/>
             <Text style={eventTileStyle.approvedText}>Approved by all roommates</Text>
          </View>
         )}
        
-        { owner && event.approval_status && ((event.approval_counts &&event.approval_counts?.approved < event.approval_counts.total))&&  (
+        { (owner||details) && event.approval_status && ((event.approval_counts &&event.approval_counts?.approved < event.approval_counts.total))&&  (
             <View style={eventTileStyle.titleContainer}>
                 <IconSymbol size={20} name="hourglass" color='black'/>
                 <Text style={eventTileStyle.pendingText}>Waiting for approval ({(event.approval_counts?.total ?? 0) - (event.approval_counts?.approved ?? 0)}/{event.approval_counts?.total} remaining)</Text>
              </View>
         )}
         { eventDetails && (
-            <EventModal event={event} owner={owner} pendingEvent={pending} printDate={printDate}  onClose={() => setEventDetails(false)}/>
+            <EventModal event={event} owner={owner && !details} pendingEvent={pending} onClose={() => setEventDetails(false)}/>
         )}
         
     </TouchableOpacity>
@@ -217,15 +234,14 @@ const eventTileStyle = StyleSheet.create({
     color: 'rgba(220, 146, 34, 1)',
   },
   buttonContainer: {
-    justifyContent:"space-between",
+    justifyContent:"space-around",
     display: "flex",
     flexDirection: "row",
-    alignItems: "center",
     padding: 12,
-    paddingLeft: 30,
-    paddingRight: 30,
+    gap: 10,
   },
   declineButton: {
+        flex: 1,
         backgroundColor: '#fff',
         borderWidth: 1,
         borderRadius: 10,
@@ -243,6 +259,7 @@ const eventTileStyle = StyleSheet.create({
         fontWeight: 500
     },
     approveButton: {
+        flex: 1,
         backgroundColor: 'rgba(54, 188, 75, 1)',
         borderRadius: 10,
         color: '#fff',
@@ -255,7 +272,7 @@ const eventTileStyle = StyleSheet.create({
         borderWidth: 1
     },
     saveText: {
-        color: "#fff",
+        // color: "#fff",
         fontSize: 16,
         fontWeight: 500
     }
