@@ -26,11 +26,11 @@ export default function InvItemModal(props: ModalProps) {
 
     const roommateList: string[] = ["Elle", "Leyna", "Sofia", "Ananya"];
     const [locations, setLocations] = useState([
-        {label: 'Kitchen', value: 'kitchen'},
-        {label: 'Living Room', value: 'living room'},
-        {label: 'Bedroom', value: 'bedroom'},
-        {label: 'Bathroom', value: 'bathroom'},
-        {label: 'Other', value: 'other'}
+        {label: 'Kitchen', value: 'Kitchen'},
+        {label: 'Living Room', value: 'Living Room'},
+        {label: 'Bedroom', value: 'Bedroom'},
+        {label: 'Bathroom', value: 'Bathroom'},
+        {label: 'Other', value: 'Other'}
     ])
 
     const [date, setDate] = useState(new Date());

@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import { IconSymbol } from './ui/icon-symbol';
 import { Chore } from '@/api/chores';
+import { ThemedText } from './themed-text';
 
 type ModalProps = {
     chore: Chore;
@@ -85,10 +86,16 @@ export default function ChoreViewModal(props: ModalProps) {
                         <Text style={styles.subHeading}>Location: <Text style={styles.text}>{props.chore.location}</Text></Text>
                         
                     </View>
-                    
-                    <TouchableOpacity style={styles.completeButton} onPress={handleComplete}>
-                        <Text style={styles.subHeading}>Mark as Complete</Text>
-                    </TouchableOpacity>
+                    {!props.chore.latest_assignment?.completed &&
+                        <TouchableOpacity style={styles.completeButton} onPress={handleComplete}>
+                            <Text style={styles.subHeading}>Mark as Complete</Text>
+                        </TouchableOpacity>
+                    } 
+                    { props.chore.latest_assignment?.completed && 
+                        <TouchableOpacity style={styles.completeButton} onPress={handleComplete}>
+                            <ThemedText style={styles.subHeading}>Chore Completed!</ThemedText>
+                        </TouchableOpacity>
+                    }
                      
                 </SafeAreaView>
 

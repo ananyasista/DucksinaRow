@@ -3,12 +3,12 @@ import {Switch, StyleSheet, View} from 'react-native';
 import { ThemedText } from './themed-text';
 type ThemedSwitchProps = {
     label:string;
+    value: boolean;
     onChangeSwitch: (set: boolean)=> void;
 };
-export function ThemedSwitch({label="", onChangeSwitch}:ThemedSwitchProps) {
-  const [isEnabled, setIsEnabled] = useState(false);
-  function toggleSwitch() 
-  {
+export function ThemedSwitch({label="", onChangeSwitch, value=false}:ThemedSwitchProps) {
+  const [isEnabled, setIsEnabled] = useState(value);
+  function toggleSwitch() {
       onChangeSwitch(!isEnabled);
       setIsEnabled(!isEnabled);
   }

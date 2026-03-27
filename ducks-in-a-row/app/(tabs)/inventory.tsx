@@ -41,6 +41,8 @@ export default function InventoryScreen() {
     };
 
     loadData();
+    itemList.map(item => console.log("ITEM:", item.name, item.restock_needed));
+    
   }, []);
 
   const applyFilterChanges = async () => {
@@ -60,13 +62,14 @@ export default function InventoryScreen() {
     setSelectedItem(item);
   }
 
-  const handleRestockToggle = async (restock: boolean, item: invAPI.InventoryCard) => {
-  
-    await invAPI.updateItem(item.id, {
-      ...item,
-      restock_needed: restock,
-      
+  const handleRestockToggle = async (newValue: boolean, item: string) => {
+    const id = item;
+    setItemList(prev => prev.map(i => i.id === id ? { ...i, restock_needed: restock } : i));
+
+    await invAPI.updateItem(item, {
+      restock_needed: newValue,
     })
+    await refreshItems();
   }
  
   return (
@@ -110,7 +113,7 @@ export default function InventoryScreen() {
                   category={item.location ?? ''}
                   restock={item.restock_needed}
                   quantity={item.quantity}
-                  onChange={(restock) => handleRestockToggle(restock,item)}
+                  onChange={(newValue) => handleRestockToggle(newValue, item.id)}
                   onPress={() => {
                     getItem(item.id);
                     setViewItemVisible(true);
@@ -141,7 +144,10 @@ export default function InventoryScreen() {
             <InvViewModal 
               item = {selectedItem}
               visible = {viewItemVisible}
-              onClose={() => setViewItemVisible(false)}
+              onClose={() => {
+                setViewItemVisible(false)
+                refreshItems();
+              }}
               onEdit = {() => {
                 setViewItemVisible(false);
                 setEditItemVisible(true);
@@ -151,6 +157,7 @@ export default function InventoryScreen() {
                 setViewItemVisible(false);
                 refreshItems();
               }}
+              onRestockChange={handleRestockToggle}
             />
           )}
 

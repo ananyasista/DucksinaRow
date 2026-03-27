@@ -75,13 +75,19 @@ export default function HomeScreen() {
       setGroupName(householdData.household_name || "Household");
 
       const user = await me();
-      const choreData = await getChores();
+      const choreData = await getChores({
+        completed: false, 
+        assignee: [user.id]
+      });
 
-      const myChores = choreData.filter(
-        (chore) => chore.latest_assignment?.assignee?.id === user.id
-      );
+      // const myChores = choreData.filter(
+      //   (chore) => {
+      //     chore.latest_assignment?.assignee?.id === user.id && 
+      //     chore.latest_assignment?.completed === false
+      //   }
+      // );
 
-      setChoreList(myChores);
+      setChoreList(choreData);
     } catch (e: any) {
       console.log("Home page error:", e?.response?.data || e.message);
     }

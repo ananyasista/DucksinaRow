@@ -102,8 +102,8 @@ export default function ChoreFilterModal(props: ModalProps) {
                     </View>
 
                     <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
-                        <Text style={styles.subHeading}>Show Completed</Text>
-                        <Switch onValueChange={() => props.setCompletedFilter(prev => !prev)} value={props.completedFilter}/>
+                        {/* <Text style={styles.subHeading}>Show Completed</Text> */}
+                        <ThemedSwitch label="Show Completed" value={props.completedFilter} onChangeSwitch={() => props.setCompletedFilter(prev => !prev)}/>
                     </View>
 
                     <View>

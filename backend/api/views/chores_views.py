@@ -39,7 +39,7 @@ class ChoreViewSet(viewsets.ModelViewSet):
         completed = self.request.query_params.get("completed")
         if completed is not None:
             if completed.lower() == "true":
-                qs = qs.filter(latest_completed=True)
+                qs = qs.filter(latest_completed__in=[True, False])
             elif completed.lower() == "false":
                 qs = qs.filter(latest_completed=False)
 

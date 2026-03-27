@@ -31,7 +31,7 @@ class InventoryViewSet(viewsets.ModelViewSet):
         restock_needed = self.request.query_params.get("restock_needed")
         if restock_needed is not None:
                 if restock_needed.lower() == "true":
-                    queryset = queryset.filter(restock_needed=True)
+                    queryset = queryset.filter(restock_needed__in=[True, False])
                 elif restock_needed.lower() == "false":
                     queryset = queryset.filter(restock_needed=False)
 
@@ -90,15 +90,3 @@ class InventoryViewSet(viewsets.ModelViewSet):
         }
 
         return Response(data)
-    
-    def perform_update(self, serializer):
-        instance = self.get_object()
-        was_restock_needed = instance.restock_needed
-
-        updated_instance = serializer.save()
-
-        # If item was restocked
-        if was_restock_needed and not updated_instance.restock_needed:
-            updated_instance.last_purchase_date = timezone.now()
-            updated_instance.last_purchased_by = self.request.user
-            updated_instance.save(update_fields=["last_purchase_date", "last_purchased_by"])

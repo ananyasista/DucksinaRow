@@ -48,12 +48,13 @@ export const getItemById = async (id: string) => {
 };
 
 export const createItem = async (data: Omit<InventoryCard, "id">) => {
-  // console.log(data);
+  console.log(data);
   const response = await api.post("/inventory/", data);
   return response.data;
 };
 
 export const updateItem = async (id: string, data: Partial<InventoryCard>) => {
+  console.log(data);
   const response = await api.patch(`/inventory/${id}/`, data);
   return response.data;
 };

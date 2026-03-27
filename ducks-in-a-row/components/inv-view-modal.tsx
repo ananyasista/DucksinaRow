@@ -3,7 +3,7 @@ import Chip from './chip';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import Counter from './counter';
-import { InventoryDetails } from '@/api/inventory';
+import { InventoryDetails, updateItem } from '@/api/inventory';
 import { IconSymbol } from './ui/icon-symbol';
 import { ThemedText } from './themed-text';
 import { ThemedSwitch } from './themed-switch';
@@ -15,7 +15,7 @@ type ModalProps = {
     onClose: () => void;
     onEdit: () => void;
     onDelete: () => void;
-
+    onRestockChange: (value: boolean, id: string) => void;
 }
 
 export default function InvViewModal(props: ModalProps) {
@@ -31,7 +31,6 @@ export default function InvViewModal(props: ModalProps) {
                 allowSwipeDismissal={true}
                 onRequestClose={props.onClose}
             >
-
                 <View>
                     <View style={{height: 20}}></View>
                     <View style={styles.header}>
@@ -60,7 +59,13 @@ export default function InvViewModal(props: ModalProps) {
                     <ThemedText type="subtitle">Last Purchased By: <ThemedText type="secondarySubtitle">{props.item.last_purchased_by.first_name}</ThemedText></ThemedText>
                     <ThemedText type="subtitle">Purchase Date: <ThemedText type="secondarySubtitle">{props.item.last_purchased_date.toDateString()}</ThemedText></ThemedText>
                     <View>                            
-                        <ThemedSwitch label="Restock Needed?" onChangeSwitch={props.onClose}/>
+                        <ThemedSwitch 
+                            label="Restock Needed?" 
+                            value={props.item.restock_needed} 
+                            onChangeSwitch={(value) => {
+                                props.onRestockChange(value, props.item.id);
+                            }}
+                        />
                         <ThemedText type="text">Toggle when this item needs to be restocked</ThemedText>
                     </View>
                     
