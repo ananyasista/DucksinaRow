@@ -47,17 +47,34 @@ class Command(BaseCommand):
         last_names = ["Lynch", "Huynh", "Sista", "Strauss"]
 
         users = []
+        color_palette = [
+        "#CF7041",
+        "#E5C5BD",
+        "#E2A55E",
+        "#5E718B",
+        "#96AA9A",
+        "#B4BFC5",
+        ]
         for i in range(4):
             user, created = User.objects.get_or_create(
-                first_name=first_names[i],
-                last_name=last_names[i],
                 email=f"{first_names[i].lower()}@example.com",
-                username=f"user{i+1}",
-                password=make_password("password123"),
-                household=households[0]
+                defaults={
+                    "first_name": first_names[i],
+                    "last_name": last_names[i],
+                    "username": f"user{i+1}",
+                    "password": make_password("password123"),
+                    "household": households[0],
+                    "display_color": color_palette[i % len(color_palette)],
+                }
             )
+
+            # If user already existed, ensure they get a color
+            if not user.display_color:
+                user.display_color = color_palette[i % len(color_palette)]
+                user.save()
+
             users.append(user)
-            self.stdout.write(self.style.SUCCESS(f"Created user: {user.email}"))
+            self.stdout.write(self.style.SUCCESS(f"Created user: {user.email} with color {user.display_color}"))
 
         # --- Create Living Preferences ---
         for user in users:
