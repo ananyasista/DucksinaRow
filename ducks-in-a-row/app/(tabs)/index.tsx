@@ -13,6 +13,7 @@ import { ThemedText } from '@/components/themed-text';
 import { getHouseholdName } from '@/api/household';
 import { listHouseholdEvents, listMyEvents, listNeedsApproval } from '../../api/calendar';
 import { ChoreDetail, getChores, updateChore } from '@/api/chores';
+import { me } from '@/api/auth';
 
 type ApprovalEvent = {
   id: string;
@@ -71,13 +72,19 @@ export default function HomeScreen() {
   const loadHomeData = async () => {
     try {
       const householdData = await getHouseholdName();
-      setGroupName(householdData.household_name || 'Household');
-    } catch (e: any) {
-      console.log('Home page error:', e?.response?.data || e.message);
-    }
+      setGroupName(householdData.household_name || "Household");
 
-    const choreData = await getChores();
-    setChoreList(choreData);
+      const user = await me();
+      const choreData = await getChores();
+
+      const myChores = choreData.filter(
+        (chore) => chore.current_assignment?.assignee?.id === user.id
+      );
+
+      setChoreList(myChores);
+    } catch (e: any) {
+      console.log("Home page error:", e?.response?.data || e.message);
+    }
   };
   
   useEffect(() => {
