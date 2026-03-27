@@ -16,13 +16,7 @@ import { getHouseholdRoommates } from '@/api/household';
 
 export default function ChoreScreen() {
   const [choresList, setChoresList] = useState<choreAPI.Chore[]>([]);
-  const [roommatesList, setRoommatesList] = useState<{
-    email: string,
-    first_name: string,
-    id: string,
-    last_name: string,
-    name: string,
-  }[]>([]);
+  const [roommatesList, setRoommatesList] = useState<choreAPI.UserSummary[]>([]);
   const [locationList, setLocationList] = useState<string[]>([]);
   const [addItemVisible, setAddItemVisible] = useState(false);
   const [viewItemVisible, setViewItemVisible] = useState(false);
@@ -113,7 +107,7 @@ export default function ChoreScreen() {
         email: r.email,
         first_name: r.first_name,
         last_name: r.last_name,
-        name: r.full_name
+        name: r.full_name ?? ""
       }));
       setRoommatesList(filterRoommates);
     }
