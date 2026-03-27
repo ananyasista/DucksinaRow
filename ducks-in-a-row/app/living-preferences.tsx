@@ -119,6 +119,12 @@ export default function LivingPreferencesScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      
+      {/* Back Button */}
+      <Pressable style={styles.backButton} onPress={() => router.back()}>
+        <Text style={styles.backText}>← Back</Text>
+      </Pressable>
+
       <Text style={styles.title}>Living Preferences Survey</Text>
       <Text style={styles.subtitle}>
         Answer these questions so your preferences can be saved to your profile.
@@ -389,5 +395,14 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "#fff",
     fontWeight: "800",
+  },
+  backButton: {
+  marginBottom: 10,
+  },
+
+  backText: {
+    color: PRIMARY,
+    fontWeight: "700",
+    fontSize: 14,
   },
 });
