@@ -24,7 +24,6 @@ export default function InvItemModal(props: ModalProps) {
     const [itemLocation, setItemLocation] = useState(props.item ? props.item.location : null);
     const [quantity, setQuantity] = useState(props.item ? props.item.quantity : 1);
 
-    const roommateList: string[] = ["Elle", "Leyna", "Sofia", "Ananya"];
     const [locations, setLocations] = useState([
         {label: 'Kitchen', value: 'Kitchen'},
         {label: 'Living Room', value: 'Living Room'},
@@ -33,25 +32,10 @@ export default function InvItemModal(props: ModalProps) {
         {label: 'Other', value: 'Other'}
     ])
 
-    const [date, setDate] = useState(new Date());
-    const [mode, setMode] = useState('date');
-    const [show, setShow] = useState(false);
-
     const [openDropdown, setOpenDropdown] = useState(false);
 
-    const onChangeDate = (event: DateTimePickerEvent, selectedDate?: Date) => {
-        const currentDate = selectedDate ? selectedDate : new Date();
-        setDate(currentDate);
-    };
-
-    const showMode = (currentMode: any) => {
-        setShow(true);
-        setDate(new Date());
-        setMode(currentMode);
-    };
-
     const handleSave = () => {
-    const updatedItem: Partial<InventoryCard> = {
+        const updatedItem: Partial<InventoryCard> = {
             id: props.item?.id,
             name: itemName,
             details: itemDetails,
@@ -64,20 +48,16 @@ export default function InvItemModal(props: ModalProps) {
     };
 
     useEffect(() => {
-    if (props.item) {
-        setItemName(props.item.name);
-        setItemDetails(props.item.details);
-        setItemLocation(props.item.location);
-        setQuantity(props.item.quantity);
-    }
+        if (props.item) {
+            setItemName(props.item.name);
+            setItemDetails(props.item.details);
+            setItemLocation(props.item.location);
+            setQuantity(props.item.quantity);
+        }
     }, [props.item]);
-
-
-
 
     return (
         <View>
-
             <Modal
                 animationType='slide'
                 visible={props.visible}
@@ -85,77 +65,74 @@ export default function InvItemModal(props: ModalProps) {
                 allowSwipeDismissal={true}
                 onRequestClose={props.onClose}
             >
-            <TouchableWithoutFeedback onPress={() => {setOpenDropdown(false);}}>
-                <View>
-                    <View style={{height: 20}}></View>
-                <View style={styles.header}>
-                    <TouchableOpacity style={styles.cancelButton} 
-                        onPress={() => {
-                            setItemName('')
-                            setItemDetails('')
-                            setItemLocation(null)
-                            setQuantity(1)
-                            props.onClose()
-                        }}
-                    >
-                        <Text style={styles.cancelText}>Cancel</Text>
-                    </TouchableOpacity>
-                    <Text style={styles.title}>{props.title}</Text>
-                    <TouchableOpacity style={styles.cancelButton} onPress={handleSave}>
-                        <Text style={styles.cancelText}>Save</Text>
-                    </TouchableOpacity>
-                </View>
-
-                {/* Item name field */}
-                <SafeAreaView style={styles.modalContent}>
-                    <View style={styles.formField}>
-                        <ThemedText type="boldText">Item Name</ThemedText>
-                        <ThemedTextInput 
-                            onChangeText={setItemName}
-                            defaultValue={itemName}
-                            placeholder='Item Name'
-                        />
-                    </View>
-
-                    {/* Item details field */}
-                    <View style={styles.formField}>
-                        <ThemedText type="boldText">Details</ThemedText>
-                        <ThemedTextInput
-                            onChangeText={setItemDetails}
-                            defaultValue={itemDetails}
-                            placeholder='Add Details'
-                            multiline
-                            size="large"
-                        />
-                    </View>
-                
-                    {/* Item quantity field */}
-                    <View style={styles.formField}>
-                        <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: "space-between"}}>
-                            <ThemedText type="boldText">Quantity</ThemedText>
-                            <Counter value={quantity} onChange={setQuantity} />
+                <TouchableWithoutFeedback onPress={() => {setOpenDropdown(false);}}>
+                    <View>
+                        <View style={{height: 20}}></View>
+                        <View style={styles.header}>
+                            <TouchableOpacity style={styles.cancelButton} 
+                                onPress={() => {
+                                    setItemName('')
+                                    setItemDetails('')
+                                    setItemLocation(null)
+                                    setQuantity(1)
+                                    props.onClose()
+                                }}
+                            >
+                                <Text style={styles.cancelText}>Cancel</Text>
+                            </TouchableOpacity>
+                            <ThemedText type='subtitle'>{props.title}</ThemedText>
+                            <TouchableOpacity style={styles.cancelButton} onPress={handleSave}>
+                                <Text style={styles.cancelText}>Save</Text>
+                            </TouchableOpacity>
                         </View>
+
+                        {/* Item name field */}
+                        <SafeAreaView style={styles.modalContent}>
+                            <View style={styles.formField}>
+                                <ThemedText type="boldText">Item Name</ThemedText>
+                                <ThemedTextInput 
+                                    onChangeText={setItemName}
+                                    defaultValue={itemName}
+                                    placeholder='Item Name'
+                                />
+                            </View>
+
+                            {/* Item details field */}
+                            <View style={styles.formField}>
+                                <ThemedText type="boldText">Details</ThemedText>
+                                <ThemedTextInput
+                                    onChangeText={setItemDetails}
+                                    defaultValue={itemDetails}
+                                    placeholder='Add Details'
+                                    multiline
+                                    size="large"
+                                />
+                            </View>
+                        
+                            {/* Item quantity field */}
+                            <View style={styles.formField}>
+                                <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: "space-between"}}>
+                                    <ThemedText type="boldText">Quantity</ThemedText>
+                                    <Counter value={quantity} onChange={setQuantity} />
+                                </View>
+                            </View>
+
+                            <View style={styles.formField}>
+                                <ThemedText type="boldText">Location</ThemedText>
+                                <DropDownPicker 
+                                    open={openDropdown}
+                                    value={itemLocation}
+                                    items={locations}
+                                    setOpen={setOpenDropdown}
+                                    setValue={setItemLocation}
+                                    setItems={setLocations}
+                                    style={styles.input}
+                                    dropDownContainerStyle={styles.dropdownMenu}
+                                />
+                            </View>
+                        </SafeAreaView>
                     </View>
-
-                    <View style={styles.formField}>
-                        <ThemedText type="boldText">Location</ThemedText>
-                        <DropDownPicker 
-                            open={openDropdown}
-                            value={itemLocation}
-                            items={locations}
-                            setOpen={setOpenDropdown}
-                            setValue={setItemLocation}
-                            setItems={setLocations}
-                            style={styles.input}
-                            dropDownContainerStyle={styles.dropdownMenu}
-                        />
-                    </View>
-
-                </SafeAreaView>
-
-                </View>
-                
-            </TouchableWithoutFeedback>
+                </TouchableWithoutFeedback>
             </Modal>
         </View>
         

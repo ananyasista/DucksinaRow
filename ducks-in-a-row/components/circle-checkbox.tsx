@@ -1,6 +1,5 @@
 import React from "react";
 import { Pressable, View, StyleSheet } from "react-native";
-import { ThemedText } from "./themed-text";
 import { IconSymbol } from './ui/icon-symbol';
 
 type Props = {
@@ -31,7 +30,7 @@ export default function CircularCheckbox({
           <IconSymbol
             size={size * 0.6}
             name="checkmark"
-            color="#ffffff"
+            color="#eaf3ec"
           />
         )}
       </View>
@@ -42,13 +41,13 @@ export default function CircularCheckbox({
 const styles = StyleSheet.create({
   circle: {
     borderWidth: 2,
-    borderColor: "#000000",
+    borderColor: "#233426",
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#ffffff",
+    backgroundColor: "#fffffffa",
   },
 
   checkedCircle: {
-    backgroundColor: "green",
+    backgroundColor: "#5B6D5E",
   },
 });

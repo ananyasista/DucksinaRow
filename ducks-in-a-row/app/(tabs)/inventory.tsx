@@ -113,7 +113,7 @@ export default function InventoryScreen() {
                   category={item.location ?? ''}
                   restock={item.restock_needed}
                   quantity={item.quantity}
-                  onChange={(newValue) => handleRestockToggle(newValue, item.id)}
+                  onChange={() => handleRestockToggle(item.restock_needed, item.id)} // consider passing by reference 
                   onPress={() => {
                     getItem(item.id);
                     setViewItemVisible(true);
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
   },
 
   addButton: {
-        backgroundColor: '#4DC591',
+        backgroundColor: '#79997E',
         width: 50,
         height: 50,
         borderRadius: 30,

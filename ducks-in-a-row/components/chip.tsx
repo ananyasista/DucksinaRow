@@ -36,7 +36,7 @@ export default function Chip({
             selected
               ? "#ffffff"
               : isSelectable
-              ? "#FF7648"
+              ? "#EC8534"
               : "#ffffff"
           }
         />
@@ -56,7 +56,7 @@ export default function Chip({
 
 const styles = StyleSheet.create({
     chip: {
-        backgroundColor: '#FF7648',
+        backgroundColor: '#EC8534',
         borderRadius: 16,
         padding: 10,
         flexDirection: 'row',
@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
     title: {
         textAlignVertical: 'center',
         color: '#ffffff',
-        fontSize: 20
+        fontSize: 18
     },
 
     icon: {
@@ -78,22 +78,20 @@ const styles = StyleSheet.create({
     unselectedChip: {
       backgroundColor: '#ffffff',
       borderWidth: 2,
-      borderColor: '#FF7648'
+      borderColor: '#EC8534'
     },
 
     unselectedTitle: {
-      color: '#FF7648'
+      color: '#EC8534'
     },
 
     selectedChip: {
-     backgroundColor: '#FF7648',
+     backgroundColor: '#EC8534',
       borderWidth: 2,
-      borderColor: '#FF7648'
+      borderColor: '#EC8534'
     },
 
     selectedTitle: {
       color: '#ffffff'
     }
-
-
 });
