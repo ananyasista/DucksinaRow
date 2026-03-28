@@ -1,9 +1,6 @@
-import {View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Pressable, Keyboard, TouchableWithoutFeedback, Switch } from 'react-native'
-import Chip from './chip';
+import {View, StyleSheet, TouchableOpacity, Modal } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState } from 'react';
-import Counter from './counter';
-import { InventoryDetails, updateItem } from '@/api/inventory';
+import { InventoryDetails } from '@/api/inventory';
 import { IconSymbol } from './ui/icon-symbol';
 import { ThemedText } from './themed-text';
 import { ThemedSwitch } from './themed-switch';
@@ -19,11 +16,8 @@ type ModalProps = {
 }
 
 export default function InvViewModal(props: ModalProps) {
-    
-
     return (
         <View>
-
             <Modal
                 animationType='slide'
                 visible={props.visible}
@@ -47,34 +41,35 @@ export default function InvViewModal(props: ModalProps) {
                         </View>
                     </View>
 
-
-                <SafeAreaView style={styles.modalContent}>
-                    <ThemedText type="title">{props.item.name}</ThemedText>
-                    <ThemedText type="secondarySubtitle">{props.item.details}</ThemedText>
-                    <View style={styles.rowStart}> 
-                        <IconSymbol size={20} name="pin" color="#000"/>
-                        <ThemedText type="subtitle">Location: <ThemedText type="secondarySubtitle">{props.item.location}</ThemedText></ThemedText>
-                    </View>
-                    
-                    <ThemedText type="subtitle">Last Purchased By: <ThemedText type="secondarySubtitle">{props.item.last_purchased_by.first_name}</ThemedText></ThemedText>
-                    <ThemedText type="subtitle">Purchase Date: <ThemedText type="secondarySubtitle">{props.item.last_purchased_date.toDateString()}</ThemedText></ThemedText>
-                    <View>                            
-                        <ThemedSwitch 
-                            label="Restock Needed?" 
-                            value={props.item.restock_needed} 
-                            onChangeSwitch={(value) => {
-                                props.onRestockChange(value, props.item.id);
-                            }}
-                        />
-                        <ThemedText type="text">Toggle when this item needs to be restocked</ThemedText>
-                    </View>
-                    
-                </SafeAreaView>
-
+                    <SafeAreaView style={styles.modalContent}>
+                        <ThemedText type="title">{props.item.name}</ThemedText>
+                        <ThemedText type="secondarySubtitle">{props.item.details}</ThemedText>
+                        <View style={styles.rowStart}> 
+                            <IconSymbol size={30} name="pin.fill" color="#000"/>
+                            <ThemedText type="subtitle">Location: <ThemedText type="secondarySubtitle">{props.item.location}</ThemedText></ThemedText>
+                        </View>
+                        <View style={styles.rowStart}> 
+                            <IconSymbol size={30} name="person.fill" color="#000"/>
+                            <ThemedText type="subtitle">Last Purchased By: <ThemedText type="secondarySubtitle">{props.item.last_purchased_by.first_name}</ThemedText></ThemedText>
+                        </View>
+                        <View style={styles.rowStart}> 
+                            <IconSymbol size={30} name="calendar" color="#000"/>
+                            <ThemedText type="subtitle">Purchase Date: <ThemedText type="secondarySubtitle">{props.item.last_purchased_date.toDateString()}</ThemedText></ThemedText>
+                        </View>
+                        <View>                            
+                            <ThemedSwitch 
+                                label="Restock Needed?" 
+                                value={props.item.restock_needed} 
+                                onChangeSwitch={(value) => {
+                                    props.onRestockChange(value, props.item.id);
+                                }}
+                            />
+                            <ThemedText type="text">Toggle when this item needs to be restocked</ThemedText>
+                        </View>
+                    </SafeAreaView>
                 </View>
             </Modal>
         </View>
-        
     )
 }
 

@@ -1,6 +1,4 @@
-import {View, StyleSheet, Switch, Text, TouchableOpacity} from 'react-native';
-import { use, useState } from 'react';
-import { isEnabled } from 'react-native/Libraries/Performance/Systrace';
+import {View, StyleSheet, TouchableOpacity} from 'react-native';
 import { ThemedText } from './themed-text';
 import { ThemedSwitch } from './themed-switch';
 
@@ -25,19 +23,16 @@ export default function InvItemTile(props: InvItemTileProps){
 
     return (
         <TouchableOpacity onPress={props.onPress}>
-        <View 
-            style={[styles.tile, props.restock && styles.restockTile]}
-            
-        >
-            <ThemedText type="subtitle">{props.title}</ThemedText>
-            <ThemedText type="secondarySubtitle">Category: {props.category}</ThemedText>
-            <View style={styles.subView}>
-                <ThemedText type="secondarySubtitle">Stock: {props.quantity}</ThemedText>
-                <View>
-                    <ThemedSwitch label="Restock?" value={!!props.restock} onChangeSwitch={props.onChange}/>
+            <View style={[styles.tile, props.restock && styles.restockTile]}>
+                <ThemedText type="subtitle">{props.title}</ThemedText>
+                <ThemedText type="secondarySubtitle">Category: {props.category}</ThemedText>
+                <View style={styles.subView}>
+                    <ThemedText type="secondarySubtitle">Stock: {props.quantity}</ThemedText>
+                    <View>
+                        <ThemedSwitch label="Restock?" value={!!props.restock} onChangeSwitch={props.onChange}/>
+                    </View>
                 </View>
             </View>
-        </View>
         </TouchableOpacity>
 
     )
@@ -48,6 +43,7 @@ const styles = StyleSheet.create({
         fontSize: 24,
         fontWeight: 600
     },
+    
     tile: {
         backgroundColor: "#F6F6F5",
         borderRadius: 16,
@@ -59,7 +55,7 @@ const styles = StyleSheet.create({
     },
 
     restockTile: {
-        backgroundColor: "#f8c3b2",
+        backgroundColor: "#1433487f",
         borderRadius: 16,
         padding: 20,
         fontSize: 24,

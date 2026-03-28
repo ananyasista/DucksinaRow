@@ -1,11 +1,11 @@
-import {View, Text, StyleSheet, Dimensions, TouchableOpacity, Modal, Switch } from 'react-native'
+import {View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native'
 import React, { useState, PropsWithChildren } from 'react'
-import { Button, Header } from '@react-navigation/elements'
 import Chip from './chip';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedSwitch } from './themed-switch';
 import { IconSymbol } from './ui/icon-symbol';
-import DateTimePicker, { DateTimePickerEvent, Event } from '@react-native-community/datetimepicker';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { ThemedText } from './themed-text';
 
 type ModalProps = PropsWithChildren<{
     title: string;
@@ -58,12 +58,11 @@ export default function ChoreFilterModal(props: ModalProps) {
     return (
         <View>
             <Chip 
-            title="Filter" 
-            iconName='slider.horizontal.3'
-            onPress={() => setVisible(true)}
-            selected = {true}
+                title="Filter" 
+                iconName='slider.horizontal.3'
+                onPress={() => setVisible(true)}
+                selected = {true}
             />
-
             <Modal
                 animationType='slide'
                 visible={visible}
@@ -72,16 +71,15 @@ export default function ChoreFilterModal(props: ModalProps) {
                 onRequestClose={() => setVisible(false)}
             >
                 <View style={styles.header}>
-                    <Text style={styles.title}>{props.title}</Text>
-                    <TouchableOpacity style={styles.cancelButton} onPress={() => setVisible(false)}>
-                        <Text style={styles.cancelText}>Close</Text>
+                    <ThemedText type='title'>{props.title}</ThemedText>
+                    <TouchableOpacity onPress={() => setVisible(false)}>
+                        <IconSymbol size={30} name="multiply" color="#143348"/>
                     </TouchableOpacity>
                 </View>
 
-
                 <SafeAreaView style={styles.modalContent}>
                     <View style={{gap: 10}}>
-                    <Text style={styles.subHeading}>Assignee</Text>
+                    <ThemedText type='subtitle'>Assignee</ThemedText>
                     <View style={styles.chipView}>
                         {props.assigneeList.map((name => (
                             <Chip 
@@ -101,18 +99,17 @@ export default function ChoreFilterModal(props: ModalProps) {
 
                     </View>
 
-                    <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
-                        {/* <Text style={styles.subHeading}>Show Completed</Text> */}
+                    <View>
                         <ThemedSwitch label="Show Completed" value={props.completedFilter} onChangeSwitch={() => props.setCompletedFilter(prev => !prev)}/>
                     </View>
 
                     <View>
-                        <Text style={[styles.subHeading, {paddingBottom: 5}]}>Due Date Range</Text>
+                        <ThemedText type='subtitle'>Due Date Range</ThemedText>
                         <View style={{flexDirection: 'row', justifyContent: 'space-around'}}>
                             <View style={{justifyContent: 'center', gap: 7}}>
-                                <Text style={styles.dateHeader}>Start Date</Text>
+                                <ThemedText type='secondarySubtitle'>Start Date</ThemedText>
                                 <View style={{flexDirection: 'row'}}>
-                                    <IconSymbol name='calendar' size={30} color="#000"/>
+                                    <IconSymbol name='calendar' size={30} color="#143348"/>
                                     <DateTimePicker
                                         testID="dateTimePicker"
                                         value={props.startDateFilter}
@@ -125,9 +122,9 @@ export default function ChoreFilterModal(props: ModalProps) {
                                 </View>
                             </View>
                             <View style={{justifyContent: 'center', gap: 7}}>
-                                <Text style={styles.dateHeader}>End Date</Text>
+                                <ThemedText type='secondarySubtitle'>End Date</ThemedText>
                                 <View style={{flexDirection: 'row'}}>
-                                    <IconSymbol name='calendar' size={30} color="#000"/>
+                                    <IconSymbol name='calendar' size={30} color="#143348"/>
                                     <DateTimePicker
                                         testID="dateTimePicker"
                                         value={props.endDateFilter}
@@ -143,27 +140,26 @@ export default function ChoreFilterModal(props: ModalProps) {
                         
                     </View>
 
-                    <Text style={styles.subHeading}>Location</Text>
-                    <View style={styles.chipView}>
-                        {props.locationList.map((name => (
-                            <Chip 
-                                title={name} 
-                                onPress={() => {
-                                    props.setLocationFilterList(prev => {
-                                        if(prev.includes(name)) {
-                                            return prev.filter(item => item !== name);
-                                        } else {
-                                            return [...prev, name];
-                                        }
-                                    })                                }}
-                                selected = {props.locationFilterList.includes(name)}
-                            />
-                        )))}
+                    <ThemedText type='subtitle'>Location</ThemedText>
+                        <View style={styles.chipView}>
+                            {props.locationList.map((name => (
+                                <Chip 
+                                    title={name} 
+                                    onPress={() => {
+                                        props.setLocationFilterList(prev => {
+                                            if(prev.includes(name)) {
+                                                return prev.filter(item => item !== name);
+                                            } else {
+                                                return [...prev, name];
+                                            }
+                                        })                                }}
+                                    selected = {props.locationFilterList.includes(name)}
+                                />
+                            )))}
 
-                    </View>
+                        </View>
                     </View>
                     
-
                     <View style={{flexDirection: 'row', justifyContent: 'space-evenly'}}>
                         <TouchableOpacity 
                             style={styles.stateButtons} 
@@ -210,14 +206,16 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         gap: 12,
         paddingTop: 10,
-        paddingBottom: 10
+        paddingBottom: 10,
+        flexWrap: 'wrap',
+        width: '100%',
     },
     
     header: {
         justifyContent: "space-between",
         flexDirection: 'row',
         alignItems: 'flex-end',
-        padding: 30
+        padding: 20
     },
 
     cancelButton: {
@@ -245,13 +243,15 @@ const styles = StyleSheet.create({
         borderWidth: 2,
         borderRadius: 10,
         color: '#000',
+        borderColor: '#EC8534',
         justifyContent: 'center',
         alignItems: 'center'
     },
 
     stateText: {
-        fontSize: 30,
+        fontSize: 24,
         marginVertical: 10,
-        marginHorizontal: 40
+        marginHorizontal: 40,
+        color: '#EC8534'
     }
 });

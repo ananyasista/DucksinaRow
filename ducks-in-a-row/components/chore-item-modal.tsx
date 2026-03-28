@@ -1,14 +1,16 @@
-import {View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Switch, Keyboard, TouchableWithoutFeedback, ScrollView } from 'react-native'
+import {View, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native'
 import Chip from './chip';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { KeyboardAvoidingView, Platform } from 'react-native';
 import { useState, useEffect } from 'react';
 import DropDownPicker from 'react-native-dropdown-picker'
-import DateTimePicker, { DateTimePickerEvent, Event } from '@react-native-community/datetimepicker';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import Counter from './counter';
 import { IconSymbol } from './ui/icon-symbol';
 import { Chore, ChoreCreateInput, buildChorePatch } from '@/api/chores';
-import CircularCheckbox from './circle-checkbox';
 import { ThemedText } from './themed-text';
+import { ThemedTextInput } from './text-input';
+import { ThemedSwitch } from './themed-switch';
 
 type ModalProps = {
     visible: boolean;
@@ -150,218 +152,210 @@ export default function ChoreItemModal(props: ModalProps) {
                 onRequestClose={props.onClose}
                 style={{flex: 1}}
             >
-            <TouchableWithoutFeedback onPress={() => {setOpenPassDropdown(false); setOpenRepeatDropdown(false);}}  style={{flex: 1}}>
-                <View style={{flex: 1}}>
-                    <View style={{height: 20}}></View>
-                <View style={styles.header}>
-                    <TouchableOpacity style={styles.cancelButton} 
-                        onPress={() => {
-                            props.chore ? (
-                                props.onClose()
-                            ) : (
-                                setChoreTitle(''),
-                                setChoreDetails(''),
-                                setChoreLocation(null),
-                                setRoommatesInvolved([]),
-                                setRepeatUnit('Weeks'),
-                                setDate(new Date()),
-                                setChoreRotate(false),
-                                setDueDate(new Date()),
-                                setAllDay(true),
-                                setRepeatValue(1),
-                                setPassToNextUnit('Weeks'),
-                                setPassToNextValue(1),
-                                props.onClose()
-                            )
-                            
-                        }}
-                    >
-                        <Text style={styles.cancelText}>Cancel</Text>
-                    </TouchableOpacity>
-                    <Text style={styles.title}>{props.title}</Text>
-                    <TouchableOpacity style={styles.cancelButton} onPress={() => handleSave()}>
-                        <Text style={styles.cancelText}>Save</Text>
-                    </TouchableOpacity>
-                </View>
-
-
-                {/* CHORE NAME FIELD */}                    
-                <SafeAreaView  style={{flex: 1}}>
-                    <ScrollView 
-                        contentContainerStyle={{padding: 20, gap: 20, flexGrow: 1, flex: 1}}
-                        keyboardShouldPersistTaps="handled"
-                    >
-                        <View style={styles.formField}>
-                        <Text style={styles.subHeading}>Chore Name</Text>
-                        <TextInput 
-                            style={styles.input}
-                            onChangeText={setChoreTitle}
-                            value={choreTitle}
-                            placeholder='Chore Name'
-                            placeholderTextColor='#ABA4A461'
-                        />
-                    </View>
-
-                    {/* CHORE DETAIL FIELD */}
-                    <View style={styles.formField}>
-                        <Text style={styles.subHeading}>Details</Text>
-                        <TextInput 
-                            style={styles.input}
-                            onChangeText={setChoreDetails}
-                            value={choreDetails}
-                            placeholder='Add Details'
-                            placeholderTextColor='#ABA4A461'
-                            multiline
-                        />
-                    </View>
-
-                    {/* CHORE ALL DAY SWITCH */}
-                    <View style={styles.formField}>
-                        <Text style={styles.subHeading}>
-                            All Day
-                            <Switch 
-                                style={{marginLeft: 20, alignContent: 'center'}}
-                                value={allDay}
-                                onValueChange={setAllDay}
-                            />
-                        </Text>
-                        <View style={{flexDirection: 'row'}}>
-                            <IconSymbol name='calendar' size={30} color="#000"/>
-                            {allDay ? (
-                            <DateTimePicker
-                                    testID="dateTimePicker"
-                                    value={dueDate}
-                                    is24Hour={true}
-                                    mode={'date'}
-                                    display = 'default'
-                                    themeVariant='light'
-                                    onChange={(event, selectedDate) => {
-                                        if (selectedDate) setDueDate(selectedDate);
-                                    }}
-                                /> 
-                            ) : (
-                                <DateTimePicker
-                                    testID="dateTimePicker"
-                                    value={dueDate}
-                                    is24Hour={true}
-                                    mode={'datetime'}
-                                    display = 'default'
-                                    themeVariant='light'
-                                    onChange={(event, selectedDate) => {
-                                        if (selectedDate) setDueDate(selectedDate);
-                                    }}
-                                />
-                            )}
-                            
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === "ios" ? "padding" : undefined}
+                    style={{ flex: 1 }}
+                >
+                    <View style={{flex: 1}}>
+                        <View style={{height: 20}}></View>
+                        <View style={styles.header}>
+                            <TouchableOpacity style={styles.cancelButton} 
+                                onPress={() => {
+                                    props.chore ? (
+                                        props.onClose()
+                                    ) : (
+                                        setChoreTitle(''),
+                                        setChoreDetails(''),
+                                        setChoreLocation(null),
+                                        setRoommatesInvolved([]),
+                                        setRepeatUnit('Weeks'),
+                                        setDate(new Date()),
+                                        setChoreRotate(false),
+                                        setDueDate(new Date()),
+                                        setAllDay(true),
+                                        setRepeatValue(1),
+                                        setPassToNextUnit('Weeks'),
+                                        setPassToNextValue(1),
+                                        props.onClose()
+                                    )
+                                    
+                                }}
+                            >
+                                <ThemedText type='default'>Cancel</ThemedText>
+                            </TouchableOpacity>
+                            <ThemedText type='subtitle'>{props.title}</ThemedText>
+                            <TouchableOpacity style={styles.cancelButton} onPress={() => handleSave()}>
+                                <ThemedText type='default'>Save</ThemedText>
+                            </TouchableOpacity>
                         </View>
-                    </View>
+                        {/* CHORE NAME FIELD */}                    
+                        <SafeAreaView style={{ flex: 1 }}>
+                            <ScrollView 
+                                style={{ flex: 1 }}
+                                contentContainerStyle={{
+                                    padding: 20,
+                                    gap: 20,
+                                    width: '100%',
+                                }}
+                                keyboardShouldPersistTaps="handled"
+                            >
+                                <View style={styles.formField}>
+                                    <ThemedText type='boldText'>Chore Name</ThemedText>
+                                    <ThemedTextInput 
+                                        // style={styles.input}
+                                        onChangeText={setChoreTitle}
+                                        defaultValue={choreTitle}
+                                        placeholder='Chore Name'
+                                        // placeholderTextColor='#ABA4A461'
+                                    />
+                                </View>
 
-                    {/* CHORE LOCATION */}
-                    <View style={styles.formField}>
-                        <Text style={styles.subHeading}>Location</Text>
-                        <View style={styles.chipView}>
-                            {locationList.map((name => (
-                                <Chip
-                                    key={name}
-                                    title = {name}
-                                    onPress = {() => setChoreLocation(name)}
-                                    selected = {choreLocation === name} 
-                                />
-                            )))}
-    
-                        </View>
-                    </View>
+                                {/* CHORE DETAIL FIELD */}
+                                <View style={styles.formField}>
+                                    <ThemedText type='boldText'>Details</ThemedText>
+                                    <ThemedTextInput 
+                                        // style={styles.input}
+                                        onChangeText={setChoreDetails}
+                                        defaultValue={choreDetails}
+                                        placeholder='Add Details'
+                                        // placeholderTextColor='#ABA4A461'
+                                        multiline
+                                        size="large"
+                                    />
+                                </View>
 
-                    {/* CHORE REPEAT TIME */}
-                    <View style={styles.formField}>
-                        <Text style={styles.subHeading}>Repeat chore after?</Text>
-                        <View style={{flexDirection: 'row', gap: 20, flexGrow: 1}}>
-                            <Counter value={repeatValue} onChange={setRepeatValue} />
-                            <View style={{flex: 1}}>
-                                <DropDownPicker
-                                    open={openRepeatDropdown}
-                                    value={repeatUnit}
-                                    items={repeatInt}
-                                    setOpen={setOpenRepeatDropdown}
-                                    setValue={setRepeatUnit}
-                                    setItems={setRepeatInt}
-                                    style={styles.input}
-                                    dropDownContainerStyle={styles.dropdownMenu}
-                                />
-                            </View>
-                            
-                        </View>
-                        
-                    </View>
+                                {/* CHORE ALL DAY SWITCH */}
+                                <View style={styles.formField}>
+                                    <ThemedSwitch
+                                        label="All Day"
+                                        onChangeSwitch={() => setAllDay(!allDay)} 
+                                        value={allDay}
+                                    />
+                                    <View style={{flexDirection: 'row'}}>
+                                        <IconSymbol name='calendar' size={30} color="#000"/>
+                                        {allDay ? (
+                                        <DateTimePicker
+                                                testID="dateTimePicker"
+                                                value={dueDate}
+                                                is24Hour={true}
+                                                mode={'date'}
+                                                display = 'default'
+                                                themeVariant='light'
+                                                onChange={(event, selectedDate) => {
+                                                    if (selectedDate) setDueDate(selectedDate);
+                                                }}
+                                            /> 
+                                        ) : (
+                                            <DateTimePicker
+                                                testID="dateTimePicker"
+                                                value={dueDate}
+                                                is24Hour={true}
+                                                mode={'datetime'}
+                                                display = 'default'
+                                                themeVariant='light'
+                                                onChange={(event, selectedDate) => {
+                                                    if (selectedDate) setDueDate(selectedDate);
+                                                }}
+                                            />
+                                        )}
+                                        
+                                    </View>
+                                </View>
 
-                    {/* CHORE ROTATION SWITCH */}
-                    <View style={styles.formField}>
-                        <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
-                            <Text style={styles.subHeading}>Rotate Chore?</Text>
-                            <CircularCheckbox checked={choreRotate} onToggle={() => setChoreRotate(!choreRotate)}/>
-                        </View>
-
-                    </View>
-
-                    {choreRotate && ( <>
-                    {/* CHORE ROOMMATES */}
-                    <View style={styles.formField}>
-                        <Text style={styles.subHeading}>Roommates Involved</Text>
-                        <View style={styles.chipView}>
-                            {props.allRoommates.map((user => (
-                                <Chip 
-                                    key={user.id}
-                                    title={user.first_name}
-                                    selected={roommatesInvolved.some(r => r.id === user.id)}
-                                    onPress={() => {
-                                        setRoommatesInvolved(prev => {
-                                        if (prev.some(r => r.id === user.id)) {
-                                            return prev.filter(r => r.id !== user.id);
-                                        } else {
-                                            return [...prev, user];
-                                        }
-                                        });
-                                    }}
-                                />
-                            )))}
-    
-                        </View>
-                    </View>
-
-
-
-                    {/* CHORE PASS TIME */}
-                    <View style={styles.formField}>
-                        <Text style={styles.subHeading}>Pass chore to the next roommate after?</Text>
-                        <View style={{flexDirection: 'row', gap: 20, flexGrow: 1}}>
-                            <Counter value={passToNextValue} onChange={setPassToNextValue} />
-                            <View style={{flex: 1}}>
-                                <DropDownPicker 
-                                    open={openPassDropdown}
-                                    value={passToNextUnit}
-                                    items={repeatInt}
-                                    setOpen={setOpenPassDropdown}
-                                    setValue={setPassToNextUnit}
-                                    setItems={setRepeatInt}
-                                    style={styles.input}
-                                    dropDownContainerStyle={styles.dropdownMenu}
-
-                                />
-                            </View>
-                            
-                        </View>
-                        
-                    </View>
-                    </>)}   
-                    </ScrollView>
-                    
-
-
-                </SafeAreaView>
-
-                </View>
+                                {/* CHORE LOCATION */}
+                                <View style={styles.formField}>
+                                    <ThemedText type='boldText'>Location</ThemedText>
+                                    <View style={styles.chipView}>
+                                        {locationList.map((name => (
+                                            <Chip
+                                                key={name}
+                                                title = {name}
+                                                onPress = {() => setChoreLocation(name)}
+                                                selected = {choreLocation === name} 
+                                            />
+                                        )))}
                 
-            </TouchableWithoutFeedback>
+                                    </View>
+                                </View>
+
+                                {/* CHORE REPEAT TIME */}
+                                <View style={styles.formField}>
+                                    <ThemedText type='boldText'>Repeat chore after?</ThemedText>
+                                    <View style={{flexDirection: 'row', gap: 20, flexGrow: 1}}>
+                                        <Counter value={repeatValue} onChange={setRepeatValue} />
+                                        <View style={{ flex: 1, width: '100%', zIndex: 1000 }}>
+                                            <DropDownPicker
+                                                open={openRepeatDropdown}
+                                                value={repeatUnit}
+                                                items={repeatInt}
+                                                setOpen={setOpenRepeatDropdown}
+                                                setValue={setRepeatUnit}
+                                                setItems={setRepeatInt}
+                                                style={styles.input}
+                                                dropDownContainerStyle={styles.dropdownMenu}
+                                            />
+                                        </View>    
+                                    </View>
+                                </View>
+
+                                {/* CHORE ROTATION SWITCH */}
+                                <View style={styles.formField}>
+                                        <ThemedSwitch
+                                            label='Rotate Chore?'
+                                            value={choreRotate}
+                                            onChangeSwitch={() => setChoreRotate(!choreRotate)}
+                                        />
+                                </View>
+
+                                {choreRotate && ( <>
+                                {/* CHORE ROOMMATES */}
+                                <View style={styles.formField}>
+                                    <ThemedText type='boldText'>Roommates Involved</ThemedText>
+                                    <View style={styles.chipView}>
+                                        {props.allRoommates.map((user => (
+                                            <Chip 
+                                                key={user.id}
+                                                title={user.first_name}
+                                                selected={roommatesInvolved.some(r => r.id === user.id)}
+                                                onPress={() => {
+                                                    setRoommatesInvolved(prev => {
+                                                    if (prev.some(r => r.id === user.id)) {
+                                                        return prev.filter(r => r.id !== user.id);
+                                                    } else {
+                                                        return [...prev, user];
+                                                    }
+                                                    });
+                                                }}
+                                            />
+                                        )))}
+                                    </View>
+                                </View>
+
+                                {/* CHORE PASS TIME */}
+                                <View style={styles.formField}>
+                                    <ThemedText type='boldText'>Pass chore to the next roommate after?</ThemedText>
+                                    <View style={{flexDirection: 'row', gap: 20, flexGrow: 1}}>
+                                        <Counter value={passToNextValue} onChange={setPassToNextValue} />
+                                        <View style={{ flex: 1, width: '100%', zIndex: 999 }}>
+                                            <DropDownPicker 
+                                                open={openPassDropdown}
+                                                value={passToNextUnit}
+                                                items={repeatInt}
+                                                setOpen={setOpenPassDropdown}
+                                                setValue={setPassToNextUnit}
+                                                setItems={setRepeatInt}
+                                                style={styles.input}
+                                                dropDownContainerStyle={styles.dropdownMenu}
+
+                                            />
+                                        </View>
+                                    </View>
+                                </View>
+                                </>)}   
+                            </ScrollView>
+                        </SafeAreaView>
+                    </View>
+                </KeyboardAvoidingView>
             </Modal>
         </View>
         
@@ -391,24 +385,27 @@ const styles = StyleSheet.create({
         gap: 12,
         paddingTop: 10,
         paddingBottom: 10,
-        flexWrap: 'wrap'
+        flexWrap: 'wrap',
+        width: '100%',
     },
     
     header: {
         justifyContent: "space-between",
         flexDirection: 'row',
-        alignItems: 'flex-end',
+        alignItems: 'center',
         padding: 12
     },
 
     cancelButton: {
         backgroundColor: '#fff',
         borderWidth: 2,
-        borderRadius: 20,
+        borderRadius: 10,
         color: '#000',
         justifyContent: 'center',
         alignItems: 'center',
-        padding:7
+        padding:7,
+        width: 100,
+        height: 50,
     },
 
     cancelText: {
@@ -426,7 +423,7 @@ const styles = StyleSheet.create({
 
     formField: {
         gap: 5,
-        flexWrap: 'wrap'
+        width: '100%',
     },
 
     picker: {

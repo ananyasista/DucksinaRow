@@ -2,7 +2,6 @@ import {StyleSheet, View, Text, ScrollView, TouchableOpacity, TextInput } from '
 import { useState, useEffect } from 'react';
 
 import { SafeAreaView} from 'react-native-safe-area-context';
-import { Link } from 'expo-router';
 
 import Octicons from "@expo/vector-icons/Octicons";
 
@@ -17,13 +16,7 @@ import { getHouseholdRoommates } from '@/api/household';
 
 export default function ChoreScreen() {
   const [choresList, setChoresList] = useState<choreAPI.Chore[]>([]);
-  const [roommatesList, setRoommatesList] = useState<{
-    email: string,
-    first_name: string,
-    id: string,
-    last_name: string,
-    name: string,
-  }[]>([]);
+  const [roommatesList, setRoommatesList] = useState<choreAPI.UserSummary[]>([]);
   const [locationList, setLocationList] = useState<string[]>([]);
   const [addItemVisible, setAddItemVisible] = useState(false);
   const [viewItemVisible, setViewItemVisible] = useState(false);
@@ -44,15 +37,28 @@ export default function ChoreScreen() {
       const loadData = async () => {
         const filterData = await choreAPI.getAssignmentFilterOptions();
         const choreData = await choreAPI.getChores();
-        const choresWithDates = choreData.map(chore => ({
-          ...chore,
-          due_date: chore.latest_assignment.due_date ? new Date(chore.latest_assignment.due_date) : new Date(),
-        }));
+        const choresWithAssignments = choreData.map(chore => {
+          const allAssignments = chore.all_assignments.map((assignment: any) => ({
+            ...assignment,
+            due_date: assignment.due_date ? new Date(assignment.due_date) : new Date(),
+          }));
+
+          // Optional: pick the latest assignment by createdAt or due_date
+          const latestAssignment = allAssignments.reduce((latest, current) =>
+            current.due_date > latest.due_date ? current : latest
+          , allAssignments[0]);
+
+          return {
+            ...chore,
+            all_assignments: allAssignments,    // for rendering multiple cards
+            latest_assignment: latestAssignment, // for filters, summary info
+          };
+        });
         getRoommates();
   
         setLocationList(filterData.locations);
         setRoommatesList(filterData.roommates);
-        setChoresList(choresWithDates);
+        setChoresList(choresWithAssignments);
         // setLocationList()
       };
   
@@ -101,7 +107,7 @@ export default function ChoreScreen() {
         email: r.email,
         first_name: r.first_name,
         last_name: r.last_name,
-        name: r.full_name
+        name: r.full_name ?? ""
       }));
       setRoommatesList(filterRoommates);
     }
@@ -301,7 +307,7 @@ const styles = StyleSheet.create({
   },
 
   addButton: {
-        backgroundColor: '#4DC591',
+        backgroundColor: '#79997E',
         width: 50,
         height: 50,
         borderRadius: 30,
