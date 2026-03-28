@@ -20,6 +20,34 @@ def generate_unique_join_code():
         if not Household.objects.filter(join_code=code).exists():
             return code
 
+def assign_household_color(user, household):
+    palette = [
+        "#CF7041",
+        "#E5C5BD",
+        "#E2A55E",
+        "#5E718B",
+        "#96AA9A",
+        "#B4BFC5",
+    ]
+
+    used_colors = set(
+        household.members.exclude(display_color__isnull=True)
+        .exclude(id=user.id)
+        .values_list("display_color", flat=True)
+    )
+
+    for color in palette:
+        if color not in used_colors:
+            user.household = household
+            user.display_color = color
+            user.save(update_fields=["household", "display_color"])
+            return
+
+    fallback_color = palette[len(used_colors) % len(palette)]
+    user.household = household
+    user.display_color = fallback_color
+    user.save(update_fields=["household", "display_color"])
+
 # Validates input and creates user
 class SignupSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)
@@ -46,11 +74,13 @@ class SignupSerializer(serializers.ModelSerializer):
                     {"join_code": "No household found with this code."}
                 )
 
-        # Validates password & hides
         user = User(**validated_data)
-        user.household = household
-        user.set_password(password)   # hashes password
+        user.set_password(password)
         user.save()
+
+        if household:
+            assign_household_color(user, household)
+
         return user
 
 # Display user profile information
@@ -59,12 +89,19 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ("id", "email", "username", "first_name", "last_name", "household_join_code")
+        fields = ("id", "email", "username", "first_name", "last_name", "household_join_code", "display_color")
 
     def get_household_join_code(self, obj):
         return obj.household.join_code if obj.household else None
-    
-# Allow user to edit profile 
+
+# Display roommate profile information
+class RoommateProfileSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = ("id", "email", "username", "first_name", "last_name", "household_join_code", "display_color")
+
+# Allow user to edit profile
 class UpdateProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User

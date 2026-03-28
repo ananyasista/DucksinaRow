@@ -11,7 +11,10 @@ import CheckboxTile from '@/components/checkbox-tile';
 import { ThemedText } from '@/components/themed-text';
 
 import { getHouseholdName } from '@/api/household';
-import { listHouseholdEvents, listMyEvents, listNeedsApproval } from '../../api/calendar';
+import { Chore, getChores, updateChore, buildChorePatch } from '@/api/chores';
+import { me } from '@/api/auth';
+import { CalendarEvent, EventDetails, getEventId, listHouseholdEvents, listMyEvents, listNeedsApproval } from '../../api/calendar';
+import EventModal from '@/components/modal-event';
 
 type ApprovalEvent = {
   id: string;
@@ -32,11 +35,11 @@ type UserData = {
   giveApprovals?: number
   pendingNum?: number
   groupName: string
-  chores: Chore[]
+  chores: ChoreMinimalTile[]
 }
 
-type Chore = {
-  key: number
+type ChoreMinimalTile = {
+  key: string
   title: string
   complete: boolean
 }
@@ -53,24 +56,7 @@ const getInitial = (fullName?: string) => {
   return fullName.trim().charAt(0).toUpperCase();
 };
 
-const mockData: UserData = {
-  groupName: "Area 52",
-  needApprovals: 10,
-  giveApprovals: 4,
-  pendingNum: 10,
-  chores: [
-    {
-      key: 1,
-      title: "Take out trash",
-      complete: false
-    },
-    {
-      key: 2,
-      title: "Empty Dishwasher",
-      complete: true
-    }
-  ]
-}
+
 
 
 export default function HomeScreen() {
@@ -79,17 +65,28 @@ export default function HomeScreen() {
   const [giveApproval, setGiveApproval] = useState(0);
   const [calendarHeight, setCalendarHeight] = useState(0);
   const [groupName, setGroupName] = useState('Household');
-  const choreList = mockData.chores;
+  const [choreList, setChoreList] = useState<Chore[]>([]);
+  const [myEvents, setMyEvents] = useState<CalendarEvent[]>([]);
   const [upcomingEvents, setUpcomingEvents] = useState<HomeCalendarEvent[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
-
+  const [eventDetails, setEventDetails] = useState(false);
+  const [currEvent, setCurrEvent] = useState<EventDetails>();
+  const [isOwner, setIsOwner] = useState(false);
   // Fetch Household Name
   const loadHomeData = async () => {
     try {
       const householdData = await getHouseholdName();
-      setGroupName(householdData.household_name || 'Household');
+      setGroupName(householdData.household_name || "Household");
+
+      const user = await me();
+      const choreData = await getChores({
+        completed: false, 
+        assignee: [user.id]
+      });
+
+      setChoreList(choreData);
     } catch (e: any) {
-      console.log('Home page error:', e?.response?.data || e.message);
+      console.log("Home page error:", e?.response?.data || e.message);
     }
   };
   
@@ -120,7 +117,7 @@ export default function HomeScreen() {
     try {
       const currNeedsApproval = await listNeedsApproval();
       const currGiveApproval = await listMyEvents();
-
+      setMyEvents(currGiveApproval);
       setNeedsApproval(currNeedsApproval.length);
       setGiveApproval(currGiveApproval.length);
 
@@ -165,10 +162,7 @@ export default function HomeScreen() {
           end,
           details: event.details,
           location: event.location,
-          event_owner_name:
-            typeof event.event_owner_name === 'string'
-              ? event.event_owner_name
-              : event.event_owner_name?.full_name,
+          event_owner_name: event.event_owner_name,
           rawId: event.id,
         };
       })
@@ -191,6 +185,19 @@ export default function HomeScreen() {
     loadUpcomingWeekEvents();
   }, []);
 
+  async function openEventDetails(event:any)
+  {
+    const currEvent = await getEventId(event.rawId);
+    setIsOwner(false);
+    myEvents.map((e) => {
+      if(e.id === currEvent.id)
+      {
+        setIsOwner(true);
+      }
+    })
+    setCurrEvent(currEvent);
+    setEventDetails(true);
+  }
   return (
     <SafeAreaView style={{flex: 1}}>
       <ScrollView style={{flex: 1}}>
@@ -227,8 +234,32 @@ export default function HomeScreen() {
               <>
                 {choreList.map((chore) => (
                   <CheckboxTile
+                    key={chore.id}
                     title={chore.title}
-                    complete={chore.complete}
+                    id={chore.id}
+                    complete={chore.latest_assignment?.completed ?? false}
+                    onPress={()=>{router.navigate({pathname:'/(tabs)/chores'})}}
+                    onToggle={async (completed) => {
+                      try {
+                        await updateChore(chore.id, buildChorePatch(chore, {
+                          title: chore.title,
+                          details: chore.details,
+                          location: chore.location,
+                          allDay: chore.latest_assignment.all_day,
+                          dueDate: chore.latest_assignment.due_date,
+                          completed: completed,
+                          repeatUnit: chore.repeat_unit,
+                          repeatValue: chore.repeat_value,
+                          passToNextUnit: chore.pass_to_next_unit ?? "weeks",
+                          passToNextValue: chore.pass_to_next_value ?? 1,
+                          isRotating: chore.is_rotating,
+                          roommates: chore.roommates_involved
+                        }));
+                      } catch (err: any) {
+                        console.log("ERROR RESPONSE:", err.response?.data);
+                        console.log("STATUS:", err.response?.status);
+                      }
+                    }}
                   ></CheckboxTile>
                 ))}
               </>
@@ -251,10 +282,7 @@ export default function HomeScreen() {
               key={event.rawId ?? `${event.title}-${event.start.toISOString()}`}
               style={styles.eventCard}
               onPress={() =>
-                router.navigate({
-                  pathname: '/(tabs)/calendar',
-                  params: { mode: 'month' },
-                })
+                openEventDetails(event)
               }
             >
               <Text style={styles.eventTitle}>{event.title}</Text>
@@ -287,7 +315,11 @@ export default function HomeScreen() {
             <Text style={styles.subtitle2}>No events coming up this week.</Text>
           )}
         </View>
-        </View>    
+        { eventDetails && (
+              <EventModal event={currEvent ?? null} owner={isOwner} pendingEvent={currEvent}   onClose={() => setEventDetails(false)}/>
+          )} 
+        </View>  
+         
       </ScrollView>
     </SafeAreaView>
   );
@@ -340,7 +372,7 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#00664F',
     flex: 2,
-    aspectRatio: 2.5
+    aspectRatio: 0
   },
   
   eventCard: {

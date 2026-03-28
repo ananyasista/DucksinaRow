@@ -1,60 +1,57 @@
-import {View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Switch, Keyboard, TouchableWithoutFeedback } from 'react-native'
+import {View, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native'
 import Chip from './chip';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { KeyboardAvoidingView, Platform } from 'react-native';
 import { useState, useEffect } from 'react';
 import DropDownPicker from 'react-native-dropdown-picker'
-import DateTimePicker, { DateTimePickerEvent, Event } from '@react-native-community/datetimepicker';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import Counter from './counter';
 import { IconSymbol } from './ui/icon-symbol';
-import { ChoreDetail, ChoreCard } from '@/api/chores';
+import { Chore, ChoreCreateInput, buildChorePatch } from '@/api/chores';
+import { ThemedText } from './themed-text';
+import { ThemedTextInput } from './text-input';
+import { ThemedSwitch } from './themed-switch';
 
 type ModalProps = {
     visible: boolean;
     onClose: () => void;
     title: string;
-    save: (chore: Partial<ChoreDetail>) => void;
-    chore?: ChoreDetail;
-    allRoommates: ChoreDetail['roommates_involved']; 
+    save: (chore: Partial<Chore>) => void;
+    chore?: Chore;
+    allRoommates: Chore['roommates_involved']; 
 }
 
 export default function ChoreItemModal(props: ModalProps) {
-    const [choreTitle, setChoreTitle] = useState(props.chore ? props.chore.title : '');
-    const [choreDetails, setChoreDetails] = useState(props.chore ? props.chore.details : '');
-    const [choreLocation, setChoreLocation] = useState(props.chore ? props.chore.location : null);
-    const [repeatUnit, setRepeatUnit] = useState(props.chore ? props.chore.repeat_unit : undefined);
-    const [repeatDate, setRepeatDate] = useState(props.chore ? props.chore.repeat_unit : 1);
+    const [choreTitle, setChoreTitle] = useState(props.chore?.title ?? '');
+    const [choreDetails, setChoreDetails] = useState(props.chore?.details ?? '');
+    const [choreLocation, setChoreLocation] = useState(props.chore?.location ?? null);
+    const [repeatUnit, setRepeatUnit] = useState(props.chore?.repeat_unit ?? 'weeks');
+    const [repeatValue, setRepeatValue] = useState(props.chore?.repeat_value ?? 1);
+    const [choreRotate, setChoreRotate] = useState(props.chore?.is_rotating ?? false);
 
-    const [repeatQuantity, setRepeatQuantity] = useState(props.chore ? props.chore.repeat_value : 1);
-    const [allDay, setAllDay] = useState(props.chore ? props.chore.all_day : true);
-    const [dueDate, setDueDate] = useState<Date>(props.chore?.due_date ? new Date(props.chore.due_date) : new Date());
+    const [allDay, setAllDay] = useState(props.chore?.latest_assignment.all_day ?? true);
+    const [dueDate, setDueDate] = useState<Date>(props.chore?.latest_assignment.due_date ? new Date(props.chore.latest_assignment.due_date) : new Date());
     
-    const [assignee, setAssignee] = useState(props.chore ? props.chore.assignee : null);
+    // const [assignee, setAssignee] = useState<UserSummary>(props.chore?.current_assignment ? props.chore?.current_assignment?.assignee : null);
     
-    const [passToNextValue, setPassToNextValue] = useState(props.chore ? props.chore.pass_to_next_value : 1);
-    const [passToNextUnit, setPassToNextUnit] = useState(props.chore ? props.chore.pass_to_next_unit : 'Weeks');
-    const [roommatesInvolved, setRoommatesInvolved] = useState<ChoreDetail['roommates_involved']>(props.chore?.roommates_involved || []);
-    
-    const [nextAssignee, setNextAssignee] = useState<ChoreDetail['next_assignee'] | null>(
-        props.chore ? props.chore.next_assignee : null
-    );
-
-
-    // const [roommateOwnerList, setRoommateOwnerList] = useState<string[]>(props.chore ? props.chore.roommates : []);
+    const [passToNextValue, setPassToNextValue] = useState(props.chore?.pass_to_next_value ?? 1);
+    const [passToNextUnit, setPassToNextUnit] = useState(props.chore?.pass_to_next_unit ?? 'weeks');
+    const [roommatesInvolved, setRoommatesInvolved] = useState<Chore['roommates_involved']>(props.chore?.roommates_involved || []);
     
 
-    const roommateList: string[] = ["Elle", "Leyna", "Sofia", "Ananya"];
     const [repeatInt, setRepeatInt] = useState([
-        {label: 'Days', value: 'daily'},
-        {label: "Weeks", value: 'weekly'},
-        {label: "Months", value: "monthly"}
+        {label: 'Days', value: 'days'},
+        {label: "Weeks", value: 'weeks'},
+        {label: "Months", value: 'months'}
     ])
-    const locationList: string[] = ["Kitchen", "Living Room", "Bathroom"]
+    const locationList: string[] = ["Kitchen", "Living Room", "Bathroom", "Bedroom", "Other"]
 
     const [date, setDate] = useState(new Date());
     const [mode, setMode] = useState('date');
     const [show, setShow] = useState(false);
 
-    const [openDropdown, setOpenDropdown] = useState(false);
+    const [openRepeatDropdown, setOpenRepeatDropdown] = useState(false);
+    const [openPassDropdown, setOpenPassDropdown] = useState(false);
 
     const onChangeDate = (event: DateTimePickerEvent, selectedDate?: Date) => {
         const currentDate = selectedDate ? selectedDate : new Date();
@@ -78,8 +75,10 @@ export default function ChoreItemModal(props: ModalProps) {
     };
 
     const handleSave = () => {
-        const updatedItem: Partial<ChoreDetail> = {
-                id: props.chore?.id,
+        console.log("Trying to reach here");
+
+        if (!props.chore) {
+            const createdItem: ChoreCreateInput = {
                 title: choreTitle,
                 details: choreDetails,
                 due_date: dueDate instanceof Date ? dueDate : new Date(dueDate),
@@ -87,15 +86,42 @@ export default function ChoreItemModal(props: ModalProps) {
                 all_day: allDay,
                 is_rotating: false, // or controlled by a switch
                 roommates_involved: roommatesInvolved,
-                repeat_value: repeatQuantity,
+                repeat_value: repeatValue,
                 repeat_unit: repeatUnit,
                 pass_to_next_value: passToNextValue,
                 pass_to_next_unit: passToNextUnit,
             };
+
+            console.log("SENDING:", {
+                ...createdItem,
+                roommates_involved_ids: roommatesInvolved.map(r => r.id)
+            })
+            props.save(createdItem);
+        } else {
+            const updatedItem = buildChorePatch(props.chore, {
+                    title: choreTitle,
+                    details: choreDetails,
+                    location: choreLocation,
+                    allDay,
+                    dueDate,
+                    completed: props.chore?.latest_assignment.completed ?? false,
+                    repeatUnit,
+                    repeatValue,
+                    passToNextUnit,
+                    passToNextValue,
+                    isRotating: choreRotate,
+                    roommates: roommatesInvolved,
+                });
+                console.log("SENDING:", {
+                    ...updatedItem,
+                    roommates_involved_ids: roommatesInvolved.map(r => r.id)
+                })
+                props.save(updatedItem);
+        }
             
             // console.log(repeatDate);
             // console.log(repeatInt[repeatDate]);
-            props.save(updatedItem);
+            
             props.onClose();
         };
     
@@ -104,181 +130,232 @@ export default function ChoreItemModal(props: ModalProps) {
                 setChoreTitle(props.chore.title);
                 setChoreDetails(props.chore.details);
                 setChoreLocation(props.chore.location);
-                setDueDate(props.chore.due_date);
-                setAllDay(props.chore.all_day);
-                setAssignee(props.chore.assignee);
+                setDueDate(props.chore.latest_assignment.due_date ?? new Date());
+                setAllDay(props.chore.latest_assignment.all_day ?? true);
                 setRoommatesInvolved(props.chore.roommates_involved);
-                setRepeatQuantity(props.chore.repeat_value);
+                setRepeatValue(props.chore.repeat_value);
                 setRepeatUnit(props.chore.repeat_unit);
+                setPassToNextUnit(props.chore.pass_to_next_unit ?? "None");
+                setPassToNextValue(props.chore.pass_to_next_value  ?? 0);
+                setChoreRotate(props.chore.is_rotating);
             }
         }, [props.chore]);
 
 
     return (
-        <View>
-
+        <View  style={{flex: 1, paddingBottom: 50}}>
             <Modal
                 animationType='slide'
                 visible={props.visible}
                 presentationStyle='formSheet'
                 allowSwipeDismissal={true}
                 onRequestClose={props.onClose}
+                style={{flex: 1}}
             >
-            <TouchableWithoutFeedback onPress={() => {setOpenDropdown(false);}}>
-                <View>
-                    <View style={{height: 20}}></View>
-                <View style={styles.header}>
-                    <TouchableOpacity style={styles.cancelButton} 
-                        onPress={() => {
-                            props.chore ? (
-                                props.onClose()
-                            ) : (
-                                setChoreTitle(''),
-                                setChoreDetails(''),
-                                setChoreLocation(null),
-                                setRepeatQuantity(1),
-                                setRoommatesInvolved([]),
-                                setRepeatUnit(undefined),
-                                setDate(new Date()),
-                                props.onClose()
-                            )
-                            
-                        }}
-                    >
-                        <Text style={styles.cancelText}>Cancel</Text>
-                    </TouchableOpacity>
-                    <Text style={styles.title}>{props.title}</Text>
-                    <TouchableOpacity style={styles.cancelButton} onPress={handleSave}>
-                        <Text style={styles.cancelText}>Save</Text>
-                    </TouchableOpacity>
-                </View>
-
-
-                <SafeAreaView style={styles.modalContent}>
-                    <View style={styles.formField}>
-                        <Text style={styles.subHeading}>Chore Name</Text>
-                        <TextInput 
-                            style={styles.input}
-                            onChangeText={setChoreTitle}
-                            value={choreTitle}
-                            placeholder='Chore Name'
-                            placeholderTextColor='#ABA4A461'
-                        />
-                    </View>
-
-                    <View style={styles.formField}>
-                        <Text style={styles.subHeading}>Details</Text>
-                        <TextInput 
-                            style={styles.input}
-                            onChangeText={setChoreDetails}
-                            value={choreDetails}
-                            placeholder='Add Details'
-                            placeholderTextColor='#ABA4A461'
-                            multiline
-                        />
-                    </View>
-
-                    <View style={styles.formField}>
-                        <Text style={styles.subHeading}>
-                            All Day
-                            <Switch 
-                                style={{marginLeft: 20, alignContent: 'center'}}
-                                value={allDay}
-                                onValueChange={setAllDay}
-                            />
-                        </Text>
-                        <View style={{flexDirection: 'row'}}>
-                            <IconSymbol name='calendar' size={30} color="#000"/>
-                            {allDay ? (
-                            <DateTimePicker
-                                    testID="dateTimePicker"
-                                    value={dueDate}
-                                    is24Hour={true}
-                                    mode={'date'}
-                                    display = 'default'
-                                    themeVariant='light'
-                                    onChange={() => setDueDate}
-                                /> 
-                            ) : (
-                                <DateTimePicker
-                                    testID="dateTimePicker"
-                                    value={dueDate}
-                                    is24Hour={true}
-                                    mode={'datetime'}
-                                    display = 'default'
-                                    themeVariant='light'
-                                    onChange={() => setDueDate}
-                                />
-                            )}
-                            
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === "ios" ? "padding" : undefined}
+                    style={{ flex: 1 }}
+                >
+                    <View style={{flex: 1}}>
+                        <View style={{height: 20}}></View>
+                        <View style={styles.header}>
+                            <TouchableOpacity style={styles.cancelButton} 
+                                onPress={() => {
+                                    props.chore ? (
+                                        props.onClose()
+                                    ) : (
+                                        setChoreTitle(''),
+                                        setChoreDetails(''),
+                                        setChoreLocation(null),
+                                        setRoommatesInvolved([]),
+                                        setRepeatUnit('Weeks'),
+                                        setDate(new Date()),
+                                        setChoreRotate(false),
+                                        setDueDate(new Date()),
+                                        setAllDay(true),
+                                        setRepeatValue(1),
+                                        setPassToNextUnit('Weeks'),
+                                        setPassToNextValue(1),
+                                        props.onClose()
+                                    )
+                                    
+                                }}
+                            >
+                                <ThemedText type='default'>Cancel</ThemedText>
+                            </TouchableOpacity>
+                            <ThemedText type='subtitle'>{props.title}</ThemedText>
+                            <TouchableOpacity style={styles.cancelButton} onPress={() => handleSave()}>
+                                <ThemedText type='default'>Save</ThemedText>
+                            </TouchableOpacity>
                         </View>
-                    </View>
+                        {/* CHORE NAME FIELD */}                    
+                        <SafeAreaView style={{ flex: 1 }}>
+                            <ScrollView 
+                                style={{ flex: 1 }}
+                                contentContainerStyle={{
+                                    padding: 20,
+                                    gap: 20,
+                                    width: '100%',
+                                }}
+                                keyboardShouldPersistTaps="handled"
+                            >
+                                <View style={styles.formField}>
+                                    <ThemedText type='boldText'>Chore Name</ThemedText>
+                                    <ThemedTextInput 
+                                        // style={styles.input}
+                                        onChangeText={setChoreTitle}
+                                        defaultValue={choreTitle}
+                                        placeholder='Chore Name'
+                                        // placeholderTextColor='#ABA4A461'
+                                    />
+                                </View>
 
-                    <View style={styles.formField}>
-                        <Text style={styles.subHeading}>Roommates Involved</Text>
-                        <View style={styles.chipView}>
-                            {props.allRoommates.map((user => (
-                                <Chip 
-                                    key={user.id}
-                                    title={user.first_name}
-                                    selected={roommatesInvolved.some(r => r.id === user.id)}
-                                    onPress={() => {
-                                        setRoommatesInvolved(prev => {
-                                        if (prev.some(r => r.id === user.id)) {
-                                            return prev.filter(r => r.id !== user.id);
-                                        } else {
-                                            return [...prev, user];
-                                        }
-                                        });
-                                    }}
-                                />
-                            )))}
-    
-                        </View>
-                    </View>
+                                {/* CHORE DETAIL FIELD */}
+                                <View style={styles.formField}>
+                                    <ThemedText type='boldText'>Details</ThemedText>
+                                    <ThemedTextInput 
+                                        // style={styles.input}
+                                        onChangeText={setChoreDetails}
+                                        defaultValue={choreDetails}
+                                        placeholder='Add Details'
+                                        // placeholderTextColor='#ABA4A461'
+                                        multiline
+                                        size="large"
+                                    />
+                                </View>
 
-                    <View style={styles.formField}>
-                        <Text style={styles.subHeading}>Location</Text>
-                        <View style={styles.chipView}>
-                            {locationList.map((name => (
-                                <Chip
-                                    title = {name}
-                                    onPress = {() => setChoreLocation(name)}
-                                    selected = {choreLocation === name} 
-                                />
-                            )))}
-    
-                        </View>
-                    </View>
+                                {/* CHORE ALL DAY SWITCH */}
+                                <View style={styles.formField}>
+                                    <ThemedSwitch
+                                        label="All Day"
+                                        onChangeSwitch={() => setAllDay(!allDay)} 
+                                        value={allDay}
+                                    />
+                                    <View style={{flexDirection: 'row'}}>
+                                        <IconSymbol name='calendar' size={30} color="#000"/>
+                                        {allDay ? (
+                                        <DateTimePicker
+                                                testID="dateTimePicker"
+                                                value={dueDate}
+                                                is24Hour={true}
+                                                mode={'date'}
+                                                display = 'default'
+                                                themeVariant='light'
+                                                onChange={(event, selectedDate) => {
+                                                    if (selectedDate) setDueDate(selectedDate);
+                                                }}
+                                            /> 
+                                        ) : (
+                                            <DateTimePicker
+                                                testID="dateTimePicker"
+                                                value={dueDate}
+                                                is24Hour={true}
+                                                mode={'datetime'}
+                                                display = 'default'
+                                                themeVariant='light'
+                                                onChange={(event, selectedDate) => {
+                                                    if (selectedDate) setDueDate(selectedDate);
+                                                }}
+                                            />
+                                        )}
+                                        
+                                    </View>
+                                </View>
 
-
-                    
-                    <View style={styles.formField}>
-                        <Text style={styles.subHeading}>Pass chore to the next roommate after?</Text>
-                        <View style={{flexDirection: 'row', gap: 20}}>
-                            <Counter value={repeatQuantity} onChange={setRepeatQuantity} />
-                            <View style={{flex: 1}}>
-                                <DropDownPicker 
-                                    open={openDropdown}
-                                    value={repeatDate}
-                                    items={repeatInt}
-                                    setOpen={setOpenDropdown}
-                                    setValue={setRepeatDate}
-                                    setItems={setRepeatInt}
-                                    style={styles.input}
-                                    dropDownContainerStyle={styles.dropdownMenu}
-                                />
-                            </View>
-                            
-                        </View>
-                        
-                    </View>
-
-                </SafeAreaView>
-
-                </View>
+                                {/* CHORE LOCATION */}
+                                <View style={styles.formField}>
+                                    <ThemedText type='boldText'>Location</ThemedText>
+                                    <View style={styles.chipView}>
+                                        {locationList.map((name => (
+                                            <Chip
+                                                key={name}
+                                                title = {name}
+                                                onPress = {() => setChoreLocation(name)}
+                                                selected = {choreLocation === name} 
+                                            />
+                                        )))}
                 
-            </TouchableWithoutFeedback>
+                                    </View>
+                                </View>
+
+                                {/* CHORE REPEAT TIME */}
+                                <View style={styles.formField}>
+                                    <ThemedText type='boldText'>Repeat chore after?</ThemedText>
+                                    <View style={{flexDirection: 'row', gap: 20, flexGrow: 1}}>
+                                        <Counter value={repeatValue} onChange={setRepeatValue} />
+                                        <View style={{ flex: 1, width: '100%', zIndex: 1000 }}>
+                                            <DropDownPicker
+                                                open={openRepeatDropdown}
+                                                value={repeatUnit}
+                                                items={repeatInt}
+                                                setOpen={setOpenRepeatDropdown}
+                                                setValue={setRepeatUnit}
+                                                setItems={setRepeatInt}
+                                                style={styles.input}
+                                                dropDownContainerStyle={styles.dropdownMenu}
+                                            />
+                                        </View>    
+                                    </View>
+                                </View>
+
+                                {/* CHORE ROTATION SWITCH */}
+                                <View style={styles.formField}>
+                                        <ThemedSwitch
+                                            label='Rotate Chore?'
+                                            value={choreRotate}
+                                            onChangeSwitch={() => setChoreRotate(!choreRotate)}
+                                        />
+                                </View>
+
+                                {choreRotate && ( <>
+                                {/* CHORE ROOMMATES */}
+                                <View style={styles.formField}>
+                                    <ThemedText type='boldText'>Roommates Involved</ThemedText>
+                                    <View style={styles.chipView}>
+                                        {props.allRoommates.map((user => (
+                                            <Chip 
+                                                key={user.id}
+                                                title={user.first_name}
+                                                selected={roommatesInvolved.some(r => r.id === user.id)}
+                                                onPress={() => {
+                                                    setRoommatesInvolved(prev => {
+                                                    if (prev.some(r => r.id === user.id)) {
+                                                        return prev.filter(r => r.id !== user.id);
+                                                    } else {
+                                                        return [...prev, user];
+                                                    }
+                                                    });
+                                                }}
+                                            />
+                                        )))}
+                                    </View>
+                                </View>
+
+                                {/* CHORE PASS TIME */}
+                                <View style={styles.formField}>
+                                    <ThemedText type='boldText'>Pass chore to the next roommate after?</ThemedText>
+                                    <View style={{flexDirection: 'row', gap: 20, flexGrow: 1}}>
+                                        <Counter value={passToNextValue} onChange={setPassToNextValue} />
+                                        <View style={{ flex: 1, width: '100%', zIndex: 999 }}>
+                                            <DropDownPicker 
+                                                open={openPassDropdown}
+                                                value={passToNextUnit}
+                                                items={repeatInt}
+                                                setOpen={setOpenPassDropdown}
+                                                setValue={setPassToNextUnit}
+                                                setItems={setRepeatInt}
+                                                style={styles.input}
+                                                dropDownContainerStyle={styles.dropdownMenu}
+
+                                            />
+                                        </View>
+                                    </View>
+                                </View>
+                                </>)}   
+                            </ScrollView>
+                        </SafeAreaView>
+                    </View>
+                </KeyboardAvoidingView>
             </Modal>
         </View>
         
@@ -288,7 +365,9 @@ export default function ChoreItemModal(props: ModalProps) {
 const styles = StyleSheet.create({
     modalContent: {
         margin: 20,
-        gap: 20
+        gap: 20,
+        overflow: 'visible',
+        flex: 1
     },
 
     title: {
@@ -305,24 +384,28 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         gap: 12,
         paddingTop: 10,
-        paddingBottom: 10
+        paddingBottom: 10,
+        flexWrap: 'wrap',
+        width: '100%',
     },
     
     header: {
         justifyContent: "space-between",
         flexDirection: 'row',
-        alignItems: 'flex-end',
+        alignItems: 'center',
         padding: 12
     },
 
     cancelButton: {
         backgroundColor: '#fff',
         borderWidth: 2,
-        borderRadius: 20,
+        borderRadius: 10,
         color: '#000',
         justifyContent: 'center',
         alignItems: 'center',
-        padding:7
+        padding:7,
+        width: 100,
+        height: 50,
     },
 
     cancelText: {
@@ -339,7 +422,8 @@ const styles = StyleSheet.create({
     },
 
     formField: {
-        gap: 5
+        gap: 5,
+        width: '100%',
     },
 
     picker: {
@@ -366,6 +450,8 @@ const styles = StyleSheet.create({
         borderColor: '#ABA4A461',
         backgroundColor: '#F6F4F4',
         borderRadius: 13,
-        fontSize: 16
+        fontSize: 16,
+        zIndex: 2000,
+        elevation: 2000
     }
 });

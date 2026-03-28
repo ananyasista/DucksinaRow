@@ -24,7 +24,7 @@ urlpatterns = [
 
 router = DefaultRouter()
 router.register(r"chore", ChoreViewSet, basename="chore")
-router.register(r"chore-assignment/", ChoreAssignmentViewSet, basename="choreassignment")
+router.register(r"chore-assignment", ChoreAssignmentViewSet, basename="choreassignment")
 router.register(r"inventory", InventoryViewSet, basename="inventory")
 router.register(r"calendar/events", CalendarEventViewSet, basename="calendar-events")
 

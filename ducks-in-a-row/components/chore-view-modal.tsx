@@ -1,14 +1,14 @@
-import {View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Pressable, Keyboard, TouchableWithoutFeedback, Switch } from 'react-native'
+import {View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native'
 import Chip from './chip';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import { IconSymbol } from './ui/icon-symbol';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { ChoreDetail } from '@/api/chores';
+import { Chore } from '@/api/chores';
+import { ThemedText } from './themed-text';
 
 type ModalProps = {
-    chore: ChoreDetail;
-    //toggleRestock: () => void;
+    chore: Chore;
+    onComplete: (completed: boolean) => void;
     visible: boolean;
     onClose: () => void;
     onEdit: () => void;
@@ -17,7 +17,16 @@ type ModalProps = {
 }
 
 export default function ChoreViewModal(props: ModalProps) {
-    
+
+    const [complete, setComplete] = useState(props.chore.latest_assignment.completed ?? false);
+
+    const handleComplete = () => {
+        const newValue = !complete;
+        setComplete(newValue);
+
+        props.onComplete(newValue);
+        props.onClose();
+    }
 
     return (
             <Modal
@@ -27,7 +36,6 @@ export default function ChoreViewModal(props: ModalProps) {
                 allowSwipeDismissal={true}
                 onRequestClose={props.onClose}
             >
-
                 <View style={{flex: 1}}>
                     <View style={{height: 20}}></View>
                     <View style={styles.header}>
@@ -44,49 +52,65 @@ export default function ChoreViewModal(props: ModalProps) {
                         </View>
                     </View>
 
-
-                <SafeAreaView style={styles.modalContent}>
-                    <View style={{gap: 10}}>
-                        <Text style={styles.title}>{props.chore.title}</Text>
-                        <Text style={styles.text}>{props.chore.details}</Text>
-                        <View style={{flexDirection: 'row'}}>
-                            <IconSymbol name='calendar' size={30} color="#000"/>
-                            <DateTimePicker
-                                testID="dateTimePicker"
-                                value={props.chore.due_date}
-                                is24Hour={true}
-                                mode={'date'}
-                                display = 'default'
-                                themeVariant='light'
-                            />
-                        </View>
-                        <Text style={styles.subHeading}>Pass chore to next roommate: <Text style={styles.text}>{props.chore.pass_to_next_value} {props.chore.pass_to_next_unit}</Text></Text>
-                        <Text style={styles.subHeading}>Next Up: <Text style={styles.text}>{props.chore.next_assignee?.first_name ?? ""}</Text></Text>
-                        <View>
-                            <Text style={styles.subHeading}>Roomates Involved:</Text>
-                            <View style={styles.chipView}>
-                            {props.chore.roommates_involved.map((r) =>
-                                    <Chip 
-                                        key={r.id}
-                                        title={r.first_name}
-                                    />
-                                )} 
+                    <SafeAreaView style={styles.modalContent}>
+                        <View style={{gap: 10}}>
+                            <ThemedText type="title">{props.chore.title}</ThemedText>
+                            <ThemedText type="secondarySubtitle">{props.chore.details}</ThemedText>
+                            <View style={{flexDirection: 'row', gap: 5}}>
+                                <IconSymbol name='person.crop.circle.fill' size={30} color="#000"/>
+                                <ThemedText type="subtitle">Current Assignee: <ThemedText type="secondarySubtitle">{props.chore.latest_assignment.assignee?.first_name}</ThemedText></ThemedText>
+                            </View>
+                            <View style={{flexDirection: 'row', gap: 5}}>
+                                <IconSymbol name='calendar' size={30} color="#000"/>
+                                <ThemedText type="subtitle">Chore Due: <ThemedText type="secondarySubtitle">{props.chore.latest_assignment.due_date?.toLocaleDateString()}</ThemedText></ThemedText>
+                            </View>
+                            {props.chore.is_rotating && (
+                                <>
+                                <View style={{flexDirection: 'row', gap: 5}}>
+                                    <IconSymbol name='arrow.right.arrow.left.circle.fill' size={30} color="#000"/>
+                                    <ThemedText type="subtitle">Pass chore to next roommate:{"\n"}
+                                        <ThemedText type='secondarySubtitle'>{props.chore.pass_to_next_value} {props.chore.pass_to_next_unit}</ThemedText>
+                                    </ThemedText>
+                                </View>
+                                <View style={{flexDirection: 'row', gap: 5}}>
+                                    <IconSymbol name='arrow.right.circle.fill' size={30} color="#000"/>
+                                    <Text style={styles.subHeading}>Next Up: <Text style={styles.text}>{props.chore.latest_assignment.next_assignee?.first_name ?? ""}</Text></Text>
+                                </View>
+                                <View>
+                                    <View style={{flexDirection: 'row', gap: 5}}>
+                                        <IconSymbol name='person.2.circle.fill' size={30} color="#000"/>
+                                        <ThemedText type="subtitle">Roomates Involved:</ThemedText>
+                                    </View>
+                                    <View style={styles.chipView}>
+                                        {props.chore.roommates_involved.map((r) =>
+                                                <Chip 
+                                                    key={r.id}
+                                                    title={r.first_name}
+                                                />
+                                        )} 
+                                    </View>
+                                </View>
+                                </>
+                            )}
+                            <View style={{flexDirection: 'row', gap: 5}}>
+                                <IconSymbol name='location.fill' size={30} color="#000"/>
+                                <ThemedText type='subtitle'>Location: <ThemedText type='secondarySubtitle'>{props.chore.location}</ThemedText></ThemedText>
                             </View>
                             
                         </View>
-                        <Text style={styles.subHeading}>Locations: <Text style={styles.text}>{props.chore.location}</Text></Text>
-                        
-                    </View>
-                    
-                    <TouchableOpacity style={styles.completeButton} onPress={() => props.onClose()}>
-                        <Text style={styles.subHeading}>Mark as Complete</Text>
-                    </TouchableOpacity>
-                     
-                </SafeAreaView>
-
+                        {!props.chore.latest_assignment?.completed &&
+                            <TouchableOpacity style={styles.completeButton} onPress={handleComplete}>
+                                <ThemedText type='subtitle'>Mark as Complete</ThemedText>
+                            </TouchableOpacity>
+                        } 
+                        { props.chore.latest_assignment?.completed && 
+                            <TouchableOpacity style={styles.completeButton} onPress={handleComplete}>
+                                <ThemedText type='subtitle'>Chore Completed!</ThemedText>
+                            </TouchableOpacity>
+                        }
+                    </SafeAreaView>
                 </View>
             </Modal>
-        
     )
 }
 
@@ -129,7 +153,8 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         gap: 12,
         paddingTop: 10,
-        paddingBottom: 10
+        paddingBottom: 10,
+        flexWrap: 'wrap'
     },
 
     completeButton: {

@@ -128,9 +128,9 @@ class ChoreAssignmentInline(admin.TabularInline):
 
 @admin.register(Chore)
 class ChoreAdmin(admin.ModelAdmin):
-    list_display = ("title", "household", "repeat", "is_rotating", "location")
+    list_display = ("title", "household", "repeat_value", "repeat_unit", "is_rotating", "location")
     search_fields = ("title", "location", "household__household_name")
-    list_filter = ("repeat", "is_rotating", "location")
+    list_filter = ( "repeat_value", "repeat_unit", "is_rotating", "location")
     inlines = [ChoreAssignmentInline]  # optional, see assignments inline
     filter_horizontal = ("roommates_involved",)
 

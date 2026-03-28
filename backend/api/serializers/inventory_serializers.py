@@ -2,6 +2,7 @@ from rest_framework import serializers
 from django.utils import timezone
 from ..models import Items
 from .serializers import SimpleUserSerializer, User
+from ..serializers.chores_serializers import ensure_aware_datetime
 
 class InventoryListSerializer(serializers.ModelSerializer):
     last_purchased_by = SimpleUserSerializer(read_only=True)
@@ -76,3 +77,19 @@ class InventorySerializer(serializers.ModelSerializer):
             validated_data["household"] = user.household
 
         return super().create(validated_data)
+    
+    def update(self, instance, validated_data):
+        was_restock_needed = instance.restock_needed
+
+        # Update fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        # If item was restocked
+        if was_restock_needed and not instance.restock_needed:
+            instance.last_purchased_date = timezone.localdate()
+            instance.last_purchased_by = self.context["request"].user
+            instance.save(update_fields=["last_purchased_date", "last_purchased_by"])
+        
+        return instance

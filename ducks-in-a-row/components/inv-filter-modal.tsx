@@ -1,8 +1,9 @@
-import {View, Text, StyleSheet, Dimensions, TouchableOpacity, Modal } from 'react-native'
+import {View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native'
 import React, { useState, PropsWithChildren } from 'react'
-import { Button, Header } from '@react-navigation/elements'
 import Chip from './chip';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { ThemedText } from './themed-text';
+import { IconSymbol } from './ui/icon-symbol';
 
 type ModalProps = PropsWithChildren<{
     title: string;
@@ -33,12 +34,11 @@ export default function InvFilterModal(props: ModalProps) {
     return (
         <View>
             <Chip 
-            title="Filter" 
-            iconName='slider.horizontal.3'
-            onPress={() => setVisible(true)}
-            selected = {true}
+                title="Filter" 
+                iconName='slider.horizontal.3'
+                onPress={() => setVisible(true)}
+                selected = {true}
             />
-
             <Modal
                 animationType='slide'
                 visible={visible}
@@ -47,16 +47,15 @@ export default function InvFilterModal(props: ModalProps) {
                 onRequestClose={() => setVisible(false)}
             >
                 <View style={styles.header}>
-                    <Text style={styles.title}>{props.title}</Text>
-                    <TouchableOpacity style={styles.cancelButton} onPress={() => setVisible(false)}>
-                        <Text style={styles.cancelText}>Close</Text>
+                    <ThemedText type="title">{props.title}</ThemedText>
+                    <TouchableOpacity onPress={() => setVisible(false)}>
+                        <IconSymbol size={30} name="multiply" color="#000"/>
                     </TouchableOpacity>
                 </View>
 
-
                 <SafeAreaView style={styles.modalContent}>
                     <View>
-                        <Text style={styles.subHeading}>Location</Text>
+                        <ThemedText type="subtitle">Location</ThemedText>
                         <View style={styles.chipView}>
                             {props.locationList.map((name => (
                                 <Chip 
@@ -72,10 +71,9 @@ export default function InvFilterModal(props: ModalProps) {
                                     selected = {props.locationFilterList.includes(name)}
                                 />
                             )))}
-
                         </View>
 
-                        <Text style={styles.subHeading}>Stock</Text>
+                        <ThemedText type="subtitle">Stock</ThemedText>
                         <View style={styles.chipView}>
                             {stockList.map((name => (
                                 <Chip 
@@ -84,31 +82,29 @@ export default function InvFilterModal(props: ModalProps) {
                                         props.setStockFilter(prev => !prev);
                                     }}
                                     selected = {props.stockFilter}
-                                    />
+                                />
                             )))}
-
                         </View>
 
-                        <Text style={styles.subHeading}>Last Purchased By</Text>
+                        <ThemedText type="subtitle">Last Purchased By</ThemedText>
                         <View style={styles.chipView}>
                             {props.purchaseList.map(user => (
                                 <Chip
-                                key={user.value}
-                                title={user.label}
-                                onPress={() => {
-                                    props.setPurchaseFilterList(prev => {
-                                    if (prev.includes(user.value)) {
-                                        return prev.filter(item => item !== user.value);
-                                    } else {
-                                        return [...prev, user.value];
-                                    }
-                                    });
-                                }}
-                                selected={props.purchaseFilterList.includes(user.value)}
+                                    key={user.value}
+                                    title={user.label}
+                                    onPress={() => {
+                                        props.setPurchaseFilterList(prev => {
+                                        if (prev.includes(user.value)) {
+                                            return prev.filter(item => item !== user.value);
+                                        } else {
+                                            return [...prev, user.value];
+                                        }
+                                        });
+                                    }}
+                                    selected={props.purchaseFilterList.includes(user.value)}
                                 />
                             ))}
-                            </View>
-
+                        </View>
                     </View>
                     
                     <View style={{flexDirection: 'row', justifyContent: 'space-evenly'}}>
@@ -117,20 +113,17 @@ export default function InvFilterModal(props: ModalProps) {
                             onPress={() => {
                                 props.onApply();
                                 setVisible(false);
-
                         }}>
                             <Text style={styles.stateText}>Apply</Text>
                         </TouchableOpacity>
+                        
                         <TouchableOpacity style={styles.stateButtons} onPress={() => onClear()}>
                             <Text style={styles.stateText}>Clear</Text>
                         </TouchableOpacity>
                     </View>
-
                 </SafeAreaView>
-                
             </Modal>
         </View>
-        
     )
 }
 
@@ -138,7 +131,7 @@ const styles = StyleSheet.create({
     modalContent: {
         margin: 20,
         flex: 1,
-        justifyContent: 'space-between'
+        justifyContent: 'space-between',
     },
 
     title: {
@@ -167,7 +160,7 @@ const styles = StyleSheet.create({
     },
 
     cancelButton: {
-        backgroundColor: '#fff',
+         backgroundColor: '#fff',
         borderWidth: 2,
         borderRadius: 10,
         color: '#000',
@@ -178,7 +171,8 @@ const styles = StyleSheet.create({
     },
 
     cancelText: {
-        fontSize: 20
+        fontSize: 16,
+        fontWeight: 500
     },
 
     stateButtons: {
@@ -186,13 +180,15 @@ const styles = StyleSheet.create({
         borderWidth: 2,
         borderRadius: 10,
         color: '#000',
+        borderColor: '#EC8534',
         justifyContent: 'center',
         alignItems: 'center'
     },
 
     stateText: {
-        fontSize: 30,
+        fontSize: 24,
         marginVertical: 10,
-        marginHorizontal: 40
+        marginHorizontal: 40,
+        color: '#EC8534'
     }
 });

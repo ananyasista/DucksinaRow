@@ -1,10 +1,9 @@
-import {View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Pressable, Keyboard, TouchableWithoutFeedback, Switch } from 'react-native'
-import Chip from './chip';
+import {View, StyleSheet, TouchableOpacity, Modal } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState } from 'react';
-import Counter from './counter';
 import { InventoryDetails } from '@/api/inventory';
 import { IconSymbol } from './ui/icon-symbol';
+import { ThemedText } from './themed-text';
+import { ThemedSwitch } from './themed-switch';
 
 type ModalProps = {
     item: InventoryDetails;
@@ -13,15 +12,12 @@ type ModalProps = {
     onClose: () => void;
     onEdit: () => void;
     onDelete: () => void;
-
+    onRestockChange: (value: boolean, id: string) => void;
 }
 
 export default function InvViewModal(props: ModalProps) {
-    
-
     return (
         <View>
-
             <Modal
                 animationType='slide'
                 visible={props.visible}
@@ -29,7 +25,6 @@ export default function InvViewModal(props: ModalProps) {
                 allowSwipeDismissal={true}
                 onRequestClose={props.onClose}
             >
-
                 <View>
                     <View style={{height: 20}}></View>
                     <View style={styles.header}>
@@ -46,30 +41,35 @@ export default function InvViewModal(props: ModalProps) {
                         </View>
                     </View>
 
-
-                <SafeAreaView style={styles.modalContent}>
-                    <Text style={styles.title}>{props.item.name}</Text>
-                    <Text style={styles.text}>{props.item.details}</Text>
-                    <Text style={styles.subHeading}>Location: <Text style={styles.text}>{props.item.location}</Text></Text>
-                    <Text style={styles.subHeading}>Last Purchased By: <Text style={styles.text}>{props.item.last_purchased_by.first_name}</Text></Text>
-                    <Text style={styles.subHeading}>Purchase Date: <Text style={styles.text}>{props.item.last_purchased_date.toDateString()}</Text></Text>
-                    <View>
-                        <View style={{flexDirection: 'row', gap: 12}}>
-                            <Text style={styles.subHeading}>Restock Needed?</Text>
-                            <Switch 
-                                trackColor={{false: 'red', true: 'green'}}
-                                thumbColor={'white'}
-                            />
+                    <SafeAreaView style={styles.modalContent}>
+                        <ThemedText type="title">{props.item.name}</ThemedText>
+                        <ThemedText type="secondarySubtitle">{props.item.details}</ThemedText>
+                        <View style={styles.rowStart}> 
+                            <IconSymbol size={30} name="pin.fill" color="#000"/>
+                            <ThemedText type="subtitle">Location: <ThemedText type="secondarySubtitle">{props.item.location}</ThemedText></ThemedText>
                         </View>
-                        <Text style={styles.subtitle}>Toggle when this item needs to be restocked</Text>
-                    </View>
-                    
-                </SafeAreaView>
-
+                        <View style={styles.rowStart}> 
+                            <IconSymbol size={30} name="person.fill" color="#000"/>
+                            <ThemedText type="subtitle">Last Purchased By: <ThemedText type="secondarySubtitle">{props.item.last_purchased_by.first_name}</ThemedText></ThemedText>
+                        </View>
+                        <View style={styles.rowStart}> 
+                            <IconSymbol size={30} name="calendar" color="#000"/>
+                            <ThemedText type="subtitle">Purchase Date: <ThemedText type="secondarySubtitle">{props.item.last_purchased_date.toDateString()}</ThemedText></ThemedText>
+                        </View>
+                        <View>                            
+                            <ThemedSwitch 
+                                label="Restock Needed?" 
+                                value={props.item.restock_needed} 
+                                onChangeSwitch={(value) => {
+                                    props.onRestockChange(value, props.item.id);
+                                }}
+                            />
+                            <ThemedText type="text">Toggle when this item needs to be restocked</ThemedText>
+                        </View>
+                    </SafeAreaView>
                 </View>
             </Modal>
         </View>
-        
     )
 }
 
@@ -104,6 +104,13 @@ const styles = StyleSheet.create({
     subtitle: {
         fontSize: 18,
         fontWeight: 300
+    },
+
+    rowStart: {
+        justifyContent: 'flex-start',
+        flexDirection: 'row',
+        alignItems: "center",
+        gap: 5
     }
 
 });

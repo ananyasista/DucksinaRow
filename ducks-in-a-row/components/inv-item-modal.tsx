@@ -6,6 +6,8 @@ import DropDownPicker from 'react-native-dropdown-picker'
 import DateTimePicker, { DateTimePickerEvent, Event } from '@react-native-community/datetimepicker';
 import Counter from './counter';
 import { InventoryDetails, InventoryCard } from '@/api/inventory';
+import { ThemedTextInput } from './text-input';
+import { ThemedText } from './themed-text';
 
 type ModalProps = {
     visible: boolean;
@@ -22,34 +24,18 @@ export default function InvItemModal(props: ModalProps) {
     const [itemLocation, setItemLocation] = useState(props.item ? props.item.location : null);
     const [quantity, setQuantity] = useState(props.item ? props.item.quantity : 1);
 
-    const roommateList: string[] = ["Elle", "Leyna", "Sofia", "Ananya"];
     const [locations, setLocations] = useState([
-        {label: 'Kitchen', value: 'kitchen'},
-        {label: 'Living Room', value: 'living room'},
-        {label: 'Bedroom', value: 'bedroom'},
-        {label: 'Bathroom', value: 'bathroom'},
-        {label: 'Other', value: 'other'}
+        {label: 'Kitchen', value: 'Kitchen'},
+        {label: 'Living Room', value: 'Living Room'},
+        {label: 'Bedroom', value: 'Bedroom'},
+        {label: 'Bathroom', value: 'Bathroom'},
+        {label: 'Other', value: 'Other'}
     ])
-
-    const [date, setDate] = useState(new Date());
-    const [mode, setMode] = useState('date');
-    const [show, setShow] = useState(false);
 
     const [openDropdown, setOpenDropdown] = useState(false);
 
-    const onChangeDate = (event: DateTimePickerEvent, selectedDate?: Date) => {
-        const currentDate = selectedDate ? selectedDate : new Date();
-        setDate(currentDate);
-    };
-
-    const showMode = (currentMode: any) => {
-        setShow(true);
-        setDate(new Date());
-        setMode(currentMode);
-    };
-
     const handleSave = () => {
-    const updatedItem: Partial<InventoryCard> = {
+        const updatedItem: Partial<InventoryCard> = {
             id: props.item?.id,
             name: itemName,
             details: itemDetails,
@@ -62,20 +48,16 @@ export default function InvItemModal(props: ModalProps) {
     };
 
     useEffect(() => {
-    if (props.item) {
-        setItemName(props.item.name);
-        setItemDetails(props.item.details);
-        setItemLocation(props.item.location);
-        setQuantity(props.item.quantity);
-    }
+        if (props.item) {
+            setItemName(props.item.name);
+            setItemDetails(props.item.details);
+            setItemLocation(props.item.location);
+            setQuantity(props.item.quantity);
+        }
     }, [props.item]);
-
-
-
 
     return (
         <View>
-
             <Modal
                 animationType='slide'
                 visible={props.visible}
@@ -83,76 +65,74 @@ export default function InvItemModal(props: ModalProps) {
                 allowSwipeDismissal={true}
                 onRequestClose={props.onClose}
             >
-            <TouchableWithoutFeedback onPress={() => {setOpenDropdown(false);}}>
-                <View>
-                    <View style={{height: 20}}></View>
-                <View style={styles.header}>
-                    <TouchableOpacity style={styles.cancelButton} 
-                        onPress={() => {
-                            setItemName('')
-                            setItemDetails('')
-                            setItemLocation(null)
-                            setQuantity(1)
-                            props.onClose()
-                        }}
-                    >
-                        <Text style={styles.cancelText}>Cancel</Text>
-                    </TouchableOpacity>
-                    <Text style={styles.title}>{props.title}</Text>
-                    <TouchableOpacity style={styles.cancelButton} onPress={handleSave}>
-                        <Text style={styles.cancelText}>Save</Text>
-                    </TouchableOpacity>
-                </View>
+                <TouchableWithoutFeedback onPress={() => {setOpenDropdown(false);}}>
+                    <View>
+                        <View style={{height: 20}}></View>
+                        <View style={styles.header}>
+                            <TouchableOpacity style={styles.cancelButton} 
+                                onPress={() => {
+                                    setItemName('')
+                                    setItemDetails('')
+                                    setItemLocation(null)
+                                    setQuantity(1)
+                                    props.onClose()
+                                }}
+                            >
+                                <Text style={styles.cancelText}>Cancel</Text>
+                            </TouchableOpacity>
+                            <ThemedText type='subtitle'>{props.title}</ThemedText>
+                            <TouchableOpacity style={styles.cancelButton} onPress={handleSave}>
+                                <Text style={styles.cancelText}>Save</Text>
+                            </TouchableOpacity>
+                        </View>
 
+                        {/* Item name field */}
+                        <SafeAreaView style={styles.modalContent}>
+                            <View style={styles.formField}>
+                                <ThemedText type="boldText">Item Name</ThemedText>
+                                <ThemedTextInput 
+                                    onChangeText={setItemName}
+                                    defaultValue={itemName}
+                                    placeholder='Item Name'
+                                />
+                            </View>
 
-                <SafeAreaView style={styles.modalContent}>
-                    <View style={styles.formField}>
-                        <Text style={styles.subHeading}>Item Name</Text>
-                        <TextInput 
-                            style={styles.input}
-                            onChangeText={setItemName}
-                            value={itemName}
-                            placeholder='Item Name'
-                            placeholderTextColor='#ABA4A461'
-                        />
+                            {/* Item details field */}
+                            <View style={styles.formField}>
+                                <ThemedText type="boldText">Details</ThemedText>
+                                <ThemedTextInput
+                                    onChangeText={setItemDetails}
+                                    defaultValue={itemDetails}
+                                    placeholder='Add Details'
+                                    multiline
+                                    size="large"
+                                />
+                            </View>
+                        
+                            {/* Item quantity field */}
+                            <View style={styles.formField}>
+                                <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: "space-between"}}>
+                                    <ThemedText type="boldText">Quantity</ThemedText>
+                                    <Counter value={quantity} onChange={setQuantity} />
+                                </View>
+                            </View>
+
+                            <View style={styles.formField}>
+                                <ThemedText type="boldText">Location</ThemedText>
+                                <DropDownPicker 
+                                    open={openDropdown}
+                                    value={itemLocation}
+                                    items={locations}
+                                    setOpen={setOpenDropdown}
+                                    setValue={setItemLocation}
+                                    setItems={setLocations}
+                                    style={styles.input}
+                                    dropDownContainerStyle={styles.dropdownMenu}
+                                />
+                            </View>
+                        </SafeAreaView>
                     </View>
-
-                    <View style={styles.formField}>
-                        <Text style={styles.subHeading}>Details</Text>
-                        <TextInput 
-                            style={styles.input}
-                            onChangeText={setItemDetails}
-                            value={itemDetails}
-                            placeholder='Add Details'
-                            placeholderTextColor='#ABA4A461'
-                            multiline
-                        />
-                    </View>
-                
-                    <View style={styles.formField}>
-                        <Text style={styles.subHeading}>Quantity</Text>
-                        <Counter value={quantity} onChange={setQuantity} />
-                    </View>
-
-                    <View style={styles.formField}>
-                        <Text style={styles.subHeading}>Location</Text>
-                        <DropDownPicker 
-                            open={openDropdown}
-                            value={itemLocation}
-                            items={locations}
-                            setOpen={setOpenDropdown}
-                            setValue={setItemLocation}
-                            setItems={setLocations}
-                            style={styles.input}
-                            dropDownContainerStyle={styles.dropdownMenu}
-                        />
-                    </View>
-
-                </SafeAreaView>
-
-                </View>
-                
-            </TouchableWithoutFeedback>
+                </TouchableWithoutFeedback>
             </Modal>
         </View>
         
@@ -166,7 +146,7 @@ const styles = StyleSheet.create({
     },
 
     title: {
-        fontSize: 48,
+        fontSize: 24,
         fontWeight: 600
     },
 
@@ -185,26 +165,28 @@ const styles = StyleSheet.create({
     header: {
         justifyContent: "space-between",
         flexDirection: 'row',
-        alignItems: 'flex-end',
-        padding: 12
+        alignItems: 'center',
+        padding: 12,
     },
 
     cancelButton: {
-        backgroundColor: '#fff',
+         backgroundColor: '#fff',
         borderWidth: 2,
-        borderRadius: 20,
+        borderRadius: 10,
         color: '#000',
         justifyContent: 'center',
         alignItems: 'center',
-        padding:7
+        width: 100,
+        height: 50
     },
 
     cancelText: {
-        fontSize: 20
+        fontSize: 16,
+        fontWeight: 500
     },
     
     input: {
-        borderWidth: 2,
+        borderWidth: 1,
         padding: 5,
         borderColor: '#ABA4A461',
         backgroundColor: '#F6F4F4C4',
@@ -234,11 +216,12 @@ const styles = StyleSheet.create({
     },
 
     dropdownMenu: {
-        borderWidth: 2,
+        borderWidth: 1,
         padding: 5,
         borderColor: '#ABA4A461',
-        backgroundColor: '#F6F4F4',
-        borderRadius: 13,
-        fontSize: 16
+        backgroundColor: '#F6F4F4C4',
+        borderRadius: 10,
+        fontSize: 16,
+        lineHeight: 24
     }
 });

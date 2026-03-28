@@ -47,17 +47,34 @@ class Command(BaseCommand):
         last_names = ["Lynch", "Huynh", "Sista", "Strauss"]
 
         users = []
+        color_palette = [
+        "#CF7041",
+        "#E5C5BD",
+        "#E2A55E",
+        "#5E718B",
+        "#96AA9A",
+        "#B4BFC5",
+        ]
         for i in range(4):
             user, created = User.objects.get_or_create(
-                first_name=first_names[i],
-                last_name=last_names[i],
                 email=f"{first_names[i].lower()}@example.com",
-                username=f"user{i+1}",
-                password=make_password("password123"),
-                household=households[0]
+                defaults={
+                    "first_name": first_names[i],
+                    "last_name": last_names[i],
+                    "username": f"user{i+1}",
+                    "password": make_password("password123"),
+                    "household": households[0],
+                    "display_color": color_palette[i % len(color_palette)],
+                }
             )
+
+            # If user already existed, ensure they get a color
+            if not user.display_color:
+                user.display_color = color_palette[i % len(color_palette)]
+                user.save()
+
             users.append(user)
-            self.stdout.write(self.style.SUCCESS(f"Created user: {user.email}"))
+            self.stdout.write(self.style.SUCCESS(f"Created user: {user.email} with color {user.display_color}"))
 
         # --- Create Living Preferences ---
         for user in users:
@@ -122,7 +139,8 @@ class Command(BaseCommand):
                     household=hh,
                     title=chore_name,
                     details=f"{chore_name} for {hh.household_name}",
-                    repeat=random.choice([r[0] for r in RepeatChoices.choices]),
+                    repeat_unit=random.choice([r[0] for r in RepeatChoices.choices]),
+                    repeat_value=random.randint(1, 7),
                     is_rotating=is_rotating,
                     pass_to_next_value=random.randint(1, 5) if is_rotating else 0,
                     pass_to_next_unit=random.choice([u[0] for u in PassToUnitChoices.choices[1:]]) if is_rotating else "none",
@@ -132,18 +150,22 @@ class Command(BaseCommand):
                 )
 
                 # Add roommates involved for rotation
-                if (chore.is_rotating):
+                # Add roommates involved for rotation
+                if chore.is_rotating:
                     roommates_for_chore = random.sample(members, k=min(2, len(members)))
-                    chore.roommates_involved.set(roommates_for_chore)
                 else:
                     roommates_for_chore = random.sample(members, k=1)
-                    chore.roommates_involved.set(roommates_for_chore)
+                chore.roommates_involved.set(roommates_for_chore)
+                chore.save()  # make sure the M2M is saved before creating assignment
 
                 # Create the first assignment
                 initial_assignee = random.choice(roommates_for_chore)
-                next_assignee=random.choice(roommates_for_chore) if chore.is_rotating else None
-                due_date = timezone.now().date() + timedelta(days=random.randint(0, 7))
+                next_assignee = None
+                if chore.is_rotating and len(roommates_for_chore) > 1:
+                    # pick someone else as next
+                    next_assignee = random.choice([u for u in roommates_for_chore if u != initial_assignee])
 
+                due_date = timezone.now().date() + timedelta(days=random.randint(0, 7))
                 ChoreAssignment.objects.create(
                     chore=chore,
                     assignee=initial_assignee,
