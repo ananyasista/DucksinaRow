@@ -15,14 +15,14 @@ import { getHouseholdRoommates } from '@/api/household';
 
 
 export default function ChoreScreen() {
-  const [choresList, setChoresList] = useState<choreAPI.Chore[]>([]);
+  const [choresList, setChoresList] = useState<choreAPI.ChoreAssignment[]>([]);
   const [roommatesList, setRoommatesList] = useState<choreAPI.UserSummary[]>([]);
   const [locationList, setLocationList] = useState<string[]>([]);
   const [addItemVisible, setAddItemVisible] = useState(false);
   const [viewItemVisible, setViewItemVisible] = useState(false);
   const [editItemVisible, setEditItemVisible] = useState(false);
   const [complete, setComplete] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<choreAPI.Chore | null>(null);
+  const [selectedItem, setSelectedItem] = useState<choreAPI.ChoreAssignment | null>(null);
   const [searchText, setSearchText] = useState('');
 
   const [locationFilterList, setLocationFilterList] = useState<string[]>([]);
@@ -36,26 +36,37 @@ export default function ChoreScreen() {
   useEffect(() => {
       const loadData = async () => {
         const filterData = await choreAPI.getAssignmentFilterOptions();
-        const choreData = await choreAPI.getChores();
-        const choresWithAssignments = choreData.map(chore => {
-          const allAssignments = chore.all_assignments.map((assignment: any) => ({
+        const choreData = await choreAPI.getChoreAssignments();
+        const choresWithAssignments = choreData.map((assignment: choreAPI.ChoreAssignment) => {
+          const parsedAssignment: choreAPI.ChoreAssignment = {
             ...assignment,
             due_date: assignment.due_date ? new Date(assignment.due_date) : new Date(),
-          }));
-
-          // Optional: pick the latest assignment by createdAt or due_date
-          const latestAssignment = allAssignments.reduce((latest, current) =>
-            current.due_date > latest.due_date ? current : latest
-          , allAssignments[0]);
-
-          return {
-            ...chore,
-            all_assignments: allAssignments,    // for rendering multiple cards
-            latest_assignment: latestAssignment, // for filters, summary info
+            completed_date: assignment.completed_date ? new Date(assignment.completed_date) : null,
           };
+
+          return parsedAssignment;
         });
+      
+        const choresMap: Record<string, { all_assignments: choreAPI.ChoreAssignment[]; latest_assignment: choreAPI.ChoreAssignment }> = {};
+
+        choresWithAssignments.forEach(assignment => {
+          const choreId = assignment.chore.id;
+          if (!choresMap[choreId]) {
+            choresMap[choreId] = {
+              all_assignments: [assignment],
+              latest_assignment: assignment,
+            };
+          } else {
+            choresMap[choreId].all_assignments.push(assignment);
+
+            // Update latest assignment based on due_date
+            if (assignment.due_date > choresMap[choreId].latest_assignment.due_date) {
+              choresMap[choreId].latest_assignment = assignment;
+            }
+          }
+        });
+
         getRoommates();
-  
         setLocationList(filterData.locations);
         setRoommatesList(filterData.roommates);
         setChoresList(choresWithAssignments);
@@ -67,7 +78,7 @@ export default function ChoreScreen() {
     
     // add in date filters
     const applyFilterChanges = async () => {
-      const data = await choreAPI.getChores({
+      const data = await choreAPI.getChoreAssignments({
         completed: completedFilter, 
         assignee: assigneeFilterList, 
         location: locationFilterList, 
@@ -75,7 +86,7 @@ export default function ChoreScreen() {
 
       const choresWithDates = data.map(chore => ({
         ...chore,
-        due_date: chore.latest_assignment.due_date ? new Date(chore.latest_assignment.due_date) : new Date(),
+        due_date: chore.due_date ? new Date(chore.due_date) : new Date(),
       }));
 
       console.log(assigneeFilterList);
@@ -86,17 +97,17 @@ export default function ChoreScreen() {
     }
   
     const refreshChores = async () => {
-      const data = await choreAPI.getChores();
+      const data = await choreAPI.getChoreAssignments();
       const choresWithDates = data.map(chore => ({
         ...chore,
-        due_date: chore.latest_assignment.due_date ? new Date(chore.latest_assignment.due_date) : new Date(),
+        due_date: chore.due_date ? new Date(chore.due_date) : new Date(),
       }));
       setChoresList(choresWithDates);
     }
   
     const getChore = async (id: string) => {
-      const chore = await choreAPI.getChoreById(id);
-      chore.latest_assignment.due_date = chore.latest_assignment.due_date ? new Date(chore.latest_assignment.due_date) : new Date();
+      const chore = await choreAPI.getChoreAssignmentById(id);
+      chore.due_date = chore.due_date ? new Date(chore.due_date) : new Date();
       setSelectedItem(chore);
     }
 
@@ -107,7 +118,8 @@ export default function ChoreScreen() {
         email: r.email,
         first_name: r.first_name,
         last_name: r.last_name,
-        name: r.full_name ?? ""
+        name: r.full_name ?? "",
+        display_color: r.display_color ?? "#3f4ba1"
       }));
       setRoommatesList(filterRoommates);
     }
@@ -149,17 +161,17 @@ export default function ChoreScreen() {
             {choresList
                 .filter(chore => {
                   if(!searchText) return true;
-                  return chore.title.toLowerCase().includes(searchText.toLowerCase());
+                  return chore.chore.title.toLowerCase().includes(searchText.toLowerCase());
                 })
                 .map((chore) => (
                 <ChoreTile
                   key={chore.id}
                   id={chore.id}
-                  title={chore.title} 
-                  completed={chore.latest_assignment.completed ?? false}
-                  due_date={chore.latest_assignment.due_date ?? new Date}
-                  repeat={chore.repeat_unit}
-                  assignee={chore.latest_assignment.assignee ?? undefined}
+                  title={chore.chore.title} 
+                  completed={chore.completed ?? false}
+                  due_date={chore.due_date ?? new Date}
+                  repeat={chore.chore.repeat_unit}
+                  assignee={chore.assignee ?? undefined}
                   onPress={() => {
                     getChore(chore.id);
                     setSelectedItem(chore);
@@ -167,20 +179,26 @@ export default function ChoreScreen() {
                   }}
                   onChange={async (completed) => {
                     try {
-                        await choreAPI.updateChore(chore.id, choreAPI.buildChorePatch(chore, {
-                          title: chore.title,
-                          details: chore.details,
-                          location: chore.location,
-                          allDay: chore.latest_assignment.all_day,
-                          dueDate: chore.latest_assignment.due_date,
+                        var { chorePatch, choreAssignmentPatch } = choreAPI.buildChorePatch(chore, {
+                          title: chore.chore.title,
+                          details: chore.chore.details,
+                          location: chore.chore.location,
+                          allDay: chore.all_day,
+                          dueDate: chore.due_date,
                           completed: completed,
-                          repeatUnit: chore.repeat_unit,
-                          repeatValue: chore.repeat_value,
-                          passToNextUnit: chore.pass_to_next_unit ?? "weeks",
-                          passToNextValue: chore.pass_to_next_value ?? 1,
-                          isRotating: chore.is_rotating,
-                          roommates: chore.roommates_involved
-                        }));
+                          repeatUnit: chore.chore.repeat_unit,
+                          repeatValue: chore.chore.repeat_value,
+                          passToNextUnit: chore.chore.pass_to_next_unit ?? "weeks",
+                          passToNextValue: chore.chore.pass_to_next_value ?? 1,
+                          isRotating: chore.chore.is_rotating,
+                          roommates: chore.chore.roommates_involved
+                        });
+                        if (Object.keys(chorePatch).length > 0) {
+                          await choreAPI.updateChore(chore.chore.id, chorePatch);
+                        }
+                        if (Object.keys(choreAssignmentPatch).length > 0) {
+                          await choreAPI.updateAssignment(chore.id, choreAssignmentPatch);
+                        }
                       } catch (err: any) {
                         console.log("ERROR RESPONSE:", err.response?.data);
                         console.log("STATUS:", err.response?.status);
@@ -196,20 +214,24 @@ export default function ChoreScreen() {
             onClose={() => setAddItemVisible(false)}
             title="Add Chore"
             save={async (chore) => {
+              const { create } = chore;
               try {
-                await choreAPI.createChore({
-                  title: chore.title ?? "",
-                  details: chore.details ?? "",
-                  due_date: chore.latest_assignment?.due_date ?? new Date(),
-                  all_day: chore.latest_assignment?.all_day ?? true, 
-                  repeat_unit: chore.repeat_unit ?? "days",
-                  repeat_value: chore.repeat_value ?? 1,
-                  location: chore.location ?? "",
-                  is_rotating: chore.is_rotating ?? false,
-                  pass_to_next_unit: chore.pass_to_next_unit ?? "None",
-                  pass_to_next_value: chore.pass_to_next_value ?? 0,
-                  roommates_involved: chore.roommates_involved || [],
+                if (create) {
+                  await choreAPI.createChore({
+                  title: create.title ?? "",
+                  details: create.details ?? "",
+                  due_date: create.due_date ?? new Date(),
+                  all_day: create.all_day ?? true, 
+                  repeat_unit: create.repeat_unit ?? "days",
+                  repeat_value: create.repeat_value ?? 1,
+                  location: create.location ?? "",
+                  is_rotating: create.is_rotating ?? false,
+                  pass_to_next_unit: create.pass_to_next_unit ?? "None",
+                  pass_to_next_value: create.pass_to_next_value ?? 0,
+                  roommates_involved: create.roommates_involved || [],
                 })
+                }
+                
               } catch (err: any){
                 console.log("ERROR", err.response?.data);
               }
@@ -239,20 +261,26 @@ export default function ChoreScreen() {
               }}
               onComplete={async (completed) => {
                     try {
-                        await choreAPI.updateChore(selectedItem.id, choreAPI.buildChorePatch(selectedItem, {
-                          title: selectedItem.title,
-                          details: selectedItem.details,
-                          location: selectedItem.location,
-                          allDay: selectedItem.latest_assignment.all_day,
-                          dueDate: selectedItem.latest_assignment.due_date,
+                        var { chorePatch, choreAssignmentPatch } = choreAPI.buildChorePatch(selectedItem, {
+                          title: selectedItem.chore.title,
+                          details: selectedItem.chore.details,
+                          location: selectedItem.chore.location,
+                          allDay: selectedItem.all_day,
+                          dueDate: selectedItem.due_date,
                           completed: completed,
-                          repeatUnit: selectedItem.repeat_unit,
-                          repeatValue: selectedItem.repeat_value,
-                          passToNextUnit: selectedItem.pass_to_next_unit ?? "weeks",
-                          passToNextValue: selectedItem.pass_to_next_value ?? 1,
-                          isRotating: selectedItem.is_rotating,
-                          roommates: selectedItem.roommates_involved
-                        }));
+                          repeatUnit: selectedItem.chore.repeat_unit,
+                          repeatValue: selectedItem.chore.repeat_value,
+                          passToNextUnit: selectedItem.chore.pass_to_next_unit ?? "weeks",
+                          passToNextValue: selectedItem.chore.pass_to_next_value ?? 1,
+                          isRotating: selectedItem.chore.is_rotating,
+                          roommates: selectedItem.chore.roommates_involved
+                        });
+                        if (Object.keys(chorePatch).length > 0) {
+                          await choreAPI.updateChore(selectedItem.chore.id, chorePatch);
+                        }
+                        if (Object.keys(choreAssignmentPatch).length > 0) {
+                          await choreAPI.updateAssignment(selectedItem.id, choreAssignmentPatch);
+                        }
                       } catch (err: any) {
                         console.log("ERROR RESPONSE:", err.response?.data);
                         console.log("STATUS:", err.response?.status);
@@ -267,10 +295,24 @@ export default function ChoreScreen() {
               onClose={() => setEditItemVisible(false)}
               title="Edit Chore"
               chore={selectedItem}
-              save={async (chore) => {
+              save={async (updatedItem) => {
                 if(!selectedItem) return;
-                await choreAPI.updateChore(selectedItem.id, chore);
-                await refreshChores();
+                try {
+                  const { chorePatch, choreAssignmentPatch } = updatedItem;
+
+                  if (chorePatch && Object.keys(chorePatch).length > 0) {
+                    await choreAPI.updateChore(selectedItem.chore.id, chorePatch);
+                  }
+
+                  if (choreAssignmentPatch && Object.keys(choreAssignmentPatch).length > 0) {
+                    await choreAPI.updateAssignment(selectedItem.id, choreAssignmentPatch);
+                  }
+
+                  await refreshChores();
+                } catch (err: any) {
+                  console.log("ERROR RESPONSE:", err.response?.data);
+                  console.log("STATUS:", err.response?.status);
+                }
               }}
               allRoommates={roommatesList}
             />

@@ -3,11 +3,11 @@ import Chip from './chip';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import { IconSymbol } from './ui/icon-symbol';
-import { Chore } from '@/api/chores';
+import { ChoreAssignment } from '@/api/chores';
 import { ThemedText } from './themed-text';
 
 type ModalProps = {
-    chore: Chore;
+    chore: ChoreAssignment;
     onComplete: (completed: boolean) => void;
     visible: boolean;
     onClose: () => void;
@@ -18,7 +18,7 @@ type ModalProps = {
 
 export default function ChoreViewModal(props: ModalProps) {
 
-    const [complete, setComplete] = useState(props.chore.latest_assignment.completed ?? false);
+    const [complete, setComplete] = useState(props.chore.completed ?? false);
 
     const handleComplete = () => {
         const newValue = !complete;
@@ -54,27 +54,27 @@ export default function ChoreViewModal(props: ModalProps) {
 
                     <SafeAreaView style={styles.modalContent}>
                         <View style={{gap: 10}}>
-                            <ThemedText type="title">{props.chore.title}</ThemedText>
-                            <ThemedText type="secondarySubtitle">{props.chore.details}</ThemedText>
+                            <ThemedText type="title">{props.chore.chore.title}</ThemedText>
+                            <ThemedText type="secondarySubtitle">{props.chore.chore.details}</ThemedText>
                             <View style={{flexDirection: 'row', gap: 5}}>
                                 <IconSymbol name='person.crop.circle.fill' size={30} color="#000"/>
-                                <ThemedText type="subtitle">Current Assignee: <ThemedText type="secondarySubtitle">{props.chore.latest_assignment.assignee?.first_name}</ThemedText></ThemedText>
+                                <ThemedText type="subtitle">Current Assignee: <ThemedText type="secondarySubtitle">{props.chore.assignee?.first_name}</ThemedText></ThemedText>
                             </View>
                             <View style={{flexDirection: 'row', gap: 5}}>
                                 <IconSymbol name='calendar' size={30} color="#000"/>
-                                <ThemedText type="subtitle">Chore Due: <ThemedText type="secondarySubtitle">{props.chore.latest_assignment.due_date?.toLocaleDateString()}</ThemedText></ThemedText>
+                                <ThemedText type="subtitle">Chore Due: <ThemedText type="secondarySubtitle">{props.chore.due_date?.toLocaleDateString()}</ThemedText></ThemedText>
                             </View>
-                            {props.chore.is_rotating && (
+                            {props.chore.chore.is_rotating && (
                                 <>
                                 <View style={{flexDirection: 'row', gap: 5}}>
                                     <IconSymbol name='arrow.right.arrow.left.circle.fill' size={30} color="#000"/>
                                     <ThemedText type="subtitle">Pass chore to next roommate:{"\n"}
-                                        <ThemedText type='secondarySubtitle'>{props.chore.pass_to_next_value} {props.chore.pass_to_next_unit}</ThemedText>
+                                        <ThemedText type='secondarySubtitle'>{props.chore.chore.pass_to_next_value} {props.chore.chore.pass_to_next_unit}</ThemedText>
                                     </ThemedText>
                                 </View>
                                 <View style={{flexDirection: 'row', gap: 5}}>
                                     <IconSymbol name='arrow.right.circle.fill' size={30} color="#000"/>
-                                    <Text style={styles.subHeading}>Next Up: <Text style={styles.text}>{props.chore.latest_assignment.next_assignee?.first_name ?? ""}</Text></Text>
+                                    <Text style={styles.subHeading}>Next Up: <Text style={styles.text}>{props.chore.next_assignee?.first_name ?? ""}</Text></Text>
                                 </View>
                                 <View>
                                     <View style={{flexDirection: 'row', gap: 5}}>
@@ -82,7 +82,7 @@ export default function ChoreViewModal(props: ModalProps) {
                                         <ThemedText type="subtitle">Roomates Involved:</ThemedText>
                                     </View>
                                     <View style={styles.chipView}>
-                                        {props.chore.roommates_involved.map((r) =>
+                                        {props.chore.chore.roommates_involved.map((r) =>
                                                 <Chip 
                                                     key={r.id}
                                                     title={r.first_name}
@@ -94,16 +94,16 @@ export default function ChoreViewModal(props: ModalProps) {
                             )}
                             <View style={{flexDirection: 'row', gap: 5}}>
                                 <IconSymbol name='location.fill' size={30} color="#000"/>
-                                <ThemedText type='subtitle'>Location: <ThemedText type='secondarySubtitle'>{props.chore.location}</ThemedText></ThemedText>
+                                <ThemedText type='subtitle'>Location: <ThemedText type='secondarySubtitle'>{props.chore.chore.location}</ThemedText></ThemedText>
                             </View>
                             
                         </View>
-                        {!props.chore.latest_assignment?.completed &&
+                        {!props.chore.completed &&
                             <TouchableOpacity style={styles.completeButton} onPress={handleComplete}>
                                 <ThemedText type='subtitle'>Mark as Complete</ThemedText>
                             </TouchableOpacity>
                         } 
-                        { props.chore.latest_assignment?.completed && 
+                        { props.chore.completed && 
                             <TouchableOpacity style={styles.completeButton} onPress={handleComplete}>
                                 <ThemedText type='subtitle'>Chore Completed!</ThemedText>
                             </TouchableOpacity>
