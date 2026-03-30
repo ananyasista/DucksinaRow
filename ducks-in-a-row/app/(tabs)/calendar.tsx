@@ -29,11 +29,12 @@ import Chip from '@/components/chip';
 
 export interface CalendarEvent extends ICalendarEventBase {
   id: string;
+  display_color?: string | null;
 }
 
 export default function CalendarPage () {
     const { mode } = useLocalSearchParams();
-    const [events, setEvents] = useState<ICalendarEventBase[]>([]);
+    const [events, setEvents] = useState<CalendarEvent[]>([]);
     const [fullDetailEvent, setFullDetailEvents] = useState<APICalendarEvent[]>([]);
     const [allMyEvents, setAllMyEvents] = useState<APICalendarEvent[]>([]);
     const [myEvents, setMyEvents] = useState<APICalendarEvent[]>([]);
@@ -92,6 +93,7 @@ export default function CalendarPage () {
     useEffect(() => {
       loadFilteredCalendarEvents(filtersByRoommate);
     }, [currentDate, filtersByRoommate]);
+
     function APICalEventToCalEvent(event: APICalendarEvent) {
 
         var startDate = new Date(event.start_date);
@@ -107,6 +109,7 @@ export default function CalendarPage () {
             end: endDate,
             title: event.title,
             id: event.id,
+            display_color: event.display_color ?? null,
         }
         return calEvent;
     }
@@ -124,6 +127,7 @@ export default function CalendarPage () {
             requires_approval: e.event.requires_approval,
             location: e.event.location,
             event_owner_name:  e.event.event_owner_name ?? "",
+            display_color: e.event.display_color ?? null,
       }
       return approvEvent;
     }
@@ -350,21 +354,44 @@ export default function CalendarPage () {
                 );
               })}
             </View>
-              <Calendar
+            <Calendar
               events={events}
               height={calendarHeight}
-              date = {currentDate}
+              date={currentDate}
               maxVisibleEventCount={2}
-              eventCellStyle = {calendarTheme.eventStyle}
+              eventCellStyle={(event) => {
+                const calEvent = event as CalendarEvent;
+                const color = calEvent.display_color || "#4DC591";
+
+                return {
+                  backgroundColor: color,
+                  borderColor: color,
+                  borderWidth: 1,
+                  borderRadius: 6,
+                };
+              }}
+              allDayEventCellStyle={(event) => {
+                const calEvent = event as CalendarEvent;
+                const color = calEvent.display_color || "#4DC591";
+
+                return {
+                  backgroundColor: color,
+                  borderColor: color,
+                  borderWidth: 1,
+                  borderRadius: 6,
+                };
+              }}
+              eventCellTextColor="#fff"
+              allDayEventCellTextColor="#fff"
               mode={currentMode}
-              onPressCell={(date:Date) =>changeDateMode(date)}
-              onPressDateHeader={(date:Date) =>changeDateMode(date)}
-              onSwipeEnd = {(date:Date) => setCurrentDate(date)}
-              theme = {theme.calendar}
+              onPressCell={(date: Date) => changeDateMode(date)}
+              onPressDateHeader={(date: Date) => changeDateMode(date)}
+              onSwipeEnd={(date: Date) => setCurrentDate(date)}
+              theme={theme.calendar}
               verticalScrollEnabled={true}
-              showAllDayEventCell = {true}
+              showAllDayEventCell={true}
               onPressEvent={(event) => showDetailModal(event as CalendarEvent)}
-          />
+            />
           </View>)
           }
           {/* Event View - Approval vs Approved*/}
