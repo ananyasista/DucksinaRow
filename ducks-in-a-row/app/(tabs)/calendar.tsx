@@ -188,28 +188,24 @@ export default function CalendarPage () {
       setOpenDropdown(false);
     }
     
-    async function showDetailModal(currEvent:CalendarEvent)
-    {
+    async function showDetailModal(currEvent: CalendarEvent) {
       setEvent(currEvent);
       setOpenDropdown(false);
+      setIsOwner(false);
+
       const pendingEvent = await getEventId(currEvent.id);
       setPendingEvent(pendingEvent);
-      myEvents.forEach((e) => {
-        if(e.id === currEvent.id)
-        {
-          setIsOwner(true);
-        }
-      })
-      fullDetailEvent.forEach((e) => {
-        if(e.id=== currEvent.id)
-        {
-          setAPIEvent(e);
-        }
-      })
+
+      const ownsEvent = myEvents.some((e) => e.id === currEvent.id);
+      setIsOwner(ownsEvent);
+
+      const selectedEvent = fullDetailEvent.find((e) => e.id === currEvent.id) ?? null;
+      setAPIEvent(selectedEvent);
+
       setDetailsModal(true);
     }
-    async function updateCalendar() 
-    {
+
+    async function updateCalendar() {
       await updateEvents();
     }
     async function closeDetailModal()
