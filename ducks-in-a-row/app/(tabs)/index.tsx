@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
 import { getHouseholdName } from '@/api/household';
-import { Chore, getChores, updateChore, buildChorePatch } from '@/api/chores';
+import { updateAssignment, getChoreAssignments, updateChore, buildChorePatch, ChoreAssignment } from '@/api/chores';
 import { me } from '@/api/auth';
 import {
   CalendarEvent,
@@ -58,7 +58,7 @@ export default function HomeScreen() {
   const [needsApproval, setNeedsApproval] = useState(0);
   const [giveApproval, setGiveApproval] = useState(0);
   const [groupName, setGroupName] = useState('Household');
-  const [choreList, setChoreList] = useState<Chore[]>([]);
+  const [choreList, setChoreList] = useState<ChoreAssignment[]>([]);
   const [myEvents, setMyEvents] = useState<CalendarEvent[]>([]);
   const [upcomingEvents, setUpcomingEvents] = useState<HomeCalendarEvent[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
@@ -72,9 +72,9 @@ export default function HomeScreen() {
       setGroupName(householdData.household_name || 'Household');
 
       const user = await me();
-      const choreData = await getChores({
-        completed: false,
-        assignee: [user.id],
+      const choreData = await getChoreAssignments({
+        completed: false, 
+        assignee: [user.id]
       });
 
       setChoreList(choreData);
@@ -224,7 +224,54 @@ export default function HomeScreen() {
                     </TouchableOpacity>
                   ))}
                 </View>
-              </View>
+              </>
+            </View>
+          )}
+
+          {/* // rendering for chores section */}
+          <View style={styles.section}>
+            <Text style={styles.subtitle}>Quick To-Do List:</Text>
+            {choreList.length >= 1 ? (
+              <>
+                {choreList.map((chore) => (
+                  <CheckboxTile
+                    key={chore.id}
+                    title={chore.chore.title}
+                    id={chore.id}
+                    complete={chore.completed ?? false}
+                    onPress={()=>{router.navigate({pathname:'/(tabs)/chores'})}}
+                    onToggle={async (completed) => {
+                      try {
+                        var { chorePatch, choreAssignmentPatch } = buildChorePatch(chore, {
+                          title: chore.chore.title,
+                          details: chore.chore.details,
+                          location: chore.chore.location,
+                          allDay: chore.all_day,
+                          dueDate: chore.due_date,
+                          completed: completed,
+                          repeatUnit: chore.chore.repeat_unit,
+                          repeatValue: chore.chore.repeat_value,
+                          passToNextUnit: chore.chore.pass_to_next_unit ?? "weeks",
+                          passToNextValue: chore.chore.pass_to_next_value ?? 1,
+                          isRotating: chore.chore.is_rotating,
+                          roommates: chore.chore.roommates_involved
+                        });
+                        if (Object.keys(chorePatch).length > 0) {
+                          await updateChore(chore.id, chorePatch);
+                        }
+                        if (Object.keys(choreAssignmentPatch).length > 0) {
+                          await updateAssignment(chore.id, choreAssignmentPatch);
+                        }
+                      } catch (err: any) {
+                        console.log("ERROR RESPONSE:", err.response?.data);
+                        console.log("STATUS:", err.response?.status);
+                      }
+                    }}
+                  ></CheckboxTile>
+                ))}
+              </>
+            ) : (
+              <Text style={styles.subtitle2}>Your to-do list is empty!</Text>
             )}
 
             <View style={styles.section}>

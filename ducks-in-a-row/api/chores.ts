@@ -1,11 +1,12 @@
 import { api } from "./client";
 
 export interface UserSummary {
+  id: string;
   email: string;
   first_name: string;
-  id: string;
   last_name: string;
   name: string;
+  display_color: string;
 }
 
 export interface ChoreAssignment {
@@ -14,8 +15,10 @@ export interface ChoreAssignment {
   next_assignee: UserSummary | null;
   due_date: Date;
   completed: boolean;
-  completed_date: Date;
+  completed_date: Date | null;
   all_day: boolean;
+
+  chore: ChoreSummary;
 }
 
 export interface Chore {
@@ -28,11 +31,25 @@ export interface Chore {
   repeat_value: number;
   repeat_unit: string;
   roommates_involved: UserSummary[];
+  // roommates_involved_id?: string[];
   pass_to_next_value: number | null;
   pass_to_next_unit: string | null;
 
   latest_assignment: ChoreAssignment;
   all_assignments: ChoreAssignment[] | [];
+}
+
+export interface ChoreSummary {
+  id: string;
+  title: string;
+  details: string;
+  location: string | null;
+  is_rotating: boolean;
+  repeat_value: number;
+  repeat_unit: string;
+  pass_to_next_value: number | null;
+  pass_to_next_unit: string | null;
+  roommates_involved: UserSummary[];
 }
 
 // --- Raw API type ---
@@ -44,6 +61,18 @@ interface RawAssignment {
   completed: boolean;
   completed_date: string | null;
   all_day: boolean;
+  chore: {
+    id: string;
+    title: string;
+    details: string;
+    location: string | null;
+    is_rotating: boolean;
+    repeat_value: number;
+    repeat_unit: string;
+    pass_to_next_value: number | null;
+    pass_to_next_unit: string | null;
+    roommates_involved: UserSummary[];
+  };
 }
 
 interface RawChore {
@@ -54,16 +83,9 @@ interface RawChore {
   is_rotating: boolean;
   repeat_value: number;
   repeat_unit: string;
-  roommates_involved: {
-    email: string,
-    first_name: string,
-    id: string,
-    last_name: string,
-    name: string,
-  }[];
   pass_to_next_value: number | null;
   pass_to_next_unit: string | null;
-
+  roommates_involved: UserSummary[];
   latest_assignment: RawAssignment;
   all_assignments: RawAssignment[];
 }
@@ -85,6 +107,18 @@ function parseAssignment(raw: RawAssignment): ChoreAssignment {
     ...raw,
     due_date: parseDate(raw.due_date, raw.all_day),
     completed_date: parseDate(raw.completed_date),
+    chore: {
+      id: raw.chore.id,
+      title: raw.chore.title,
+      details: raw.chore.details,
+      location: raw.chore.location,
+      is_rotating: raw.chore.is_rotating,
+      repeat_value: raw.chore.repeat_value,
+      repeat_unit: raw.chore.repeat_unit,
+      pass_to_next_value: raw.chore.pass_to_next_value,
+      pass_to_next_unit: raw.chore.pass_to_next_unit,
+      roommates_involved: raw.chore.roommates_involved || [], // convert IDs to UserSummary if needed
+    },
   };
 }
 
@@ -98,13 +132,13 @@ function parseChore(raw: RawChore): Chore {
 }
 
 // --- API calls ---
-export const getChores = async (filters?: {
+export const getChoreAssignments = async (filters?: {
   completed?: boolean;
   assignee?: string[];
   location?: string[];
   start_date?: Date;
   end_date?: Date;
-}): Promise<Chore[]> => {
+}): Promise<ChoreAssignment[]> => {
   const params = {
     completed: filters?.completed === true ? "true" : filters?.completed === false ? "false" : undefined,
     assignee: filters?.assignee?.join(","),
@@ -113,92 +147,80 @@ export const getChores = async (filters?: {
     end: filters?.end_date?.toISOString(),
   };
 
-  const response = await api.get<RawChore[]>("/chore/", { params });
-  return response.data.map(parseChore);
+  // Fetch raw assignments
+  const response = await api.get<RawAssignment[]>("/chore-assignment/", { params });
+
+  // Parse each raw assignment into ChoreAssignment
+  return response.data.map(parseAssignment);
 };
 
-export const getChoreById = async (id: string): Promise<Chore> => {
-  const response = await api.get<RawChore>(`/chore/${id}/`);
-  console.log(response.data.latest_assignment.due_date);
-  return parseChore(response.data);
+// Get a single chore by id
+export const getChoreAssignmentById = async (id: string): Promise<ChoreAssignment> => {
+  const response = await api.get<RawAssignment>(`/chore-assignment/${id}/`);
+  console.log(response.data);
+  return parseAssignment(response.data);
 };
 
-export const buildChorePatch = (original: Chore, current: {
-  title: string;
-  details: string;
-  location: string | null;
-  allDay: boolean;
-  dueDate: Date | undefined;
-  completed: boolean | undefined;
-  repeatUnit: string;
-  repeatValue: number;
-  passToNextUnit: string;
-  passToNextValue: number;
-  isRotating: boolean;
-  roommates: Chore["roommates_involved"];
-}) => {
-  const payload: any = {};
+export type chorePatchPartial = Partial<Chore> &  {
+  roommates_involved_ids?: string[];
+}
 
-  if (original.title !== current.title) payload.title = current.title;
-  if (original.details !== current.details) payload.details = current.details;
-  if (original.location !== current.location) payload.location = current.location;
-
-  if (original.is_rotating !== current.isRotating) {
-    payload.is_rotating = current.isRotating;
+export const buildChorePatch = (
+  original: ChoreAssignment,
+  current: {
+    title: string;
+    details: string;
+    location: string | null;
+    allDay: boolean;
+    dueDate?: Date;
+    completed?: boolean;
+    repeatUnit: string;
+    repeatValue: number;
+    passToNextUnit: string;
+    passToNextValue: number;
+    isRotating: boolean;
+    roommates: Chore["roommates_involved"];
   }
+) => {
+  const chorePatch: chorePatchPartial = {};
+  const choreAssignmentPatch: Partial<ChoreAssignment> = {};
 
-  if (original.repeat_unit !== current.repeatUnit) {
-    payload.repeat_unit = current.repeatUnit;
-  }
+  // --- Chore-level diffs ---
+  if (original.chore.title !== current.title) chorePatch.title = current.title;
+  if (original.chore.details !== current.details) chorePatch.details = current.details;
+  if (original.chore.location !== current.location) chorePatch.location = current.location;
+  if (original.chore.is_rotating !== current.isRotating) chorePatch.is_rotating = current.isRotating;
+  if (original.chore.repeat_unit !== current.repeatUnit) chorePatch.repeat_unit = current.repeatUnit;
+  if (original.chore.repeat_value !== current.repeatValue) chorePatch.repeat_value = current.repeatValue;
+  if (original.chore.pass_to_next_unit !== current.passToNextUnit) chorePatch.pass_to_next_unit = current.passToNextUnit;
+  if (original.chore.pass_to_next_value !== current.passToNextValue) chorePatch.pass_to_next_value = current.passToNextValue;
 
-  if (original.repeat_value !== current.repeatValue) {
-    payload.repeat_value = current.repeatValue;
-  }
-
-  if (original.pass_to_next_unit !== current.passToNextUnit) {
-    payload.pass_to_next_unit = current.passToNextUnit;
-  }
-
-  if (original.pass_to_next_value !== current.passToNextValue) {
-    payload.pass_to_next_value = current.passToNextValue;
-  }
-
-  // Assignment diff
-  const originalAssignment = original.latest_assignment;
-
+  // --- Assignment-level diffs ---
   if (current.dueDate) {
-    const originalDate = originalAssignment.due_date
-      ? current.allDay
-        ? new Date(originalAssignment.due_date).toISOString().slice(0, 10)
-        : new Date(originalAssignment.due_date).toISOString()
-      : null;
-
+    const originalDate = current.allDay
+      ? original.due_date.toISOString().slice(0, 10)
+      : original.due_date.toISOString();
     const currentDate = current.allDay
       ? current.dueDate.toISOString().slice(0, 10)
       : current.dueDate.toISOString();
 
-    if (originalDate !== currentDate) {
-      payload.due_date = currentDate;
-    }
+    if (originalDate !== currentDate) choreAssignmentPatch.due_date = current.dueDate;
   }
 
-  if (originalAssignment.all_day !== current.allDay) {
-    payload.all_day = current.allDay;
+  if (original.all_day !== current.allDay) choreAssignmentPatch.all_day = current.allDay;
+  if (current.completed !== undefined && original.completed !== current.completed) {
+    choreAssignmentPatch.completed = current.completed;
   }
 
-  if (originalAssignment.completed !== current.completed) {
-    payload.completed = current.completed
-  }
-
-  // Roommates diff
-  const originalIds = original.roommates_involved.map(r => r.id).sort();
+  // --- Roommates check ---
+  const originalIds = original.chore.roommates_involved.map(r => r.id).sort();
   const newIds = current.roommates.map(r => r.id).sort();
 
   if (JSON.stringify(originalIds) !== JSON.stringify(newIds)) {
-    payload.roommates_involved_ids = newIds;
+    chorePatch.roommates_involved_ids = newIds;
   }
 
-  return payload;
+  return { chorePatch, choreAssignmentPatch };
 };
 
 export type PartialChoreUpdate = Partial<Chore> & {
@@ -206,10 +228,15 @@ export type PartialChoreUpdate = Partial<Chore> & {
 }
 
 export const updateChore = async (id: string, data: PartialChoreUpdate) => {
-  console.log("INITIAL DATA: ", data);
-
+  // console.log("Update Chore Data: ", data);
   const response = await api.patch(`/chore/${id}/`, data);
-  return parseChore(response.data); // always parse nested assignments
+  return parseChore(response.data);
+};
+
+// Update assignment (assignment-level)
+export const updateAssignment = async (assignmentId: string, data: Partial<ChoreAssignment>) => {
+  const response = await api.patch(`/chore-assignment/${assignmentId}/`, data);
+  return parseAssignment(response.data);
 };
 
 export type ChoreCreateInput = Omit<
