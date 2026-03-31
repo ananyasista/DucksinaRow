@@ -20,7 +20,6 @@ class SimpleUserSerializer(serializers.ModelSerializer):
 class CalendarEventCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = CalendarEvents
-        # event_owner and household from auth user in view 
         fields = [
             "id",
             "title",
@@ -42,7 +41,6 @@ class CalendarEventCreateSerializer(serializers.ModelSerializer):
         if start_date and end_date and end_date <= start_date:
             raise serializers.ValidationError("End date must be after start date.")
 
-        # If notification value is provided, notification unit should also exist
         notification_value = attrs.get("notification_value")
         notification_unit = attrs.get("notification_unit")
 
@@ -55,6 +53,7 @@ class CalendarEventCreateSerializer(serializers.ModelSerializer):
 # Used for event cards/list views
 class CalendarEventListSerializer(serializers.ModelSerializer):
     event_owner_name = serializers.SerializerMethodField()
+    display_color = serializers.SerializerMethodField()
     approval_status = serializers.SerializerMethodField()
     approval_counts = serializers.SerializerMethodField()
 
@@ -71,6 +70,7 @@ class CalendarEventListSerializer(serializers.ModelSerializer):
             "requires_approval",
             "location",
             "event_owner_name",
+            "display_color",
             "approval_status",
             "approval_counts",
         ]
@@ -82,7 +82,11 @@ class CalendarEventListSerializer(serializers.ModelSerializer):
         full_name = f"{obj.event_owner.first_name} {obj.event_owner.last_name}".strip()
         return full_name or obj.event_owner.email
 
-    # For "Your Events" tab, shows event status: approved | pending | declined
+    def get_display_color(self, obj):
+        if not obj.event_owner:
+            return None
+        return obj.event_owner.display_color
+
     def get_approval_status(self, obj):
         if not obj.requires_approval:
             return "approved"
@@ -132,6 +136,7 @@ class EventApprovalSerializer(serializers.ModelSerializer):
 # Used for event detail views
 class CalendarEventDetailSerializer(serializers.ModelSerializer):
     event_owner_name = serializers.SerializerMethodField()
+    display_color = serializers.SerializerMethodField()
     approval_status = serializers.SerializerMethodField()
     approvals = EventApprovalSerializer(many=True, read_only=True)
 
@@ -150,6 +155,7 @@ class CalendarEventDetailSerializer(serializers.ModelSerializer):
             "notification_value",
             "notification_unit",
             "event_owner_name",
+            "display_color",
             "approval_status",
             "approvals",
         ]
@@ -160,6 +166,11 @@ class CalendarEventDetailSerializer(serializers.ModelSerializer):
 
         full_name = f"{obj.event_owner.first_name} {obj.event_owner.last_name}".strip()
         return full_name or obj.event_owner.email
+
+    def get_display_color(self, obj):
+        if not obj.event_owner:
+            return None
+        return obj.event_owner.display_color
 
     def get_approval_status(self, obj):
         if not obj.requires_approval:

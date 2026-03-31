@@ -14,11 +14,11 @@ export interface CalendarEvent {
   display_color?: string | null;
   notification_value?: number | null;
   notification_unit?: string | null;
-  approval_status?: "approved"|"pending"|"declined";
+  approval_status?: "approved" | "pending" | "declined";
   approval_counts?: {
-    approved:number;
+    approved: number;
     total: number;
-  }
+  };
 }
 
 export interface ApprovalUser {
@@ -59,9 +59,42 @@ export type CalendarEventCreateInput = Omit<
   "id" | "event_owner_name" | "approval_status" | "approval_counts"
 >;
 
+export type CalendarFilterOptions = {
+  mine?: boolean;
+  month?: number;
+  year?: number;
+  owners?: string[]; // roommate user IDs
+};
+
 // All events in the current user's household
 export async function listHouseholdEvents(): Promise<CalendarEvent[]> {
   const res = await api.get("/calendar/events/");
+  return res.data;
+}
+
+// Filtered household events
+export async function getFilterOptions(
+  filters: CalendarFilterOptions = {}
+): Promise<CalendarEvent[]> {
+  const params: Record<string, string> = {};
+
+  if (filters.mine) {
+    params.mine = "true";
+  }
+
+  if (filters.month !== undefined) {
+    params.month = String(filters.month);
+  }
+
+  if (filters.year !== undefined) {
+    params.year = String(filters.year);
+  }
+
+  if (filters.owners && filters.owners.length > 0) {
+    params.owners = filters.owners.join(",");
+  }
+
+  const res = await api.get("/calendar/events/", { params });
   return res.data;
 }
 
