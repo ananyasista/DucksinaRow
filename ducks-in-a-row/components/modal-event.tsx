@@ -1,6 +1,5 @@
 import { Calendar, ICalendarEventBase, Mode } from 'react-native-big-calendar'
-import { StyleSheet, Dimensions, TouchableOpacity, Modal, Platform} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { StyleSheet, Dimensions, TouchableOpacity, Modal, Platform, SafeAreaView } from 'react-native';
 import React, { useEffect, useState } from 'react';
 // import { View } from 'react-native-reanimated/lib/typescript/Animated';
 import { View, Text } from 'react-native';
@@ -238,43 +237,31 @@ export default function EventModal({event, owner=false, pendingEvent, ...props}:
             </View>
             <ThemedText type='title'>Roommate Approval</ThemedText>
             <ThemedText type='subtitle'>{approved} of {total} roommates have approved</ThemedText>
-            {pendingEvent && 
-                pendingEvent.approvals.map((e) => {
-                    
-                    if(e.status === 'approved')
-                    {
-                        return <View style={[modalTheme.rowSpace, modalTheme.rowPadding]}>
-                                    <View style={modalTheme.rowStart}>
-                                        <View style={modalTheme.avatarCircle}>
-                                        <Text style={modalTheme.avatarText}>{e.user.name.charAt(0)}</Text>
-                                        </View>
-                                        <ThemedText type='boldText'>{e.user.name}</ThemedText>
-                                    </View>
-                                    <Octicons size={30} name='check-circle' color='black'/>
-                                </View>
-                    }  else if(e.status === 'declined') {
-                        return <View style={[modalTheme.rowSpace, modalTheme.rowPadding]}>
-                                <View  style={modalTheme.rowStart}>
-                                    <View style={modalTheme.avatarCircleRed}>
-                                    <Text style={modalTheme.avatarText}>{e.user.name.charAt(0)}</Text>
-                                    </View>
-                                    <ThemedText type='boldText'>{e.user.name}</ThemedText>
-                                </View>
-                                <Octicons size={30} name='x' color='black'/>
-                            </View>
-                    } else {
-                      return  <View style={[modalTheme.rowSpace, modalTheme.rowPadding]}>
-                                <View  style={modalTheme.rowStart}>
-                                    <View style={modalTheme.avatarCircleYellow}>
-                                    <Text style={modalTheme.avatarText}>{e.user.name.charAt(0)}</Text>
-                                    </View>
-                                    <ThemedText type='boldText'>{e.user.name}</ThemedText>
-                                </View>
-                                <IconSymbol size={30} name='hourglass' color='black'/>
-                            </View>
-                    }
-                })
-            }
+            {pendingEvent &&
+            pendingEvent.approvals.map((e) => {
+                let circleStyle = modalTheme.avatarCircleYellow;
+                let rightIcon = <IconSymbol size={30} name='hourglass' color='black' />;
+
+                if (e.status === 'approved') {
+                circleStyle = modalTheme.avatarCircle;
+                rightIcon = <Octicons size={30} name='check-circle' color='black' />;
+                } else if (e.status === 'declined') {
+                circleStyle = modalTheme.avatarCircleRed;
+                rightIcon = <Octicons size={30} name='x' color='black' />;
+                }
+
+                return (
+                <View key={`${e.user.id}-${e.status}`} style={[modalTheme.rowSpace, modalTheme.rowPadding]}>
+                    <View style={modalTheme.rowStart}>
+                    <View style={circleStyle}>
+                        <Text style={modalTheme.avatarText}>{e.user.name.charAt(0)}</Text>
+                    </View>
+                    <ThemedText type='boldText'>{e.user.name}</ThemedText>
+                    </View>
+                    {rightIcon}
+                </View>
+                );
+            })}
             </View>
         </Modal>
         {editModal && (
