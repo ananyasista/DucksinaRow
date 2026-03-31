@@ -224,54 +224,7 @@ export default function HomeScreen() {
                     </TouchableOpacity>
                   ))}
                 </View>
-              </>
-            </View>
-          )}
-
-          {/* // rendering for chores section */}
-          <View style={styles.section}>
-            <Text style={styles.subtitle}>Quick To-Do List:</Text>
-            {choreList.length >= 1 ? (
-              <>
-                {choreList.map((chore) => (
-                  <CheckboxTile
-                    key={chore.id}
-                    title={chore.chore.title}
-                    id={chore.id}
-                    complete={chore.completed ?? false}
-                    onPress={()=>{router.navigate({pathname:'/(tabs)/chores'})}}
-                    onToggle={async (completed) => {
-                      try {
-                        var { chorePatch, choreAssignmentPatch } = buildChorePatch(chore, {
-                          title: chore.chore.title,
-                          details: chore.chore.details,
-                          location: chore.chore.location,
-                          allDay: chore.all_day,
-                          dueDate: chore.due_date,
-                          completed: completed,
-                          repeatUnit: chore.chore.repeat_unit,
-                          repeatValue: chore.chore.repeat_value,
-                          passToNextUnit: chore.chore.pass_to_next_unit ?? "weeks",
-                          passToNextValue: chore.chore.pass_to_next_value ?? 1,
-                          isRotating: chore.chore.is_rotating,
-                          roommates: chore.chore.roommates_involved
-                        });
-                        if (Object.keys(chorePatch).length > 0) {
-                          await updateChore(chore.id, chorePatch);
-                        }
-                        if (Object.keys(choreAssignmentPatch).length > 0) {
-                          await updateAssignment(chore.id, choreAssignmentPatch);
-                        }
-                      } catch (err: any) {
-                        console.log("ERROR RESPONSE:", err.response?.data);
-                        console.log("STATUS:", err.response?.status);
-                      }
-                    }}
-                  ></CheckboxTile>
-                ))}
-              </>
-            ) : (
-              <Text style={styles.subtitle2}>Your to-do list is empty!</Text>
+              </View>
             )}
 
             <View style={styles.section}>
@@ -280,19 +233,19 @@ export default function HomeScreen() {
 
               {choreList.length >= 1 ? (
                 <View style={styles.todoList}>
-                  {choreList.map((chore) => {
-                    const completed = chore.latest_assignment?.completed ?? false;
+                  {choreList.map((assignment) => {
+                    const completed = assignment.completed ?? false;
                     const choreColor = completed ? COLORS.sage : COLORS.orange;
 
                     return (
                       <TouchableOpacity
-                        key={chore.id}
+                        key={assignment.id}
                         style={[styles.choreCard, { backgroundColor: choreColor }]}
                         onPress={() => {
                           router.navigate({ pathname: '/(tabs)/chores' });
                         }}
                       >
-                        <Text style={styles.choreCardText}>{chore.title}</Text>
+                        <Text style={styles.choreCardText}>{assignment.chore.title}</Text>
 
                         <TouchableOpacity
                           style={[
@@ -301,24 +254,33 @@ export default function HomeScreen() {
                           ]}
                           onPress={async () => {
                             try {
-                              await updateChore(
-                                chore.id,
-                                buildChorePatch(chore, {
-                                  title: chore.title,
-                                  details: chore.details,
-                                  location: chore.location,
-                                  allDay: chore.latest_assignment.all_day,
-                                  dueDate: chore.latest_assignment.due_date,
+                              const { chorePatch, choreAssignmentPatch } = buildChorePatch(
+                                assignment,
+                                {
+                                  title: assignment.chore.title,
+                                  details: assignment.chore.details,
+                                  location: assignment.chore.location,
+                                  allDay: assignment.all_day,
+                                  dueDate: assignment.due_date,
                                   completed: !completed,
-                                  repeatUnit: chore.repeat_unit,
-                                  repeatValue: chore.repeat_value,
-                                  passToNextUnit: chore.pass_to_next_unit ?? 'weeks',
-                                  passToNextValue: chore.pass_to_next_value ?? 1,
-                                  isRotating: chore.is_rotating,
-                                  roommates: chore.roommates_involved,
-                                })
+                                  repeatUnit: assignment.chore.repeat_unit,
+                                  repeatValue: assignment.chore.repeat_value,
+                                  passToNextUnit: assignment.chore.pass_to_next_unit ?? 'weeks',
+                                  passToNextValue: assignment.chore.pass_to_next_value ?? 1,
+                                  isRotating: assignment.chore.is_rotating,
+                                  roommates: assignment.chore.roommates_involved,
+                                }
                               );
-                              loadHomeData();
+
+                              if (Object.keys(chorePatch).length > 0) {
+                                await updateChore(assignment.chore.id, chorePatch);
+                              }
+
+                              if (Object.keys(choreAssignmentPatch).length > 0) {
+                                await updateAssignment(assignment.id, choreAssignmentPatch);
+                              }
+
+                              await loadHomeData();
                             } catch (err: any) {
                               console.log('ERROR RESPONSE:', err.response?.data);
                               console.log('STATUS:', err.response?.status);
