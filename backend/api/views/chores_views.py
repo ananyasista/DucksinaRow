@@ -83,7 +83,7 @@ class ChoreAssignmentViewSet(viewsets.ModelViewSet):
         now = timezone.now()
 
         queryset = ChoreAssignment.objects.select_related(
-            "chore", "assignee", "chore__household"
+            "chore", "assignee", "next_assignee", "chore__household"
         )
 
         if not user.is_superuser:
@@ -91,16 +91,12 @@ class ChoreAssignmentViewSet(viewsets.ModelViewSet):
 
         # COMPLETION LOGIC
         completed = self.request.query_params.get("completed")
-        if completed is None:
-            # Default: only incomplete, future/present assignments
-            queryset = queryset.filter(completed=False, due_date__gte=now)
-        elif completed.lower() == "true":
-            # Include incomplete future + all completed
-            queryset = queryset.filter(
-                Q(completed=False, due_date__gte=now) | Q(completed=True)
-            )
-        elif completed.lower() == "false":
-            queryset = queryset.filter(completed=False)
+        if completed is not None:
+            if completed.lower() == "true":
+                queryset = queryset.filter(completed__in=[True, False])
+            elif completed.lower() == "false":
+                queryset = queryset.filter(completed=False)
+
 
         # My assignments
         if self.request.query_params.get("my") == "true":
@@ -110,9 +106,9 @@ class ChoreAssignmentViewSet(viewsets.ModelViewSet):
         assignee = self.request.query_params.get("assignee")
         if assignee:
             queryset = queryset.filter(
-                assignee__id__in=[int(a.strip()) for a in assignee.split(",")]
+                assignee__id__in=[a.strip() for a in assignee.split(",")]
             )
-
+        
         # Location (from chore)
         location = self.request.query_params.get("location")
         if location:

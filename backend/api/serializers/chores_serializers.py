@@ -31,16 +31,34 @@ def ensure_aware_datetime(value, all_day=False):
 
     return dt
 
+class ChoreMiniSerializer(serializers.ModelSerializer):
+    roommates_involved = SimpleUserSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Chore
+        fields = [
+            "id",
+            "title",
+            "details",
+            "location",
+            "is_rotating",
+            "repeat_unit",
+            "repeat_value",
+            "pass_to_next_unit",
+            "pass_to_next_value",
+            "household",  # this will be ID by default
+            "roommates_involved",
+        ]
 
 class ChoreAssignmentSerializer(serializers.ModelSerializer):
     assignee = SimpleUserSerializer(read_only=True)
     next_assignee = SimpleUserSerializer(read_only=True)
+    # Only include minimal chore info to avoid circular dependency
+    chore = ChoreMiniSerializer(read_only=True)
+
     class Meta:
         model = ChoreAssignment
-        fields = [
-            "id", "assignee", "next_assignee",
-            "due_date", "completed", "completed_date", "all_day"
-        ]
+        fields = [ "id", "assignee", "next_assignee", "due_date", "completed", "completed_date", "all_day", "chore"]
 
 class ChoreSerializer(serializers.ModelSerializer):
     latest_assignment = ChoreAssignmentSerializer(required=False)
@@ -77,38 +95,42 @@ class ChoreSerializer(serializers.ModelSerializer):
         return ChoreAssignmentSerializer(qs, many=True).data
 
     def update(self, instance, validated_data):
-        print(validated_data)
-        due_date = validated_data.pop("due_date", None)
-        all_day = validated_data.pop("all_day", None)
-        completed = validated_data.pop("completed", None)
-
+        # print("Validated Data: ", validated_data)
+        roommates_ids = validated_data.pop("roommates_involved_ids", None)
         # Update Chore fields
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
+        
+        # Update Roommates
+        if roommates_ids is not None:
+            users = User.objects.filter(id__in=[u.id if isinstance(u, User) else u for u in roommates_ids])
+            instance.roommates_involved.set(users)
 
+        
         # Update latest_assignment
         latest_assignment = instance.latest_assignment
+        if latest_assignment:
+            due_date = validated_data.pop("due_date", None)
+            all_day = validated_data.pop("all_day", None)
+            completed = validated_data.pop("completed", None)
 
-        if not latest_assignment:
-            return instance
+            # Update assignment fields
+            if due_date is not None:
+                latest_assignment.due_date = ensure_aware_datetime(
+                    due_date,
+                    all_day=all_day if all_day is not None else latest_assignment.all_day
+                )
 
-        # Update assignment fields
-        if due_date is not None:
-            latest_assignment.due_date = ensure_aware_datetime(
-                due_date,
-                all_day=all_day if all_day is not None else latest_assignment.all_day
-            )
+            if all_day is not None:
+                latest_assignment.all_day = all_day
 
-        if all_day is not None:
-            latest_assignment.all_day = all_day
-
-        if completed is not None:
-            latest_assignment.completed = completed
-            if completed:
-                latest_assignment.completed_date = timezone.now()
-
-        latest_assignment.save()
+            if completed is not None:
+                latest_assignment.completed = completed
+                if completed:
+                    latest_assignment.completed_date = timezone.now()
+            
+            latest_assignment.save()
 
         # Decide if we should create next assignment
         if completed is True:
@@ -157,11 +179,15 @@ class ChoreSerializer(serializers.ModelSerializer):
         )
 
         # Set roommates involved
+        # Extract IDs from UserSummary dicts
         if roommates:
-            users = User.objects.filter(id__in=roommates)
+            # Extract IDs from dicts (UserSummary) or User objects
+            roommate_ids = [u["id"] if isinstance(u, dict) else u.id for u in roommates]
+            users = User.objects.filter(id__in=roommate_ids)
             chore.roommates_involved.set(users)
         else:
-            roommates = [user]  # default assignee if no roommates
+            # Default assignee is the current user
+            chore.roommates_involved.set([user])
 
         # Determine first assignee & next assignee
         assignee = roommates[0] if roommates else user
