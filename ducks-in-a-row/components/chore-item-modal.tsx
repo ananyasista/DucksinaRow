@@ -7,7 +7,7 @@ import DropDownPicker from 'react-native-dropdown-picker'
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import Counter from './counter';
 import { IconSymbol } from './ui/icon-symbol';
-import { Chore, ChoreCreateInput, buildChorePatch } from '@/api/chores';
+import { Chore, ChoreAssignment, ChoreCreateInput, buildChorePatch } from '@/api/chores';
 import { ThemedText } from './themed-text';
 import { ThemedTextInput } from './text-input';
 import { ThemedSwitch } from './themed-switch';
@@ -16,27 +16,29 @@ type ModalProps = {
     visible: boolean;
     onClose: () => void;
     title: string;
-    save: (chore: Partial<Chore>) => void;
-    chore?: Chore;
+    save: (data: {
+        create?: ChoreCreateInput;
+        chorePatch?: Partial<Chore>;
+        choreAssignmentPatch?: Partial<ChoreAssignment>;
+    }) => void;
+    chore?: ChoreAssignment;
     allRoommates: Chore['roommates_involved']; 
 }
 
 export default function ChoreItemModal(props: ModalProps) {
-    const [choreTitle, setChoreTitle] = useState(props.chore?.title ?? '');
-    const [choreDetails, setChoreDetails] = useState(props.chore?.details ?? '');
-    const [choreLocation, setChoreLocation] = useState(props.chore?.location ?? null);
-    const [repeatUnit, setRepeatUnit] = useState(props.chore?.repeat_unit ?? 'weeks');
-    const [repeatValue, setRepeatValue] = useState(props.chore?.repeat_value ?? 1);
-    const [choreRotate, setChoreRotate] = useState(props.chore?.is_rotating ?? false);
+    const [choreTitle, setChoreTitle] = useState(props.chore?.chore.title ?? '');
+    const [choreDetails, setChoreDetails] = useState(props.chore?.chore.details ?? '');
+    const [choreLocation, setChoreLocation] = useState(props.chore?.chore.location ?? null);
+    const [repeatUnit, setRepeatUnit] = useState(props.chore?.chore.repeat_unit ?? 'weeks');
+    const [repeatValue, setRepeatValue] = useState(props.chore?.chore.repeat_value ?? 1);
+    const [choreRotate, setChoreRotate] = useState(props.chore?.chore.is_rotating ?? false);
 
-    const [allDay, setAllDay] = useState(props.chore?.latest_assignment.all_day ?? true);
-    const [dueDate, setDueDate] = useState<Date>(props.chore?.latest_assignment.due_date ? new Date(props.chore.latest_assignment.due_date) : new Date());
-    
-    // const [assignee, setAssignee] = useState<UserSummary>(props.chore?.current_assignment ? props.chore?.current_assignment?.assignee : null);
-    
-    const [passToNextValue, setPassToNextValue] = useState(props.chore?.pass_to_next_value ?? 1);
-    const [passToNextUnit, setPassToNextUnit] = useState(props.chore?.pass_to_next_unit ?? 'weeks');
-    const [roommatesInvolved, setRoommatesInvolved] = useState<Chore['roommates_involved']>(props.chore?.roommates_involved || []);
+    const [allDay, setAllDay] = useState(props.chore?.all_day ?? true);
+    const [dueDate, setDueDate] = useState<Date>(props.chore?.due_date ? new Date(props.chore.due_date) : new Date());
+        
+    const [passToNextValue, setPassToNextValue] = useState(props.chore?.chore.pass_to_next_value ?? 1);
+    const [passToNextUnit, setPassToNextUnit] = useState(props.chore?.chore.pass_to_next_unit ?? 'weeks');
+    const [roommatesInvolved, setRoommatesInvolved] = useState<Chore['roommates_involved']>(props.chore?.chore.roommates_involved || []);
     
 
     const [repeatInt, setRepeatInt] = useState([
@@ -75,8 +77,6 @@ export default function ChoreItemModal(props: ModalProps) {
     };
 
     const handleSave = () => {
-        console.log("Trying to reach here");
-
         if (!props.chore) {
             const createdItem: ChoreCreateInput = {
                 title: choreTitle,
@@ -84,7 +84,7 @@ export default function ChoreItemModal(props: ModalProps) {
                 due_date: dueDate instanceof Date ? dueDate : new Date(dueDate),
                 location: choreLocation,
                 all_day: allDay,
-                is_rotating: false, // or controlled by a switch
+                is_rotating: choreRotate, // or controlled by a switch
                 roommates_involved: roommatesInvolved,
                 repeat_value: repeatValue,
                 repeat_unit: repeatUnit,
@@ -96,51 +96,50 @@ export default function ChoreItemModal(props: ModalProps) {
                 ...createdItem,
                 roommates_involved_ids: roommatesInvolved.map(r => r.id)
             })
-            props.save(createdItem);
+            props.save({create: createdItem});
         } else {
-            const updatedItem = buildChorePatch(props.chore, {
-                    title: choreTitle,
-                    details: choreDetails,
-                    location: choreLocation,
-                    allDay,
-                    dueDate,
-                    completed: props.chore?.latest_assignment.completed ?? false,
-                    repeatUnit,
-                    repeatValue,
-                    passToNextUnit,
-                    passToNextValue,
-                    isRotating: choreRotate,
-                    roommates: roommatesInvolved,
-                });
-                console.log("SENDING:", {
-                    ...updatedItem,
-                    roommates_involved_ids: roommatesInvolved.map(r => r.id)
-                })
-                props.save(updatedItem);
-        }
-            
-            // console.log(repeatDate);
-            // console.log(repeatInt[repeatDate]);
-            
-            props.onClose();
-        };
-    
-        useEffect(() => {
-            if (props.chore) {
-                setChoreTitle(props.chore.title);
-                setChoreDetails(props.chore.details);
-                setChoreLocation(props.chore.location);
-                setDueDate(props.chore.latest_assignment.due_date ?? new Date());
-                setAllDay(props.chore.latest_assignment.all_day ?? true);
-                setRoommatesInvolved(props.chore.roommates_involved);
-                setRepeatValue(props.chore.repeat_value);
-                setRepeatUnit(props.chore.repeat_unit);
-                setPassToNextUnit(props.chore.pass_to_next_unit ?? "None");
-                setPassToNextValue(props.chore.pass_to_next_value  ?? 0);
-                setChoreRotate(props.chore.is_rotating);
-            }
-        }, [props.chore]);
+            // SAVE FOR UPDATEs
+            const { chorePatch, choreAssignmentPatch } = buildChorePatch(props.chore, {
+                title: choreTitle,
+                details: choreDetails,
+                location: choreLocation,
+                allDay,
+                dueDate,
+                completed: props.chore?.completed ?? false,
+                repeatUnit,
+                repeatValue,
+                passToNextUnit,
+                passToNextValue,
+                isRotating: choreRotate,
+                roommates: roommatesInvolved,
+            });
 
+            console.log("CHORE UPDATE: ",  chorePatch);
+            console.log("CHORE ASSIGNMENT UPDATE: ", choreAssignmentPatch);
+            
+            props.save({
+                chorePatch: chorePatch,
+                choreAssignmentPatch: choreAssignmentPatch,
+            });
+        }   
+        props.onClose();
+    };
+    
+    useEffect(() => {
+        if (props.chore) {
+            setChoreTitle(props.chore.chore.title);
+            setChoreDetails(props.chore.chore.details);
+            setChoreLocation(props.chore.chore.location);
+            setDueDate(props.chore.due_date ?? new Date());
+            setAllDay(props.chore.all_day ?? true);
+            setRoommatesInvolved(props.chore.chore.roommates_involved);
+            setRepeatValue(props.chore.chore.repeat_value);
+            setRepeatUnit(props.chore.chore.repeat_unit);
+            setPassToNextUnit(props.chore.chore.pass_to_next_unit ?? "None");
+            setPassToNextValue(props.chore.chore.pass_to_next_value  ?? 0);
+            setChoreRotate(props.chore.chore.is_rotating);
+        }
+    }, [props.chore]);
 
     return (
         <View  style={{flex: 1, paddingBottom: 50}}>

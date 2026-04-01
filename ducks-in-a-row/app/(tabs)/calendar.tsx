@@ -9,7 +9,16 @@ import ModalCalendarForm from '@/components/modal-calendar-form';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import AntDesign from '@expo/vector-icons/AntDesign';
-import { CalendarEvent as APICalendarEvent, ApprovalEvent as APIApprovalEvent, EventDetails as APIEventDetails, listHouseholdEvents, listMyEvents, listNeedsApproval, getEventId } from '@/api/calendar';
+import {
+  CalendarEvent as APICalendarEvent,
+  ApprovalEvent as APIApprovalEvent,
+  EventDetails as APIEventDetails,
+  listHouseholdEvents,
+  listMyEvents,
+  listNeedsApproval,
+  getEventId,
+  getFilterOptions,
+} from '@/api/calendar';
 import { CalendarContainerProps } from 'react-native-big-calendar/build/components/CalendarContainer';
 import CreateHouseholdScreen from '../create-household';
 import EventModal from '@/components/modal-event';
@@ -20,11 +29,12 @@ import Chip from '@/components/chip';
 
 export interface CalendarEvent extends ICalendarEventBase {
   id: string;
+  display_color?: string | null;
 }
 
 export default function CalendarPage () {
     const { mode } = useLocalSearchParams();
-    const [events, setEvents] = useState<ICalendarEventBase[]>([]);
+    const [events, setEvents] = useState<CalendarEvent[]>([]);
     const [fullDetailEvent, setFullDetailEvents] = useState<APICalendarEvent[]>([]);
     const [allMyEvents, setAllMyEvents] = useState<APICalendarEvent[]>([]);
     const [myEvents, setMyEvents] = useState<APICalendarEvent[]>([]);
@@ -52,11 +62,38 @@ export default function CalendarPage () {
     const [showNeedsApproval, setShowNeedsApproval] = useState(true);
     const [showUpcomingEvents, setShowUpcomingEvents] = useState(true);
     const [upcomingEvents, setUpcomingEvents] = useState<APICalendarEvent[]>([]);
-    const [filtersByEvent, setFiltersByEvent] = useState<String[]>([]);
-    const [filtersByRoommate, setFiltersByRoommate] = useState<String[]>([]);
+    const [filtersByEvent, setFiltersByEvent] = useState<string[]>([]);
+    const [filtersByRoommate, setFiltersByRoommate] = useState<string[]>([]);
+
+    async function loadFilteredCalendarEvents(selectedOwnerIds: string[]) {
+      try {
+        const filteredEvents =
+          selectedOwnerIds.length === 0
+            ? await listHouseholdEvents()
+            : await getFilterOptions({
+                owners: selectedOwnerIds,
+              });
+
+        const calenEvents: CalendarEvent[] = filteredEvents.map((event: APICalendarEvent) =>
+          APICalEventToCalEvent(event)
+        );
+
+        setFullDetailEvents(filteredEvents);
+        setEvents(calenEvents);
+        setUpcomingEvents(filteredEvents);
+      } catch (e: any) {
+        console.log("Filtered calendar error: " + e);
+      }
+    }
+
     useEffect(() => {
       onScreenLoad();
     }, [])
+
+    useEffect(() => {
+      loadFilteredCalendarEvents(filtersByRoommate);
+    }, [currentDate, filtersByRoommate]);
+
     function APICalEventToCalEvent(event: APICalendarEvent) {
 
         var startDate = new Date(event.start_date);
@@ -72,9 +109,11 @@ export default function CalendarPage () {
             end: endDate,
             title: event.title,
             id: event.id,
+            display_color: event.display_color ?? null,
         }
         return calEvent;
     }
+
     function APIApprovalEventToAPICalEvent(e:APIApprovalEvent)
     {
       const approvEvent: APICalendarEvent = {
@@ -88,9 +127,11 @@ export default function CalendarPage () {
             requires_approval: e.event.requires_approval,
             location: e.event.location,
             event_owner_name:  e.event.event_owner_name ?? "",
+            display_color: e.event.display_color ?? null,
       }
       return approvEvent;
     }
+
     const onScreenLoad = async () => {
       try {
         const allEvents = await listHouseholdEvents();
@@ -147,28 +188,24 @@ export default function CalendarPage () {
       setOpenDropdown(false);
     }
     
-    async function showDetailModal(currEvent:CalendarEvent)
-    {
+    async function showDetailModal(currEvent: CalendarEvent) {
       setEvent(currEvent);
       setOpenDropdown(false);
+      setIsOwner(false);
+
       const pendingEvent = await getEventId(currEvent.id);
       setPendingEvent(pendingEvent);
-      myEvents.forEach((e) => {
-        if(e.id === currEvent.id)
-        {
-          setIsOwner(true);
-        }
-      })
-      fullDetailEvent.forEach((e) => {
-        if(e.id=== currEvent.id)
-        {
-          setAPIEvent(e);
-        }
-      })
+
+      const ownsEvent = myEvents.some((e) => e.id === currEvent.id);
+      setIsOwner(ownsEvent);
+
+      const selectedEvent = fullDetailEvent.find((e) => e.id === currEvent.id) ?? null;
+      setAPIEvent(selectedEvent);
+
       setDetailsModal(true);
     }
-    async function updateCalendar() 
-    {
+
+    async function updateCalendar() {
       await updateEvents();
     }
     async function closeDetailModal()
@@ -179,23 +216,30 @@ export default function CalendarPage () {
       setDetailsModal(false);
     }
 
-    async function updateEvents()
-    {
-      const allEvents = await listHouseholdEvents();
-        const calenEvents: CalendarEvent[] = 
-          allEvents.map((event:APICalendarEvent) => (
-            APICalEventToCalEvent(event)
-          ));
-        await setEvents(calenEvents);
-        setFullDetailEvents(allEvents);
-        setAllMyEvents(await listMyEvents());
-        setMyEvents(allMyEvents);
+    async function updateEvents() {
+      const refreshedEvents =
+        filtersByRoommate.length === 0
+          ? await listHouseholdEvents()
+          : await getFilterOptions({
+              owners: filtersByRoommate,
+            });
+
+      const calenEvents: CalendarEvent[] = refreshedEvents.map((event: APICalendarEvent) =>
+        APICalEventToCalEvent(event)
+      );
+
+      setEvents(calenEvents);
+      setFullDetailEvents(refreshedEvents);
+      setUpcomingEvents(refreshedEvents);
+
+      const refreshedMyEvents = await listMyEvents();
+      setAllMyEvents(refreshedMyEvents);
+      setMyEvents(refreshedMyEvents);
     }
 
-   
-    function toggleDropdown() {
-        if (menuRef.current) {
-          menuRef.current.measureInWindow((x, y, width, height) => {
+   function toggleDropdown() {
+       if (menuRef.current) {
+         menuRef.current.measureInWindow((x, y, width, height) => {
             setDropdownPos({
               top: y + height,
               right: 20
@@ -226,55 +270,22 @@ export default function CalendarPage () {
        });
        setNeedsMyApproval(newNeedsApproval);
     }
-    function filterBy(name: String)
-    {
-        if(name === "all")
-        {
-          setFiltersByEvent([]);
-          setFiltersByRoommate([]);
-          setUpcomingEvents(fullDetailEvent);
-          
-          setShowMyEvents(true);
-          setShowNeedsApproval(true);
-          setShowUpcomingEvents(true);
 
-          return;
-        }
-       if(filtersByRoommate.includes(name))
-       {
-          filtersByRoommate.splice(filtersByRoommate.indexOf(name),1);
-       } else {
-          filtersByRoommate.push(name);
-       }
-       applyFiltersByRoommate();
+    function filterBy(roommateId: string | "all") {
+      if (roommateId === "all") {
+        setFiltersByRoommate([]);
+        return;
+      }
+
+      const updatedFilters = filtersByRoommate.includes(roommateId)
+        ? filtersByRoommate.filter((id) => id !== roommateId)
+        : [...filtersByRoommate, roommateId];
+
+      setFiltersByRoommate(updatedFilters);
     }
-    function applyFiltersByRoommate()
-    {
-        if(filtersByRoommate.length === 0)
-        {
 
-          const calenEvents: CalendarEvent[] = 
-          fullDetailEvent.map((event:APICalendarEvent) => (
-            APICalEventToCalEvent(event)
-          ));
-          setEvents(calenEvents);
-          return;
-        } else {
-          const filteredCalenEvents: APICalendarEvent[] = [];
-          const calenEvents: CalendarEvent[] = [];
-
-          fullDetailEvent.map((event:APICalendarEvent) => {
-            if(filtersByRoommate.includes(event.event_owner_name)){
-              calenEvents.push(APICalEventToCalEvent(event));
-            }
-        });
-            setEvents(calenEvents);
-              return;
-        }
-    }
-    
-  return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background}}>
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: theme.background}}>
       
         {/*Date and Today Button*/}
         <View style={calendarTheme.header}>
@@ -311,32 +322,72 @@ export default function CalendarPage () {
         >
           {showCalendar && (
             <View>
-              <View style={calendarTheme.rowFilter}>
-                 <TouchableOpacity style={filtersByRoommate.length === 0  ? calendarTheme.filter  : calendarTheme.filterSelected} onPress={() => filterBy("all")}><Text style={filtersByRoommate.length === 0 ? calendarTheme.filterText : calendarTheme.filterTextSelected}>All</Text></TouchableOpacity>
-              {
-                  roommates.map((roommate) => {
-                  if(roommate.first_name)
-                  {
-                      return <TouchableOpacity id={roommate.id} style={filtersByRoommate.includes(roommate.first_name) ? calendarTheme.filter  : calendarTheme.filterSelected} onPress={() => filterBy(roommate.first_name)}><Text style={filtersByRoommate.includes(roommate.first_name) ? calendarTheme.filterText : calendarTheme.filterTextSelected}>{roommate.first_name}</Text></TouchableOpacity>
-                  } 
-                  })
-              }
-              </View>
-              <Calendar
+            <View style={calendarTheme.rowFilter}>
+              <TouchableOpacity
+                style={filtersByRoommate.length === 0 ? calendarTheme.filter : calendarTheme.filterSelected}
+                onPress={() => filterBy("all")}
+              >
+                <Text style={filtersByRoommate.length === 0 ? calendarTheme.filterText : calendarTheme.filterTextSelected}>
+                  All
+                </Text>
+              </TouchableOpacity>
+
+              {roommates.map((roommate) => {
+                if (!roommate.first_name) return null;
+
+                const isSelected = filtersByRoommate.includes(roommate.id);
+
+                return (
+                  <TouchableOpacity
+                    key={roommate.id}
+                    style={isSelected ? calendarTheme.filter : calendarTheme.filterSelected}
+                    onPress={() => filterBy(roommate.id)}
+                  >
+                    <Text style={isSelected ? calendarTheme.filterText : calendarTheme.filterTextSelected}>
+                      {roommate.first_name}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+            <Calendar
               events={events}
               height={calendarHeight}
-              date = {currentDate}
+              date={currentDate}
               maxVisibleEventCount={2}
-              eventCellStyle = {calendarTheme.eventStyle}
+              eventCellStyle={(event) => {
+                const calEvent = event as CalendarEvent;
+                const color = calEvent.display_color || "#4DC591";
+
+                return {
+                  backgroundColor: color,
+                  borderColor: color,
+                  borderWidth: 1,
+                  borderRadius: 6,
+                };
+              }}
+              allDayEventCellStyle={(event) => {
+                const calEvent = event as CalendarEvent;
+                const color = calEvent.display_color || "#4DC591";
+
+                return {
+                  backgroundColor: color,
+                  borderColor: color,
+                  borderWidth: 1,
+                  borderRadius: 6,
+                };
+              }}
+              eventCellTextColor="#fff"
+              allDayEventCellTextColor="#fff"
               mode={currentMode}
-              onPressCell={(date:Date) =>changeDateMode(date)}
-              onPressDateHeader={(date:Date) =>changeDateMode(date)}
-              onSwipeEnd = {(date:Date) => setCurrentDate(date)}
-              theme = {theme.calendar}
+              onPressCell={(date: Date) => changeDateMode(date)}
+              onPressDateHeader={(date: Date) => changeDateMode(date)}
+              onSwipeEnd={(date: Date) => setCurrentDate(date)}
+              theme={theme.calendar}
               verticalScrollEnabled={true}
-              showAllDayEventCell = {true}
+              showAllDayEventCell={true}
               onPressEvent={(event) => showDetailModal(event as CalendarEvent)}
-          />
+            />
           </View>)
           }
           {/* Event View - Approval vs Approved*/}
