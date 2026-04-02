@@ -79,6 +79,16 @@ class CalendarEventViewSet(viewsets.ViewSet):
         queryset = queryset.order_by("start_date")
         serializer = CalendarEventListSerializer(queryset, many=True)
         return Response(serializer.data)
+    
+    @action(detail=False, methods=["get"], url_path="upcoming")
+    def upcomingEvents(self, request):
+        today = timezone.localdate()
+        events = self.get_queryset().filter(
+            end_date__date__gte=today  # includes events ending today
+        ).order_by("start_date")
+
+        serializer = CalendarEventListSerializer(events, many=True)
+        return Response(serializer.data)
 
     # Retrieve a specific event details 
     def retrieve(self, request, pk=None):
@@ -154,7 +164,8 @@ class CalendarEventViewSet(viewsets.ViewSet):
             approved=False,
             response_time__isnull=True,
             event__household=request.user.household,
-            event__requires_approval=True
+            event__requires_approval=True,
+            event__end_date__gte=timezone.now()
         ).select_related(
             "event",
             "event__event_owner"
@@ -166,14 +177,15 @@ class CalendarEventViewSet(viewsets.ViewSet):
         return Response(serializer.data)
 
     # Get all events for the current user's household > "My Events" section
-    @action(detail=False, methods=["get"], url_path="my-events")
     def my_events(self, request):
-        events = self.get_queryset().filter(
-            event_owner=request.user
-        ).order_by("start_date")
+            today = timezone.localdate()
+            events = self.get_queryset().filter(
+                event_owner=request.user,
+                end_date__date__gte=today
+            ).order_by("start_date")
 
-        serializer = CalendarEventListSerializer(events, many=True)
-        return Response(serializer.data)
+            serializer = CalendarEventListSerializer(events, many=True)
+            return Response(serializer.data)
 
     # Respond to an event approval request
     @action(detail=True, methods=["post"], url_path="respond")
