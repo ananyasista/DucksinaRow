@@ -38,4 +38,4 @@ export const useInventorySocket = () => {
     }, []);
 
     return { inventory, setInventory };
-    };
+};
