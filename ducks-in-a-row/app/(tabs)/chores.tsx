@@ -11,7 +11,9 @@ import ChoreViewModal from '@/components/chore-view-modal';
 import ChoreItemModal from '@/components/chore-item-modal';
 
 import * as choreAPI from '@/api/chores';
-import { getHouseholdRoommates } from '@/api/household';
+import { getHouseholdRoommates, getHouseholdName } from '@/api/household';
+
+import { useChoreSocket } from '@/hooks/use-chore-socket';
 
 
 export default function ChoreScreen() {
@@ -21,7 +23,6 @@ export default function ChoreScreen() {
   const [addItemVisible, setAddItemVisible] = useState(false);
   const [viewItemVisible, setViewItemVisible] = useState(false);
   const [editItemVisible, setEditItemVisible] = useState(false);
-  const [complete, setComplete] = useState(false);
   const [selectedItem, setSelectedItem] = useState<choreAPI.ChoreAssignment | null>(null);
   const [searchText, setSearchText] = useState('');
 
@@ -31,99 +32,139 @@ export default function ChoreScreen() {
   const [endDateFilter, setEndDateFilter] = useState<Date>(new Date());
   const [assigneeFilterList, setAssigneeFilterList] = useState<string[]>([]);
 
+  const [householdId, setHouseholdId] = useState<string | null>(null);
+  const { chores: socketChores } = useChoreSocket();
 
-  // TODO: have to create function that triggers when restock toggle is pressed
   useEffect(() => {
-      const loadData = async () => {
-        const filterData = await choreAPI.getAssignmentFilterOptions();
-        const choreData = await choreAPI.getChoreAssignments();
-        const choresWithAssignments = choreData.map((assignment: choreAPI.ChoreAssignment) => {
-          const parsedAssignment: choreAPI.ChoreAssignment = {
-            ...assignment,
-            due_date: assignment.due_date ? new Date(assignment.due_date) : new Date(),
-            completed_date: assignment.completed_date ? new Date(assignment.completed_date) : null,
-          };
+    const loadData = async () => {
+      const household = await getHouseholdName();
+      setHouseholdId(household.id);
 
-          return parsedAssignment;
-        });
-      
-        const choresMap: Record<string, { all_assignments: choreAPI.ChoreAssignment[]; latest_assignment: choreAPI.ChoreAssignment }> = {};
+      const filterData = await choreAPI.getAssignmentFilterOptions();
+      const choreData = await choreAPI.getChoreAssignments();
+      const choresWithAssignments = choreData.map((assignment: choreAPI.ChoreAssignment) => {
+        const parsedAssignment: choreAPI.ChoreAssignment = {
+          ...assignment,
+          due_date: assignment.due_date ? new Date(assignment.due_date) : new Date(),
+          completed_date: assignment.completed_date ? new Date(assignment.completed_date) : null,
+        };
 
-        choresWithAssignments.forEach(assignment => {
-          const choreId = assignment.chore.id;
-          if (!choresMap[choreId]) {
-            choresMap[choreId] = {
-              all_assignments: [assignment],
-              latest_assignment: assignment,
-            };
-          } else {
-            choresMap[choreId].all_assignments.push(assignment);
-
-            // Update latest assignment based on due_date
-            if (assignment.due_date > choresMap[choreId].latest_assignment.due_date) {
-              choresMap[choreId].latest_assignment = assignment;
-            }
-          }
-        });
-
-        getRoommates();
-        setLocationList(filterData.locations);
-        setRoommatesList(filterData.roommates);
-        setChoresList(choresWithAssignments);
-        // setLocationList()
-      };
-  
-      loadData();
-    }, []);
+        return parsedAssignment;
+      });
     
-    // add in date filters
-    const applyFilterChanges = async () => {
-      const data = await choreAPI.getChoreAssignments({
-        completed: completedFilter, 
-        assignee: assigneeFilterList, 
-        location: locationFilterList, 
+      const choresMap: Record<string, { all_assignments: choreAPI.ChoreAssignment[]; latest_assignment: choreAPI.ChoreAssignment }> = {};
+
+      choresWithAssignments.forEach(assignment => {
+        const choreId = assignment.chore.id;
+        if (!choresMap[choreId]) {
+          choresMap[choreId] = {
+            all_assignments: [assignment],
+            latest_assignment: assignment,
+          };
+        } else {
+          choresMap[choreId].all_assignments.push(assignment);
+
+          // Update latest assignment based on due_date
+          if (assignment.due_date > choresMap[choreId].latest_assignment.due_date) {
+            choresMap[choreId].latest_assignment = assignment;
+          }
+        }
       });
 
-      const choresWithDates = data.map(chore => ({
-        ...chore,
-        due_date: chore.due_date ? new Date(chore.due_date) : new Date(),
-      }));
+      getRoommates();
+      setLocationList(filterData.locations);
+      setRoommatesList(filterData.roommates);
+      setChoresList(choresWithAssignments);
+    };
 
-      console.log(assigneeFilterList);
-      console.log(completedFilter);
-      console.log(locationFilterList);
-      console.log(data);
-      setChoresList(choresWithDates);
-    }
+    loadData();
+  }, []);
   
-    const refreshChores = async () => {
-      const data = await choreAPI.getChoreAssignments();
-      const choresWithDates = data.map(chore => ({
-        ...chore,
-        due_date: chore.due_date ? new Date(chore.due_date) : new Date(),
-      }));
-      setChoresList(choresWithDates);
-    }
-  
-    const getChore = async (id: string) => {
-      const chore = await choreAPI.getChoreAssignmentById(id);
-      chore.due_date = chore.due_date ? new Date(chore.due_date) : new Date();
-      setSelectedItem(chore);
+  // add in date filters
+  const applyFilterChanges = async () => {
+    const data = await choreAPI.getChoreAssignments({
+      completed: completedFilter, 
+      assignee: assigneeFilterList, 
+      location: locationFilterList, 
+    });
+
+    const choresWithDates = data.map(chore => ({
+      ...chore,
+      due_date: chore.due_date ? new Date(chore.due_date) : new Date(),
+    }));
+
+    console.log(assigneeFilterList);
+    console.log(completedFilter);
+    console.log(locationFilterList);
+    console.log(data);
+    setChoresList(choresWithDates);
+  }
+
+  const refreshChores = async () => {
+    const data = await choreAPI.getChoreAssignments();
+    const choresWithDates = data.map(chore => ({
+      ...chore,
+      due_date: chore.due_date ? new Date(chore.due_date) : new Date(),
+    }));
+    setChoresList(choresWithDates);
+
+    // Sync selectedItem if modal is open
+    if (selectedItem) {
+      const updatedChore = choresWithDates.find(c => c.id === selectedItem.id);
+      if (updatedChore) {
+        setSelectedItem(updatedChore);
+      }
     }
 
-    const getRoommates = async () => {
-      const roommates = await getHouseholdRoommates();
-      const filterRoommates= roommates.map(r => ({
-        id: r.id,
-        email: r.email,
-        first_name: r.first_name,
-        last_name: r.last_name,
-        name: r.full_name ?? "",
-        display_color: r.display_color ?? "#3f4ba1"
-      }));
-      setRoommatesList(filterRoommates);
-    }
+    return choresWithDates;
+  }
 
+  const getChore = async (id: string) => {
+    const chore = await choreAPI.getChoreAssignmentById(id);
+    chore.due_date = chore.due_date ? new Date(chore.due_date) : new Date();
+    setSelectedItem(chore);
+  }
+
+  const getRoommates = async () => {
+    const roommates = await getHouseholdRoommates();
+    const filterRoommates= roommates.map(r => ({
+      id: r.id,
+      email: r.email,
+      first_name: r.first_name,
+      last_name: r.last_name,
+      name: r.full_name ?? "",
+      display_color: r.display_color ?? "#3f4ba1"
+    }));
+    setRoommatesList(filterRoommates);
+  }
+
+  // Merge socket updates into choresList and selectedItem
+  useEffect(() => {
+    if (socketChores.length > 0) {
+      setChoresList(prev => {
+        const updated = [...prev];
+        socketChores.forEach(socketChore => {
+          const index = updated.findIndex(c => c.id === socketChore.id);
+          if (index > -1) {
+            // Update existing chore
+            updated[index] = socketChore;
+          } else {
+            // Add new chore from socket
+            updated.push(socketChore);
+          }
+        });
+        return updated;
+      });
+
+      // Update selectedItem if it's being viewed and received a socket update
+      if (selectedItem) {
+        const updatedChore = socketChores.find(chore => chore.id === selectedItem.id);
+        if (updatedChore) {
+          setSelectedItem(updatedChore);
+        }
+      }
+    }
+  }, [socketChores]);
 
   return (
     <SafeAreaView style={{flex: 1}}>
@@ -235,7 +276,7 @@ export default function ChoreScreen() {
               } catch (err: any){
                 console.log("ERROR", err.response?.data);
               }
-              
+
               await refreshChores();
             }}
             allRoommates={roommatesList}
@@ -247,6 +288,8 @@ export default function ChoreScreen() {
               visible={viewItemVisible}
               onClose={() => {
                 setViewItemVisible(false);
+                // Refresh data and sync selectedItem
+                refreshChores();
                 setSelectedItem(null);
               }}
               onEdit={() => {
@@ -257,7 +300,7 @@ export default function ChoreScreen() {
               onDelete={() => {
                 choreAPI.deleteChoreAssignment(selectedItem.id);
                 setViewItemVisible(false);
-                refreshChores();
+                // await refreshChores();
               }}
               onComplete={async (completed) => {
                     try {
@@ -281,6 +324,8 @@ export default function ChoreScreen() {
                         if (Object.keys(choreAssignmentPatch).length > 0) {
                           await choreAPI.updateAssignment(selectedItem.id, choreAssignmentPatch);
                         }
+                        // Refresh data to sync tiles
+                        // await refreshChores();
                       } catch (err: any) {
                         console.log("ERROR RESPONSE:", err.response?.data);
                         console.log("STATUS:", err.response?.status);
