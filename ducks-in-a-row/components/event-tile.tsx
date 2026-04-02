@@ -141,12 +141,12 @@ export function EventTile({event, owner,details= false, ...props}:EventTileProps
         </View>
         <ThemedText type='text'>{event.details}</ThemedText>
         <View style={eventTileStyle.titleContainer} onLayout={getPrintDate}>
-            <IconSymbol size={20} name="calendar" color='black'/>
+            <IconSymbol size={20} name="calendar" color='#5B6267'/>
             <ThemedText type='text'>{printDate}</ThemedText>
         </View>
         <View style={eventTileStyle.titleContainer}>
             { event.location && event.location !== "" &&
-                <IconSymbol name='pin' size={20} color="black"/> &&
+                <IconSymbol name='pin' size={20} color="#5B6267"/> &&
                 <ThemedText type='text'>Location: {event.location} </ThemedText>
             }
             
@@ -168,20 +168,20 @@ export function EventTile({event, owner,details= false, ...props}:EventTileProps
         
         { (owner || details )&& !event.requires_approval && (
            <View style={eventTileStyle.titleContainer}>
-            <IconSymbol size={20} name="checkmark" color='black'/>
+            <IconSymbol size={20} name="checkmark" color='#5B6267'/>
             <Text style={eventTileStyle.approvedText}>No approvals requested for event</Text>
          </View>
         )}
         { (owner || details )&& event.requires_approval && (event.approval_status === "approved" ||(event.approval_counts &&event.approval_counts?.approved >= event.approval_counts.total)) && (
            <View style={eventTileStyle.titleContainer}>
-            <IconSymbol size={20} name="checkmark" color='black'/>
+            <IconSymbol size={20} name="checkmark" color='#5B6267'/>
             <Text style={eventTileStyle.approvedText}>Approved by all roommates</Text>
          </View>
         )}
        
         { (owner||details) && event.requires_approval && ((event.approval_counts &&event.approval_counts?.approved < event.approval_counts.total))&&  (
             <View style={eventTileStyle.titleContainer}>
-                <IconSymbol size={20} name="hourglass" color='black'/>
+                <IconSymbol size={20} name="hourglass" color='#5B6267'/>
                 <Text style={eventTileStyle.pendingText}>Waiting for approval ({(event.approval_counts?.total ?? 0) - (event.approval_counts?.approved ?? 0)}/{event.approval_counts?.total} remaining)</Text>
              </View>
         )}
@@ -202,14 +202,10 @@ const eventTileStyle = StyleSheet.create({
     borderRadius: 16,
     padding: 15,
     backgroundColor:'#ffffff',
-    shadowColor: 'black',
-    shadowOffset: {
-        width: 0,
-        height: 2,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 14,
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 2,
   },
   toggleRow: {
     justifyContent:"space-between",
@@ -224,7 +220,7 @@ const eventTileStyle = StyleSheet.create({
     alignItems: "center",
   },
   approvedBubble: {
-    color: 'rgba(93, 149, 109, 1)',
+    color: '#527E58',
     fontWeight: 600,
     fontSize: 10, 
     backgroundColor: 'rgba(201, 239, 212, 1)',
@@ -236,7 +232,7 @@ const eventTileStyle = StyleSheet.create({
     paddingBottom: 5,
   },
   approvedText: {
-    color: 'rgba(93, 149, 109, 1)',
+    color: '527E58',
   },
   pendingBubble: {
     color: 'rgba(220, 146, 34, 1)',
@@ -262,7 +258,7 @@ const eventTileStyle = StyleSheet.create({
   },
   declineButton: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: '#C25A5A',
         borderWidth: 1,
         borderRadius: 10,
         color: '#000',
@@ -280,7 +276,7 @@ const eventTileStyle = StyleSheet.create({
     },
     approveButton: {
         flex: 1,
-        backgroundColor: 'rgba(54, 188, 75, 1)',
+        backgroundColor: '#527E58',
         borderRadius: 10,
         color: '#fff',
         justifyContent: 'center',

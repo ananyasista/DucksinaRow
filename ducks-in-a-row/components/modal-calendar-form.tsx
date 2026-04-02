@@ -242,9 +242,7 @@ export default function ModalCalendarForm({edit = false,event = null, ...props}:
                 </View>
                 <ThemedText type="boldText">Location:</ThemedText>
                 <ThemedTextInput onChangeText={setEventLocation} placeholder='Living Room'/>
-                <ThemedText type='boldText'>{needsApproval + " "}</ThemedText>
                 <View>
-    
                     <ThemedSwitch onChangeSwitch={setNeedsApproval} label="Needs Roommates Approval?" value={false} editable = {showRoommateSwitch}/>
                     <ThemedText type='text'>Field not editable once event is created</ThemedText>
                 </View>

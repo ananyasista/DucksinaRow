@@ -231,15 +231,15 @@ export default function EventModal({event, owner=false, pendingEvent, ...props}:
             <ThemedText type='title'>{title}</ThemedText>
             <ThemedText type='secondarySubtitle'>{details}</ThemedText>
             <View style={modalTheme.rowStart}>
-                <IconSymbol size={20} name="calendar" color='black'/>
+                <IconSymbol size={20} name="calendar" color='#5B6267'/>
                 <ThemedText>{printDate}</ThemedText>
             </View>
             <View style={modalTheme.rowStart}>
-                <IconSymbol size={20} name="pin" color='black'/>
+                <IconSymbol size={20} name="pin" color='#5B6267'/>
                 <ThemedText>Location: {location}</ThemedText>
             </View>
             <View style={modalTheme.rowStart}>
-                <IconSymbol size={20} name="person" color='black'/>
+                <IconSymbol size={20} name="person" color='#5B6267'/>
                 <ThemedText>Created by: {owner? "You" : event?.event_owner_name}</ThemedText>
             </View>
             <View style={{width:'100%', marginTop: 50}}>
