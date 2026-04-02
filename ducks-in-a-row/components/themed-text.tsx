@@ -39,33 +39,41 @@ const styles = StyleSheet.create({
   default: {
     fontSize: 16,
     lineHeight: 24,
+    color: "#143348"
   },
   defaultSemiBold: {
     fontSize: 16,
     lineHeight: 24,
     fontWeight: '600',
+     color: "#143348"
   },
   title: {
     fontSize: 32,
     fontWeight: 700,
+     color: "#143348"
     
   },
   subtitle: {
     fontSize: 24,
     fontWeight: 400,
+     color: "#143348"
   },
   secondarySubtitle: {
     marginTop: 0,
     fontSize: 20,
     fontWeight: 400,
+     color: "#143348"
   },
   boldText: {
     fontSize:16,
-    fontWeight: 600
+    fontWeight: 600,
+     color: "#143348"
   },
   text: {
     fontSize: 12,
-    fontWeight: 300
+    fontWeight: 300,
+     color: "#143348"
+
   },
   errorText: {
     color: 'red',

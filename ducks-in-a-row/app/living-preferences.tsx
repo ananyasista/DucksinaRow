@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { getLivingPreferences, updateLivingPreferences } from "../api/preferences";
 import { router, useLocalSearchParams } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type LivingPrefs = {
   cleanliness: number | null;
@@ -118,6 +119,7 @@ export default function LivingPreferencesScreen() {
   }
 
   return (
+    <SafeAreaView>
     <ScrollView contentContainerStyle={styles.container}>
       
       {/* Back Button */}
@@ -212,6 +214,7 @@ export default function LivingPreferencesScreen() {
         </Text>
       </Pressable>
     </ScrollView>
+    </SafeAreaView>
   );
 }
 

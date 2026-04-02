@@ -5,12 +5,16 @@ type ThemedSwitchProps = {
     label:string;
     value: boolean;
     onChangeSwitch: (set: boolean)=> void;
+    editable?: boolean;
 };
-export function ThemedSwitch({label="", onChangeSwitch, value=false}:ThemedSwitchProps) {
+export function ThemedSwitch({label="", onChangeSwitch, value=false, editable=true}:ThemedSwitchProps) {
   const [isEnabled, setIsEnabled] = useState(value);
   function toggleSwitch() {
+    if(editable)
+    {
       onChangeSwitch(!isEnabled);
-      setIsEnabled(!isEnabled);
+      setIsEnabled(prev => !prev);
+    }
   }
 
   return (
