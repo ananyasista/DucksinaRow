@@ -285,13 +285,13 @@ export default function ChoreScreen() {
           />
 
           {selectedItem && (
-            <ChoreViewModal 
+            <ChoreViewModal
               chore={selectedItem}
               visible={viewItemVisible}
               onClose={() => {
                 setViewItemVisible(false);
-                // Refresh data and sync selectedItem
-                refreshChores();
+                // Refresh data while maintaining filters
+                applyFilterChanges();
                 setSelectedItem(null);
               }}
               onEdit={() => {
@@ -302,7 +302,7 @@ export default function ChoreScreen() {
               onDelete={() => {
                 choreAPI.deleteChoreAssignment(selectedItem.id);
                 setViewItemVisible(false);
-                refreshChores();
+                applyFilterChanges();
               }}
               onComplete={async (completed) => {
                     try {
@@ -326,8 +326,8 @@ export default function ChoreScreen() {
                         if (Object.keys(choreAssignmentPatch).length > 0) {
                           await choreAPI.updateAssignment(selectedItem.id, choreAssignmentPatch);
                         }
-                        // Refresh data to sync tiles
-                        await refreshChores();
+                        // Refresh data while maintaining filters
+                        await applyFilterChanges();
                       } catch (err: any) {
                         console.log("ERROR RESPONSE:", err.response?.data);
                         console.log("STATUS:", err.response?.status);
