@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 
 import { getHouseholdName } from '@/api/household';
 import { updateAssignment, getChoreAssignments, updateChore, buildChorePatch, ChoreAssignment } from '@/api/chores';
@@ -18,6 +18,7 @@ import {
   listNeedsApproval,
 } from '../../api/calendar';
 import EventModal from '@/components/modal-event';
+import React from 'react';
 
 type HomeCalendarEvent = ICalendarEventBase & {
   details?: string;
@@ -101,6 +102,24 @@ export default function HomeScreen() {
     }
   };
 
+  const updateEvents = async () => {
+    try {
+      const currNeedsApproval = await listNeedsApproval();
+      const currGiveApproval = await listMyEvents();
+
+      setMyEvents(currGiveApproval);
+      setNeedsApproval(currNeedsApproval.length);
+      setGiveApproval(currGiveApproval.length);
+
+      let i = 0;
+      if (currNeedsApproval.length > 0) i++;
+      if (currGiveApproval.length > 0) i++;
+      setPendingNum(i);
+      loadUpcomingWeekEvents();
+    } catch (e: any) {
+      console.log('Home page error:', e?.response?.data || e.message);
+    }
+  }
   const loadUpcomingWeekEvents = async () => {
     try {
       const allEvents = await listHouseholdEvents();
@@ -147,6 +166,12 @@ export default function HomeScreen() {
       setLoadingEvents(false);
     }
   };
+  useFocusEffect(
+        React.useCallback(() => {
+            loadUpcomingWeekEvents();
+            updateEvents();
+        }, [])
+      );
 
   useEffect(() => {
     loadHomeData();
@@ -367,6 +392,7 @@ export default function HomeScreen() {
             owner={isOwner}
             pendingEvent={currEvent}
             onClose={() => setEventDetails(false)}
+            updateEvents={() => updateEvents()}
           />
         )}
       </View>

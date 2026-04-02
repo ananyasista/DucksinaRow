@@ -194,7 +194,7 @@ const eventTileStyle = StyleSheet.create({
     margin:10,
     borderRadius: 16,
     padding: 15,
-    backgroundColor:'rgba(246, 246, 245, 1)',
+    backgroundColor:'#ffffff',
     shadowColor: 'black',
     shadowOffset: {
         width: 0,

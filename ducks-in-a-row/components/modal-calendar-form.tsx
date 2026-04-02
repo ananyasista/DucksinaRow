@@ -158,12 +158,12 @@ export default function ModalCalendarForm({edit = false,event, ...props}: ModalP
             onRequestClose = {() => close()} 
         >
             <View style={modalTheme.header}>
-                <TouchableOpacity style={modalTheme.cancelButton} onPress={() => close()}>
-                    <Text style={modalTheme.cancelText}>Cancel</Text>
+                <TouchableOpacity style={modalTheme.cancelSaveButton} onPress={() => close()}>
+                    <Text style={modalTheme.cancelSaveText}>Cancel</Text>
                 </TouchableOpacity>
                 <Text style={modalTheme.headerText}>{props.formTitle}</Text>
-                <TouchableOpacity style={modalTheme.saveButton} onPress={() => save()}>
-                    <Text style={modalTheme.saveText}>Save</Text>
+                <TouchableOpacity style={modalTheme.cancelSaveButton} onPress={() => save()}>
+                    <Text style={modalTheme.cancelSaveText}>Save</Text>
                 </TouchableOpacity>
             </View>
             <ScrollView>
@@ -278,7 +278,7 @@ const modalTheme = StyleSheet.create({
         fontWeight: 600
     },
     addButton: {
-        backgroundColor: '#087d4b',
+        backgroundColor: '#79997E',
         width: 50,
         height: 50,
         borderRadius: 30,
@@ -288,7 +288,7 @@ const modalTheme = StyleSheet.create({
         bottom: 40,
         right: 30,
     },
-    cancelButton: {
+    cancelSaveButton: {
         backgroundColor: '#fff',
         borderWidth: 2,
         borderRadius: 10,
@@ -298,7 +298,7 @@ const modalTheme = StyleSheet.create({
         width: 100,
         height: 50
     },
-    cancelText: {
+    cancelSaveText: {
         color: '#000',
         fontSize: 16,
         fontWeight: 500

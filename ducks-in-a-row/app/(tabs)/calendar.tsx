@@ -20,6 +20,7 @@ import {
 } from '@/api/calendar';
 import EventModal from '@/components/modal-event';
 import { getHouseholdRoommates, Roommate } from '@/api/household';
+import { me, ProfileResponse } from '@/api/auth';
 
 
 export interface CalendarEvent extends ICalendarEventBase {
@@ -53,6 +54,7 @@ export default function CalendarPage () {
     const [isOwner, setIsOwner] = useState(false);
     const [roommates, setRoommates] = useState<Roommate[]>([]);
     const [filtersByRoommate, setFiltersByRoommate] = useState<string[]>([]);
+    const [profile, setProfile] = useState<ProfileResponse>();
 
     const [key, setKey] = useState(0);
 
@@ -68,10 +70,17 @@ export default function CalendarPage () {
         const calenEvents: CalendarEvent[] = filteredEvents.map((event: APICalendarEvent) =>
           APICalEventToCalEvent(event)
         );
+        var upcoming: APICalendarEvent[] = [];
+        filteredEvents.map((event) => {
+          if(new Date(event.start_date) >= new Date())
+          {
+            upcoming.push(event);
+          }
+        })
 
         setFullDetailEvents(filteredEvents);
         setEvents(calenEvents);
-        setUpcomingEvents(filteredEvents);
+        setUpcomingEvents(upcoming);
       } catch (e: any) {
         console.log("Filtered calendar error: " + e);
       }
@@ -126,6 +135,7 @@ export default function CalendarPage () {
     const onScreenLoad = async () => {
       try {
         setKey(prev => prev+1);
+        setProfile(await me());
         const allEvents = await listHouseholdEvents();
         const loadMyEvents = await listMyEvents();
         const loadNeedMyApproval:APIApprovalEvent[] = await listNeedsApproval();
@@ -140,10 +150,16 @@ export default function CalendarPage () {
         
         setEvents(calenEvents);
         setFullDetailEvents(allEvents);
-        
+        var upcoming: APICalendarEvent[] = [];
+        allEvents.map((event) => {
+          if(new Date(event.start_date) >= new Date())
+          {
+            upcoming.push(event);
+          }
+        })
         setNeedsMyApproval(needMyApprovalEvents);
         setMyEvents(loadMyEvents);
-        setUpcomingEvents(allEvents);
+        setUpcomingEvents(upcoming);
         
       } catch (e: any) {
         console.log("Home page error: " + e);
@@ -197,14 +213,12 @@ export default function CalendarPage () {
       setDetailsModal(true);
     }
 
-    async function updateCalendar() {
-      await updateEvents();
-    }
+   
     async function closeDetailModal()
     {
       await updateEvents();
-      setShowCalendar(false);
-      setShowCalendar(true);
+      // setShowCalendar(false);
+      // setShowCalendar(true);
       setDetailsModal(false);
     }
 
@@ -227,12 +241,18 @@ export default function CalendarPage () {
           loadNeedMyApproval.map((e) => (APIApprovalEventToAPICalEvent(e)));
         const refreshedMyEvents = await listMyEvents(); 
         const allEvents = await listHouseholdEvents();
-      
+        var upcoming: APICalendarEvent[] = [];
+        allEvents.map((event) => {
+          if(new Date(event.start_date) >= new Date())
+          {
+            upcoming.push(event);
+          }
+        })
         setEvents(calenEvents);
         setFullDetailEvents(allEvents);
         setNeedsMyApproval(needMyApprovalEvents);
         setMyEvents(refreshedMyEvents);
-        setUpcomingEvents(allEvents);
+        setUpcomingEvents(upcoming);
         console.log("Finished updating events...")
       } catch(e: any) {
         console.log("Error updating events: " + e);
@@ -259,6 +279,7 @@ export default function CalendarPage () {
 
           // clear param after using it
           router.setParams({ mode: undefined });
+          updateEvents();
         }
       }, [mode])
     );
@@ -411,7 +432,7 @@ export default function CalendarPage () {
                   })
                 }
                 {needsMyApproval.length === 0 && 
-                    <View style={calendarTheme.indent}><ThemedText type='text'>No events pending your approval!</ThemedText></View>
+                    <View style={calendarTheme.indent}><ThemedText type='text'>No events pending your approval</ThemedText></View>
                 }
               <View style={{padding:20}}></View>
               
@@ -434,6 +455,9 @@ export default function CalendarPage () {
                     }
                 })
               }
+              {myEvents.length === 0 && 
+                <View style={calendarTheme.indent}><ThemedText type='text'>You have no events planned</ThemedText></View>              
+              }
               <View style={{padding:20}}></View>
               
               <View style={calendarTheme.indent}>
@@ -441,9 +465,15 @@ export default function CalendarPage () {
               </View>
               {
                 upcomingEvents.map((event) => {
-                    return <EventTile key = {event.id} event = {event} owner= {false} details ={true} updateEvents={updateEvents}/>
+                  if(new Date(event.start_date) > new Date())
+                  {
+                    return <EventTile key = {event.id} event = {event} owner= {profile ? event.event_owner_name === (profile.first_name + " " + profile.last_name) : false} details ={true} updateEvents={updateEvents}/>
+                  }
                 })
               }   
+              {upcomingEvents.length === 0 && 
+                <View style={calendarTheme.indent}><ThemedText type='text'>No upcoming events</ThemedText></View>              
+              }
             </ScrollView>
           )}
           
@@ -465,12 +495,12 @@ export default function CalendarPage () {
   )
 }
 const theme = {
-  background: '#ffffff',
+  background: '#rgb(248, 248, 248)',
   text: '#212523',
   calendar: {
     palette: {
       primary: {
-        main: '#FF7648',
+        main: '#EC8534',
         contrastText: '#fff',
       },
       gray: {
@@ -536,7 +566,7 @@ const calendarTheme = StyleSheet.create({
     fontSize: 22
   },
   eventStyle: {
-    backgroundColor: '#4DC591',
+    backgroundColor: '#79997E',
     borderColor: '#12935b',
     borderWidth: 1,
   },
@@ -582,7 +612,7 @@ const calendarTheme = StyleSheet.create({
     padding: 5,
     height: 30,
     margin: 5,   
-    backgroundColor: '#FF7648',
+    backgroundColor: '#EC8534',
     borderRadius: 30,
     flexGrow: 1,
     textAlign: 'center',
@@ -600,7 +630,7 @@ const calendarTheme = StyleSheet.create({
     margin: 5,   
     height: 30,
     backgroundColor: '#fff',
-    borderColor: '#FF7648',
+    borderColor: '#EC8534',
     borderWidth: 1,
     borderRadius: 30,
     flexGrow: 1,
@@ -608,7 +638,7 @@ const calendarTheme = StyleSheet.create({
     justifyContent: 'center'  
   }, 
   filterTextSelected: {
-    color: '#FF7648',
+    color: '#EC8534',
     fontSize: 12,
     fontWeight: 600,
     alignSelf: 'center',
