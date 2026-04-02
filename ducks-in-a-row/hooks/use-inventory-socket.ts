@@ -7,7 +7,7 @@ export const useInventorySocket = () => {
 
     useEffect(() => {
         // UPDATE WITH YOUR COMPUTER'S LOCAL IP ADDRESS to RUN PROPERLY
-        const socket = new WebSocket("ws://10.138.209.82:8000/ws/household/");
+        const socket = new WebSocket("ws://10.136.146.121:8000/ws/household/");
 
         socket.onopen = () => console.log("Connected to inventory WebSocket");
 

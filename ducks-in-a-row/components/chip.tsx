@@ -58,12 +58,11 @@ const styles = StyleSheet.create({
     chip: {
         backgroundColor: '#EC8534',
         borderRadius: 16,
-        padding: 3,
-        width: 100,
+        padding: 10,
         flexDirection: 'row',
         alignSelf: 'flex-start',
         justifyContent: 'center',
-        alignContent: 'center'
+        alignContent: 'center',
     },
 
     title: {

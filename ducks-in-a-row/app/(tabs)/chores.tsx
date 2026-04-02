@@ -86,6 +86,8 @@ export default function ChoreScreen() {
       completed: completedFilter, 
       assignee: assigneeFilterList, 
       location: locationFilterList, 
+      start_date: startDateFilter,
+      end_date: endDateFilter
     });
 
     const choresWithDates = data.map(chore => ({
@@ -187,7 +189,7 @@ export default function ChoreScreen() {
               assigneeList={roommatesList}
               locationList={locationList}
               onApply={() => applyFilterChanges()}
-
+              onClear={() => refreshChores()}
             />
             <TextInput 
                 style={styles.input}
@@ -325,7 +327,7 @@ export default function ChoreScreen() {
                           await choreAPI.updateAssignment(selectedItem.id, choreAssignmentPatch);
                         }
                         // Refresh data to sync tiles
-                        // await refreshChores();
+                        await refreshChores();
                       } catch (err: any) {
                         console.log("ERROR RESPONSE:", err.response?.data);
                         console.log("STATUS:", err.response?.status);

@@ -136,6 +136,7 @@ export default function InventoryScreen() {
               locationList={locationList}
               purchaseList={purchaseList}
               onApply={() => applyFilterChanges()}
+              onClear={() => refreshItems()}
             />
             <TextInput 
                 style={styles.input}

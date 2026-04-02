@@ -18,6 +18,8 @@ type ModalProps = PropsWithChildren<{
     locationList: string[];
 
     onApply: () => void;
+
+    onClear: () => void;
 }>;
 
 export default function InvFilterModal(props: ModalProps) {
@@ -28,6 +30,10 @@ export default function InvFilterModal(props: ModalProps) {
         props.setLocationFilterList([]);
         props.setPurchaseFilterList([]);
         props.setStockFilter(true);
+
+        props.onClear();
+
+        setVisible(false);
     }
     
 
@@ -77,6 +83,7 @@ export default function InvFilterModal(props: ModalProps) {
                         <View style={styles.chipView}>
                             {stockList.map((name => (
                                 <Chip 
+                                    key={name}
                                     title={name} 
                                     onPress={() => {
                                         props.setStockFilter(prev => !prev);

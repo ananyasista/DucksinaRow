@@ -11,6 +11,7 @@ from ..serializers.chores_serializers import (
     ChoreSerializer,
     ChoreAssignmentSerializer
 )
+from ..serializers.serializers import ensure_aware_datetime
 
 # CHORE VIEWSET (TEMPLATE to make chores)
 class ChoreViewSet(viewsets.ModelViewSet):
@@ -118,11 +119,15 @@ class ChoreAssignmentViewSet(viewsets.ModelViewSet):
         start = self.request.query_params.get("start")
         end = self.request.query_params.get("end")
         if start and end:
-            queryset = queryset.filter(due_date__range=[start, end])
+            start_dt = ensure_aware_datetime(start)
+            end_dt = ensure_aware_datetime(end)
+            queryset = queryset.filter(due_date__range=[start_dt, end_dt])
         elif start:
-            queryset = queryset.filter(due_date__gte=start)
+            start_dt = ensure_aware_datetime(start)
+            queryset = queryset.filter(due_date__gte=start_dt)
         elif end:
-            queryset = queryset.filter(due_date__lte=end)
+            end_dt = ensure_aware_datetime(end)
+            queryset = queryset.filter(due_date__lte=end_dt)
 
         # Sorting: overdue first, incomplete before complete
         queryset = queryset.annotate(

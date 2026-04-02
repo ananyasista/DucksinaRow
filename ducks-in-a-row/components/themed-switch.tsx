@@ -4,9 +4,10 @@ import { ThemedText } from './themed-text';
 type ThemedSwitchProps = {
     label:string;
     value: boolean;
-    onChangeSwitch: (set: boolean)=> void;
+    labelType?: 'default' | 'title' | 'defaultSemiBold' | 'subtitle' | 'secondarySubtitle' | 'link' | 'boldText' | 'text' | 'errorText';
+    onChangeSwitch: (set:boolean)=> void;
 };
-export function ThemedSwitch({label="", onChangeSwitch, value=false}:ThemedSwitchProps) {
+export function ThemedSwitch({label="", onChangeSwitch, value=false, labelType}:ThemedSwitchProps) {
   const [isEnabled, setIsEnabled] = useState(value);
 
   // Sync isEnabled with value prop changes
@@ -21,7 +22,7 @@ export function ThemedSwitch({label="", onChangeSwitch, value=false}:ThemedSwitc
 
   return (
     <View style={styles.toggleRow}>
-        <ThemedText type='boldText'>{label}</ThemedText>
+        <ThemedText type={labelType}>{label}</ThemedText>
         <Switch
                 trackColor={{false: '#f4f4f3', true: '#FAAE43'}}
                 thumbColor={isEnabled ? '#f4f4f3': '#FAAE43'}

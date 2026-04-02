@@ -74,7 +74,7 @@ class InventorySerializer(serializers.ModelSerializer):
         # Auto-set the current user
         user = self.context["request"].user
         validated_data["last_purchased_by"] = user
-        validated_data["last_purchased_date"] = timezone.now().date()
+        validated_data["last_purchased_date"] = timezone.now()
 
         # Also set household if needed
         if "household" not in validated_data:

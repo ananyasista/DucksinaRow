@@ -110,7 +110,7 @@ export default function ChoreViewModal(props: ModalProps) {
                         } 
                         { props.chore.completed && 
                             <TouchableOpacity style={styles.completeButton} onPress={handleComplete}>
-                                <ThemedText type='subtitle'>Chore Completed!</ThemedText>
+                                <ThemedText type='subtitle'>Mark as Incomplete</ThemedText>
                             </TouchableOpacity>
                         }
                     </SafeAreaView>
