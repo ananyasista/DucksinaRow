@@ -158,7 +158,7 @@ class Items(models.Model):
     details = models.TextField(blank=True)
 
     created_date = models.DateField(auto_now_add=True)
-    last_purchased_date = models.DateField(null=True, blank=True)
+    last_purchased_date = models.DateTimeField(null=True, blank=True)
 
     last_purchased_by = models.ForeignKey(
         User,
