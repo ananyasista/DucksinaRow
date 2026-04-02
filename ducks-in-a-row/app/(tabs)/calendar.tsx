@@ -33,7 +33,7 @@ export interface CalendarEvent extends ICalendarEventBase {
 }
 
 export default function CalendarPage () {
-    const { mode } = useLocalSearchParams();
+    const [mode] = useState('week');
     const [events, setEvents] = useState<CalendarEvent[]>([]);
     const [fullDetailEvent, setFullDetailEvents] = useState<APICalendarEvent[]>([]);
     const [allMyEvents, setAllMyEvents] = useState<APICalendarEvent[]>([]);
@@ -50,19 +50,13 @@ export default function CalendarPage () {
     const [editModal, setEditModal] = useState(false);
     const [event, setEvent] = useState<CalendarEvent|null>(null);
     const [APIEvent, setAPIEvent] = useState<APICalendarEvent|null>(null);
-    // const memoizedEvents = React.useMemo(() => events, [events]);
     const menuRef = useRef<View>(null);    
     const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 });
     const [detailsModal, setDetailsModal] = useState(false);
     const [pendingEvent, setPendingEvent] = useState<APIEventDetails|null>(null); 
     const [isOwner, setIsOwner] = useState(false);
     const [roommates, setRoommates] = useState<Roommate[]>([]);
-    const [showMyEvents, setShowMyEvents] = useState(true);
-    const [showFilters, setShowFilters] = useState(false);
-    const [showNeedsApproval, setShowNeedsApproval] = useState(true);
-    const [showUpcomingEvents, setShowUpcomingEvents] = useState(true);
     const [upcomingEvents, setUpcomingEvents] = useState<APICalendarEvent[]>([]);
-    const [filtersByEvent, setFiltersByEvent] = useState<string[]>([]);
     const [filtersByRoommate, setFiltersByRoommate] = useState<string[]>([]);
 
     async function loadFilteredCalendarEvents(selectedOwnerIds: string[]) {
@@ -398,65 +392,48 @@ export default function CalendarPage () {
           {showEvents && (
             <ScrollView >
               
-              {showNeedsApproval && 
-                <View> 
-                  <View style={calendarTheme.indent}>
-                  <ThemedText type='secondarySubtitle'>Needs Approval</ThemedText>
-                  </View>
+              <View style={calendarTheme.indent}>
+                <ThemedText type='secondarySubtitle'>Needs Approval</ThemedText>
+              </View>
+                {
+                  needsMyApproval.map((event) => {
+                    return <EventTile key={event.id} event={event}  owner={false} remove={()=> remove(event.id)}/>
+                  })
+                }
+                {needsMyApproval.length === 0 && 
+                    <View style={calendarTheme.indent}><ThemedText type='text'>No events pending your approval!</ThemedText></View>
+                }
+              <View style={{padding:20}}></View>
+              
+              <View style={calendarTheme.indent}>
+                <ThemedText type='secondarySubtitle'>Your Events</ThemedText>
+              </View>
+              {
+                myEvents.map((event) => {
+                    if(event.requires_approval && event.approval_counts && event.approval_counts?.approved < event.approval_counts?.total)
                     {
-                      needsMyApproval.map((event) => {
-                        return <EventTile key={event.id} event={event}  owner={false} remove={()=> remove(event.id)}/>
-                      })
+                      return <EventTile key={event.id} event={event} owner={true} />
                     }
-                    {needsMyApproval.length === 0 && 
-                        <View style={calendarTheme.indent}><ThemedText type='text'>No events pending your approval!</ThemedText></View>
-                    }
-                    <View style={{padding:20}}></View>
-                </View>
+                })
               }
-              
-              
-              { showMyEvents && 
-                  <View>
-                    <View style={calendarTheme.indent}>
-                    <ThemedText type='secondarySubtitle'>Your Events</ThemedText>
-                    </View>
+              {
+                myEvents.map((event) => {
+                    if(event.requires_approval && event.approval_counts && event.approval_counts?.approved >= event.approval_counts?.total)
                     {
-                      
-                      myEvents.map((event) => {
-                          if(event.requires_approval && event.approval_counts && event.approval_counts?.approved < event.approval_counts?.total)
-                          {
-                            return <EventTile key={event.id} event={event} owner={true} />
-                          }
-                      })
-                      
+                      return <EventTile key={event.id} event={event} owner={true}/>
                     }
-                    {
-                      myEvents.map((event) => {
-                          if(event.requires_approval && event.approval_counts && event.approval_counts?.approved >= event.approval_counts?.total)
-                          {
-                            return <EventTile key={event.id} event={event} owner={true}/>
-                          }
-                      })
-                    }
-                    <View style={{padding:20}}></View>
-                  </View>
+                })
               }
+              <View style={{padding:20}}></View>
               
-              {showUpcomingEvents && 
-                <View> 
-                  <View style={calendarTheme.indent}>
-                    <ThemedText type='secondarySubtitle'>Upcoming Events in Your House</ThemedText>
-                    </View>
-                    {
-                      upcomingEvents.map((event) => {
-                          return <EventTile key = {event.id} event = {event} owner= {false} details ={true} />
-                      })
-                    }
-                </View>
-
-              }
-              
+              <View style={calendarTheme.indent}>
+                <ThemedText type='secondarySubtitle'>Upcoming Events in Your House</ThemedText>
+              </View>
+              {
+                upcomingEvents.map((event) => {
+                    return <EventTile key = {event.id} event = {event} owner= {false} details ={true} />
+                })
+              }   
             </ScrollView>
           )}
           
