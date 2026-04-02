@@ -189,7 +189,11 @@ export default function ChoreScreen() {
               assigneeList={roommatesList}
               locationList={locationList}
               onApply={() => applyFilterChanges()}
-              onClear={() => refreshChores()}
+              onClear={() => {
+                refreshChores();
+                setEndDateFilter(undefined);
+                setStartDateFilter(undefined);
+              }}
             />
             <TextInput 
                 style={styles.input}
@@ -279,7 +283,8 @@ export default function ChoreScreen() {
                 console.log("ERROR", err.response?.data);
               }
 
-              await refreshChores();
+              // await refreshChores();
+              await applyFilterChanges();
             }}
             allRoommates={roommatesList}
           />
@@ -355,7 +360,7 @@ export default function ChoreScreen() {
                     await choreAPI.updateAssignment(selectedItem.id, choreAssignmentPatch);
                   }
 
-                  await refreshChores();
+                  await applyFilterChanges();
                 } catch (err: any) {
                   console.log("ERROR RESPONSE:", err.response?.data);
                   console.log("STATUS:", err.response?.status);
