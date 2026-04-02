@@ -20,10 +20,11 @@ type ModalProps = PropsWithChildren<{
     formTitle:string;
     edit?: boolean;
     event?: APICalendarEvent | null;
-    onClose?: any;
+    onClose:() => Promise<void>;
+    updateEvents: ()=>Promise<void>;
 }>;
 
-export default function ModalCalendarForm({edit = false,event, onClose, ...props}: ModalProps) {
+export default function ModalCalendarForm({edit = false,event, ...props}: ModalProps) {
     const [addVisible, setAddVisible] = useState(edit);
     const [startDate, setStartDate] = useState(new Date());
     const [endDate, setEndDate] = useState(new Date());
@@ -68,9 +69,11 @@ export default function ModalCalendarForm({edit = false,event, onClose, ...props
       endDate.setHours(endDate.getHours()+1);
     };
 
-    const close = () => {
+    const close = async () => {
         setAddVisible(false);
-        onClose();
+        await props.updateEvents();
+       props.onClose();
+
     }
     
     const save = async () => {
@@ -99,7 +102,11 @@ export default function ModalCalendarForm({edit = false,event, onClose, ...props
                 await createEvent(cal);
                 console.log("Succesful create");
             }
-            
+            if(props.updateEvents)
+            {
+                await props.updateEvents();
+                console.log("updated events...");
+            }
         } catch (e:any) {
             console.log("Error saving event modal: " + e);
         }
@@ -166,7 +173,7 @@ export default function ModalCalendarForm({edit = false,event, onClose, ...props
                 <ThemedTextInput onChangeText={setEventTitle}placeholder="Item Name" defaultValue={event?.title}/>
                 <ThemedText type="boldText">Description:</ThemedText>
                 <ThemedTextInput onChangeText={setEventDescription} size="large" multiline={true} placeholder="Add Details" defaultValue={event?.details}/>
-                <ThemedSwitch onChangeSwitch={setAllDay} label="All-Day" />
+                <ThemedSwitch onChangeSwitch={setAllDay} label="All-Day" value={event?.all_day ?? false} />
                 
                 <View onLayout={showDatepicker}>
                 {startDateError && (<ThemedText type='errorText'>Start date is required</ThemedText>)}
@@ -235,7 +242,7 @@ export default function ModalCalendarForm({edit = false,event, onClose, ...props
                 </View>
                 <ThemedText type="boldText">Location:</ThemedText>
                 <ThemedTextInput onChangeText={setEventLocation} placeholder='Living Room'/>
-                <ThemedSwitch onChangeSwitch={setNeedsApproval} label="Needs Roommates Approval?"/>
+                <ThemedSwitch onChangeSwitch={setNeedsApproval} label="Needs Roommates Approval?" value={event?.requires_approval ?? false}/>
                 <ThemedText type='text'>Notify all roommates to approve this event</ThemedText>
             </View>
             <></><></><></>

@@ -10,6 +10,7 @@ interface EventTileProps {
   owner: boolean;
   details?: boolean;
   remove?: any;
+  updateEvents: () => Promise<void>
 }
 export function EventTile({event, owner,details= false, ...props}:EventTileProps) {
     const abbrMonth = ["Jan","Feb","Mar","Apr","May","June","July","Aug","Sept","Oct","Nov","Dec"];
@@ -101,20 +102,26 @@ export function EventTile({event, owner,details= false, ...props}:EventTileProps
         setEventDetails(true);
     }
 
-    function decline()
+    async function decline()
     {
         try {
             respondApproval(event.id, false);
+            if (props.updateEvents) {
+                await props.updateEvents();
+            }
             props.remove();
         } catch (e:any) {
             console.log("Error trying to decline event: " + e);
         }
     }
 
-    function approve() 
+    async function approve() 
     {
         try {
             respondApproval(event.id, true);
+            if (props.updateEvents) {
+                await props.updateEvents();
+            }
             props.remove();
         } catch (e:any) {
             console.log("error approving event: " + e);
@@ -172,7 +179,7 @@ export function EventTile({event, owner,details= false, ...props}:EventTileProps
              </View>
         )}
         { eventDetails && (
-            <EventModal event={event} owner={owner && !details} pendingEvent={pending} onClose={() => setEventDetails(false)}/>
+            <EventModal event={event} owner={owner && !details} pendingEvent={pending} onClose={() => setEventDetails(false)} updateEvents={props.updateEvents}/>
         )}
         
     </TouchableOpacity>

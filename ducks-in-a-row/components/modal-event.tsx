@@ -14,7 +14,7 @@ import DateTimePicker, { DateTimePickerEvent, Event } from '@react-native-commun
 import RNDateTimePicker from '@react-native-community/datetimepicker';
 import { IconSymbol } from './ui/icon-symbol';
 import ModalCalendarForm from './modal-calendar-form';
-import {CalendarEvent as APICalendarEvent, EventDetails as APIEventDetails, getEventId} from '@/api/calendar';
+import {CalendarEvent as APICalendarEvent, EventDetails as APIEventDetails,deleteEvent as APIDeleteEvent, getEventId} from '@/api/calendar';
 import { useFocusEffect } from 'expo-router';
 
 type EventModalProps = PropsWithChildren<{
@@ -22,7 +22,7 @@ type EventModalProps = PropsWithChildren<{
     pendingEvent?: APIEventDetails|null;
     owner?: boolean;
     onClose?: any;
-    updateCal?: any;
+    updateEvents: ()=>Promise<void>;
 }>
 
 export interface CalendarEvent extends ICalendarEventBase {
@@ -160,12 +160,11 @@ export default function EventModal({event, owner=false, pendingEvent, ...props}:
     async function showModal(approval: boolean, edit: boolean)
     {
         setApprovalModalVisible(approval);
-        setEditModal(edit);
-        if(props.updateCal)
+        setEditModal(edit); 
+        if(props.updateEvents)
         {
-            props.updateCal();
-        }
-    
+            await props.updateEvents();
+        }   
         if(event)
         {
             event = await getEventId(event.id);
@@ -189,9 +188,20 @@ export default function EventModal({event, owner=false, pendingEvent, ...props}:
     {
         //TODO: Add in reminding roommate of event apporval
     }
-    function deleteEvent() 
+    async function deleteEvent() 
     {
-        //TODO: Add in deletion functionality
+        try {
+            if(event)
+            {
+                await APIDeleteEvent(event.id);
+            }
+            if(props.updateEvents) {
+                await props.updateEvents();
+            }
+            close();
+        } catch (e: any) {
+            console.log("Error deleting event: " + e);
+        }
     }
   return (
     <View>
@@ -265,7 +275,7 @@ export default function EventModal({event, owner=false, pendingEvent, ...props}:
             </View>
         </Modal>
         {editModal && (
-            <ModalCalendarForm formTitle="Edit Event" edit={true} event={event} onClose={() => showModal(true, false)}/>
+            <ModalCalendarForm formTitle="Edit Event" edit={true} event={event} onClose={() => showModal(true, false)} updateEvents={props.updateEvents}/>
         )}
     </View>
   )

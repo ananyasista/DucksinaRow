@@ -7,7 +7,6 @@ import { ThemedText } from '@/components/themed-text';
 import { EventTile } from '@/components/event-tile';
 import ModalCalendarForm from '@/components/modal-calendar-form';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { IconSymbol } from '@/components/ui/icon-symbol';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import {
   CalendarEvent as APICalendarEvent,
@@ -19,12 +18,8 @@ import {
   getEventId,
   getFilterOptions,
 } from '@/api/calendar';
-import { CalendarContainerProps } from 'react-native-big-calendar/build/components/CalendarContainer';
-import CreateHouseholdScreen from '../create-household';
 import EventModal from '@/components/modal-event';
-import ChoreFilterModal from '@/components/chore-filter-modal';
 import { getHouseholdRoommates, Roommate } from '@/api/household';
-import Chip from '@/components/chip';
 
 
 export interface CalendarEvent extends ICalendarEventBase {
@@ -33,31 +28,33 @@ export interface CalendarEvent extends ICalendarEventBase {
 }
 
 export default function CalendarPage () {
-    const [mode] = useState('week');
-    const [events, setEvents] = useState<CalendarEvent[]>([]);
-    const [fullDetailEvent, setFullDetailEvents] = useState<APICalendarEvent[]>([]);
-    const [allMyEvents, setAllMyEvents] = useState<APICalendarEvent[]>([]);
-    const [myEvents, setMyEvents] = useState<APICalendarEvent[]>([]);
-    const [allNeedsMyApproval, setAllNeedsMyApproval]= useState<APICalendarEvent[]>([])
-    const [needsMyApproval, setNeedsMyApproval] = useState<APICalendarEvent[]>([]);
+    const { mode } = useLocalSearchParams(); //Home Page -> Calendar SPECIFICALLY Event view
+    const [calendarHeight, setCalendarHeight] = useState(0);
     const month = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
     const [currentDate, setCurrentDate] = useState(new Date());
-    const [openDropdown, setOpenDropdown] = useState(false);
     const [currentMode, setCurrentMode] = useState<Mode>('week');
-    const [calendarHeight, setCalendarHeight] = useState(0);
+
+    const [events, setEvents] = useState<CalendarEvent[]>([]);
+    const [fullDetailEvent, setFullDetailEvents] = useState<APICalendarEvent[]>([]);
+    const [needsMyApproval, setNeedsMyApproval] = useState<APICalendarEvent[]>([]);
+    const [myEvents, setMyEvents] = useState<APICalendarEvent[]>([]);
+    const [upcomingEvents, setUpcomingEvents] = useState<APICalendarEvent[]>([]);
     const [showCalendar, setShowCalendar] = useState(true);
     const [showEvents, setShowEvents] = useState(false);
-    const [editModal, setEditModal] = useState(false);
-    const [event, setEvent] = useState<CalendarEvent|null>(null);
+
     const [APIEvent, setAPIEvent] = useState<APICalendarEvent|null>(null);
-    const menuRef = useRef<View>(null);    
-    const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 });
     const [detailsModal, setDetailsModal] = useState(false);
     const [pendingEvent, setPendingEvent] = useState<APIEventDetails|null>(null); 
+
+    const [openDropdown, setOpenDropdown] = useState(false);
+    const menuRef = useRef<View>(null);    
+    const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 });
+    
     const [isOwner, setIsOwner] = useState(false);
     const [roommates, setRoommates] = useState<Roommate[]>([]);
-    const [upcomingEvents, setUpcomingEvents] = useState<APICalendarEvent[]>([]);
     const [filtersByRoommate, setFiltersByRoommate] = useState<string[]>([]);
+
+    const [key, setKey] = useState(0);
 
     async function loadFilteredCalendarEvents(selectedOwnerIds: string[]) {
       try {
@@ -128,6 +125,7 @@ export default function CalendarPage () {
 
     const onScreenLoad = async () => {
       try {
+        setKey(prev => prev+1);
         const allEvents = await listHouseholdEvents();
         const loadMyEvents = await listMyEvents();
         const loadNeedMyApproval:APIApprovalEvent[] = await listNeedsApproval();
@@ -139,13 +137,14 @@ export default function CalendarPage () {
           ));
         const needMyApprovalEvents: APICalendarEvent[] = 
           loadNeedMyApproval.map((e) => (APIApprovalEventToAPICalEvent(e)));        
-        setFullDetailEvents(allEvents);
+        
         setEvents(calenEvents);
-        setMyEvents(loadMyEvents);
-        setAllMyEvents(loadMyEvents);
-        setAllNeedsMyApproval(needMyApprovalEvents);
+        setFullDetailEvents(allEvents);
+        
         setNeedsMyApproval(needMyApprovalEvents);
+        setMyEvents(loadMyEvents);
         setUpcomingEvents(allEvents);
+        
       } catch (e: any) {
         console.log("Home page error: " + e);
       }
@@ -176,6 +175,7 @@ export default function CalendarPage () {
       setShowEvents(false);
       setOpenDropdown(false);
     }
+
     function switchToEvents() {
       setShowCalendar(false);
       setShowEvents(true);
@@ -183,9 +183,7 @@ export default function CalendarPage () {
     }
     
     async function showDetailModal(currEvent: CalendarEvent) {
-      setEvent(currEvent);
       setOpenDropdown(false);
-      setIsOwner(false);
 
       const pendingEvent = await getEventId(currEvent.id);
       setPendingEvent(pendingEvent);
@@ -211,27 +209,38 @@ export default function CalendarPage () {
     }
 
     async function updateEvents() {
-      const refreshedEvents =
-        filtersByRoommate.length === 0
-          ? await listHouseholdEvents()
-          : await getFilterOptions({
-              owners: filtersByRoommate,
-            });
+      try {
+        
+        setKey(prev => prev+1);
+        const refreshedEvents =
+          filtersByRoommate.length === 0
+            ? await listHouseholdEvents()
+            : await getFilterOptions({
+                owners: filtersByRoommate,
+              });
 
-      const calenEvents: CalendarEvent[] = refreshedEvents.map((event: APICalendarEvent) =>
-        APICalEventToCalEvent(event)
-      );
-
-      setEvents(calenEvents);
-      setFullDetailEvents(refreshedEvents);
-      setUpcomingEvents(refreshedEvents);
-
-      const refreshedMyEvents = await listMyEvents();
-      setAllMyEvents(refreshedMyEvents);
-      setMyEvents(refreshedMyEvents);
+        const calenEvents: CalendarEvent[] = refreshedEvents.map((event: APICalendarEvent) =>
+          APICalEventToCalEvent(event)
+        );
+        const loadNeedMyApproval:APIApprovalEvent[] = await listNeedsApproval();
+        const needMyApprovalEvents: APICalendarEvent[] = 
+          loadNeedMyApproval.map((e) => (APIApprovalEventToAPICalEvent(e)));
+        const refreshedMyEvents = await listMyEvents(); 
+        const allEvents = await listHouseholdEvents();
+      
+        setEvents(calenEvents);
+        setFullDetailEvents(allEvents);
+        setNeedsMyApproval(needMyApprovalEvents);
+        setMyEvents(refreshedMyEvents);
+        setUpcomingEvents(allEvents);
+        console.log("Finished updating events...")
+      } catch(e: any) {
+        console.log("Error updating events: " + e);
+      }
     }
 
-   function toggleDropdown() {
+    function toggleDropdown() 
+    {
        if (menuRef.current) {
          menuRef.current.measureInWindow((x, y, width, height) => {
             setDropdownPos({
@@ -345,6 +354,7 @@ export default function CalendarPage () {
               })}
             </View>
             <Calendar
+              key ={key}
               events={events}
               height={calendarHeight}
               date={currentDate}
@@ -389,15 +399,15 @@ export default function CalendarPage () {
             //TODO: Need to edit "Your Events" to check user against event owner
             //TODO: Add in filters -- Filter events by creator 
           */}
-          {showEvents && (
-            <ScrollView >
+          {!showCalendar && (
+            <ScrollView key={key}>
               
               <View style={calendarTheme.indent}>
                 <ThemedText type='secondarySubtitle'>Needs Approval</ThemedText>
               </View>
                 {
                   needsMyApproval.map((event) => {
-                    return <EventTile key={event.id} event={event}  owner={false} remove={()=> remove(event.id)}/>
+                    return <EventTile key={event.id} event={event}  owner={false} remove={()=> remove(event.id)}updateEvents={updateEvents}/>
                   })
                 }
                 {needsMyApproval.length === 0 && 
@@ -412,7 +422,7 @@ export default function CalendarPage () {
                 myEvents.map((event) => {
                     if(event.requires_approval && event.approval_counts && event.approval_counts?.approved < event.approval_counts?.total)
                     {
-                      return <EventTile key={event.id} event={event} owner={true} />
+                      return <EventTile key={event.id} event={event} owner={true} updateEvents={updateEvents}/>
                     }
                 })
               }
@@ -420,7 +430,7 @@ export default function CalendarPage () {
                 myEvents.map((event) => {
                     if(event.requires_approval && event.approval_counts && event.approval_counts?.approved >= event.approval_counts?.total)
                     {
-                      return <EventTile key={event.id} event={event} owner={true}/>
+                      return <EventTile key={event.id} event={event} owner={true}updateEvents={updateEvents}/>
                     }
                 })
               }
@@ -431,7 +441,7 @@ export default function CalendarPage () {
               </View>
               {
                 upcomingEvents.map((event) => {
-                    return <EventTile key = {event.id} event = {event} owner= {false} details ={true} />
+                    return <EventTile key = {event.id} event = {event} owner= {false} details ={true} updateEvents={updateEvents}/>
                 })
               }   
             </ScrollView>
@@ -439,10 +449,15 @@ export default function CalendarPage () {
           
         </View>
         {/* Create Event Modal */}
-        <ModalCalendarForm formTitle ="Create Event" edit={false} onClose={() => setEditModal(false)} />
+        <ModalCalendarForm formTitle ="Create Event" edit={false} onClose={() => closeDetailModal()} updateEvents={updateEvents}/>
 
         {detailsModal && (
-          <EventModal event={APIEvent} pendingEvent={pendingEvent} owner={isOwner} onClose={() => closeDetailModal()} updateCal={() => updateCalendar()}/>
+          <EventModal 
+            event={APIEvent} 
+            pendingEvent={pendingEvent} 
+            owner={isOwner} 
+            onClose={() => closeDetailModal()} 
+            updateEvents={updateEvents}/>
         )}
 
         
