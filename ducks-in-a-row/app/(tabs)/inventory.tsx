@@ -44,7 +44,6 @@ export default function InventoryScreen() {
     };
 
     loadData();
-    // itemList.map(item => console.log("ITEM:", item.name, item.restock_needed));
   }, []);
 
   // Merge socket updates into itemList and selectedItem

@@ -300,7 +300,7 @@ export default function ChoreScreen() {
               onDelete={() => {
                 choreAPI.deleteChoreAssignment(selectedItem.id);
                 setViewItemVisible(false);
-                // await refreshChores();
+                refreshChores();
               }}
               onComplete={async (completed) => {
                     try {
