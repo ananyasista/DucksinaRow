@@ -159,13 +159,13 @@ export default function EventModal({event, owner=false, pendingEvent, ...props}:
 
     async function showModal(approval: boolean, edit: boolean)
     {
-        setApprovalModalVisible(approval);
-        setEditModal(edit); 
-        if(props.updateEvents)
+        setApprovalModalVisible(prev => !prev);
+        setEditModal(prev => !prev); 
+        if(editModal && props.updateEvents)
         {
             await props.updateEvents();
         }   
-        if(event)
+        if(editModal && event)
         {
             event = await getEventId(event.id);
             console.log("Updated event: " + event);
@@ -246,7 +246,14 @@ export default function EventModal({event, owner=false, pendingEvent, ...props}:
                 <View style={{borderBottomColor: 'rgba(215, 209, 209, 1)', borderBottomWidth: 1, marginTop: 10, marginBottom: 10}}/>
             </View>
             <ThemedText type='title'>Roommate Approval</ThemedText>
-            <ThemedText type='subtitle'>{approved} of {total} roommates have approved</ThemedText>
+            {event?.requires_approval &&
+                <ThemedText type='subtitle'>{approved} of {total} roommates have approved</ThemedText>
+
+            }
+            {!event?.requires_approval &&
+                <ThemedText type='subtitle'>No roommate approvals requested for event</ThemedText>
+
+            }
             {pendingEvent &&
             pendingEvent.approvals.map((e) => {
                 let circleStyle = modalTheme.avatarCircleYellow;

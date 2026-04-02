@@ -165,14 +165,21 @@ export function EventTile({event, owner,details= false, ...props}:EventTileProps
                 </View>
             </View>
         )}
-        { (owner || details )&& event.approval_status && (event.approval_status === "approved" ||(event.approval_counts &&event.approval_counts?.approved >= event.approval_counts.total)) && (
+        
+        { (owner || details )&& !event.requires_approval && (
+           <View style={eventTileStyle.titleContainer}>
+            <IconSymbol size={20} name="checkmark" color='black'/>
+            <Text style={eventTileStyle.approvedText}>No approvals requested for event</Text>
+         </View>
+        )}
+        { (owner || details )&& event.requires_approval && (event.approval_status === "approved" ||(event.approval_counts &&event.approval_counts?.approved >= event.approval_counts.total)) && (
            <View style={eventTileStyle.titleContainer}>
             <IconSymbol size={20} name="checkmark" color='black'/>
             <Text style={eventTileStyle.approvedText}>Approved by all roommates</Text>
          </View>
         )}
        
-        { (owner||details) && event.approval_status && ((event.approval_counts &&event.approval_counts?.approved < event.approval_counts.total))&&  (
+        { (owner||details) && event.requires_approval && ((event.approval_counts &&event.approval_counts?.approved < event.approval_counts.total))&&  (
             <View style={eventTileStyle.titleContainer}>
                 <IconSymbol size={20} name="hourglass" color='black'/>
                 <Text style={eventTileStyle.pendingText}>Waiting for approval ({(event.approval_counts?.total ?? 0) - (event.approval_counts?.approved ?? 0)}/{event.approval_counts?.total} remaining)</Text>

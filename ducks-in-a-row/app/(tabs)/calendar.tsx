@@ -279,8 +279,9 @@ export default function CalendarPage () {
 
           // clear param after using it
           router.setParams({ mode: undefined });
-          updateEvents();
         }
+        updateEvents();
+
       }, [mode])
     );
     function remove(id: string)
@@ -441,6 +442,14 @@ export default function CalendarPage () {
               </View>
               {
                 myEvents.map((event) => {
+                    if(!event.requires_approval)
+                    {
+                      return <EventTile key={event.id} event={event} owner={true} updateEvents={updateEvents}/>
+                    }
+                })
+              }
+              {
+                myEvents.map((event) => {
                     if(event.requires_approval && event.approval_counts && event.approval_counts?.approved < event.approval_counts?.total)
                     {
                       return <EventTile key={event.id} event={event} owner={true} updateEvents={updateEvents}/>
@@ -479,7 +488,7 @@ export default function CalendarPage () {
           
         </View>
         {/* Create Event Modal */}
-        <ModalCalendarForm formTitle ="Create Event" edit={false} onClose={() => closeDetailModal()} updateEvents={updateEvents}/>
+        <ModalCalendarForm event={null}formTitle ="Create Event" edit={false} onClose={() => closeDetailModal()} updateEvents={updateEvents}/>
 
         {detailsModal && (
           <EventModal 

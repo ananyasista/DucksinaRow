@@ -19,12 +19,12 @@ import {CalendarEvent as APICalendarEvent, createEvent, updateEvent, CalendarEve
 type ModalProps = PropsWithChildren<{
     formTitle:string;
     edit?: boolean;
-    event?: APICalendarEvent | null;
+    event: APICalendarEvent | null;
     onClose:() => Promise<void>;
     updateEvents: ()=>Promise<void>;
 }>;
 
-export default function ModalCalendarForm({edit = false,event, ...props}: ModalProps) {
+export default function ModalCalendarForm({edit = false,event = null, ...props}: ModalProps) {
     const [addVisible, setAddVisible] = useState(edit);
     const [startDate, setStartDate] = useState(new Date());
     const [endDate, setEndDate] = useState(new Date());
@@ -39,8 +39,8 @@ export default function ModalCalendarForm({edit = false,event, ...props}: ModalP
     const [eventDescription, setEventDescription] = useState(event?.details);
     const [eventLocation, setEventLocation] = useState(event?.location);
     const [allDay, setAllDay] = useState(false);
-    const [needsApproval, setNeedsApproval] = useState(true);
-
+    const [needsApproval, setNeedsApproval] = useState<boolean>(false);
+    const [showRoommateSwitch] = useState(event === null);
     const onChangeStart = (event:DateTimePickerEvent, selectedDate?:Date) => {
       const currentDate = selectedDate ? selectedDate : new Date(todayInMinutes());
       setStartDate(currentDate);
@@ -72,18 +72,18 @@ export default function ModalCalendarForm({edit = false,event, ...props}: ModalP
     const close = async () => {
         setAddVisible(false);
         await props.updateEvents();
-       props.onClose();
-
+        props.onClose();
     }
-    
+
     const save = async () => {
-        console.log("inside save");
+        console.log("Trying to save...");
         var errors = setErrors();
         if(!errors)
         {
             return; //Errors -> not ready to save;
         }
         try {
+            console.log("Saving... needs approval: " + needsApproval);
             const cal: CalendarEventCreateInput = {
                 title: eventTitle ?? "",
                 details: eventDescription,
@@ -92,20 +92,20 @@ export default function ModalCalendarForm({edit = false,event, ...props}: ModalP
                 end_date: endDate.toISOString(),
                 all_day: allDay,
                 repeat: "none",
-                requires_approval: needsApproval,
+                requires_approval: needsApproval ? true: false,
             }
             if(event)
             {
                 await updateEvent(event.id, cal);
+                console.log("Successful update event");
 
             } else {
                 await createEvent(cal);
-                console.log("Succesful create");
+                console.log("Succesful create event");
             }
             if(props.updateEvents)
             {
                 await props.updateEvents();
-                console.log("updated events...");
             }
         } catch (e:any) {
             console.log("Error saving event modal: " + e);
@@ -242,8 +242,13 @@ export default function ModalCalendarForm({edit = false,event, ...props}: ModalP
                 </View>
                 <ThemedText type="boldText">Location:</ThemedText>
                 <ThemedTextInput onChangeText={setEventLocation} placeholder='Living Room'/>
-                <ThemedSwitch onChangeSwitch={setNeedsApproval} label="Needs Roommates Approval?" value={event?.requires_approval ?? false}/>
-                <ThemedText type='text'>Notify all roommates to approve this event</ThemedText>
+                <ThemedText type='boldText'>{needsApproval + " "}</ThemedText>
+                <View>
+    
+                    <ThemedSwitch onChangeSwitch={setNeedsApproval} label="Needs Roommates Approval?" value={false} editable = {showRoommateSwitch}/>
+                    <ThemedText type='text'>Field not editable once event is created</ThemedText>
+                </View>
+                
             </View>
             <></><></><></>
             </ScrollView>
