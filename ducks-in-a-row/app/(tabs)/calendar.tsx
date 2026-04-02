@@ -396,18 +396,20 @@ export default function CalendarPage () {
             //TODO: Add in filters -- Filter events by creator 
           */}
           {showEvents && (
-            <ScrollView style={calendarTheme.indent}>
+            <ScrollView >
               
               {showNeedsApproval && 
                 <View> 
+                  <View style={calendarTheme.indent}>
                   <ThemedText type='secondarySubtitle'>Needs Approval</ThemedText>
+                  </View>
                     {
                       needsMyApproval.map((event) => {
                         return <EventTile key={event.id} event={event}  owner={false} remove={()=> remove(event.id)}/>
                       })
                     }
                     {needsMyApproval.length === 0 && 
-                        <ThemedText type='text'>No events pending your approval!</ThemedText>
+                        <View style={calendarTheme.indent}><ThemedText type='text'>No events pending your approval!</ThemedText></View>
                     }
                     <View style={{padding:20}}></View>
                 </View>
@@ -416,7 +418,9 @@ export default function CalendarPage () {
               
               { showMyEvents && 
                   <View>
+                    <View style={calendarTheme.indent}>
                     <ThemedText type='secondarySubtitle'>Your Events</ThemedText>
+                    </View>
                     {
                       
                       myEvents.map((event) => {
@@ -441,7 +445,9 @@ export default function CalendarPage () {
               
               {showUpcomingEvents && 
                 <View> 
+                  <View style={calendarTheme.indent}>
                     <ThemedText type='secondarySubtitle'>Upcoming Events in Your House</ThemedText>
+                    </View>
                     {
                       upcomingEvents.map((event) => {
                           return <EventTile key = {event.id} event = {event} owner= {false} details ={true} />

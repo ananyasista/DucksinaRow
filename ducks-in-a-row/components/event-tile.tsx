@@ -28,9 +28,9 @@ export function EventTile({event, owner,details= false, ...props}:EventTileProps
         date += abbrMonth[startDate.getMonth()] + " ";
         date += startDate.getDate();
         var day = startDate.getDate()+"";
-        const st = new RegExp("$1|21|31^");
-        const nd = new RegExp("$2|22^");
-        const rd = new RegExp("$3|23^");
+        const st = new RegExp("/^1|21|31$/");
+        const nd = new RegExp("/^2|22$/");
+        const rd = new RegExp("/^3|23$/");
         date +=  st.test(day)? "st" : 
                 nd.test(day)? "nd" :
                 rd.test(day)?"rd" :
@@ -184,12 +184,18 @@ const eventTileStyle = StyleSheet.create({
     alignItems: 'flex-start',
     justifyContent: 'center',
     height: 'auto',
-    marginTop: 10,
-    marginBottom: 10, 
-    marginRight: 10,
+    margin:10,
     borderRadius: 16,
     padding: 15,
     backgroundColor:'rgba(246, 246, 245, 1)',
+    shadowColor: 'black',
+    shadowOffset: {
+        width: 0,
+        height: 2,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 14,
   },
   toggleRow: {
     justifyContent:"space-between",

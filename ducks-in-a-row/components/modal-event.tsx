@@ -204,15 +204,15 @@ export default function EventModal({event, owner=false, pendingEvent, ...props}:
         >
             <View style ={modalTheme.container}>
             <View style={modalTheme.rowSpace}>
-                <TouchableOpacity style={modalTheme.containerButton} onPress={() => close()}>
+                <TouchableOpacity  onPress={() => close()}>
                     <Octicons name='x' size = {28} color='#000000'/> 
                 </TouchableOpacity>
                 <View style={{margin:30}}/>
                {owner&& <View style={[modalTheme.rowEnd, {gap:10} ]}>
-                    <TouchableOpacity style={[modalTheme.containerButton, {borderColor:'black'}]} onPress={() => deleteEvent()}>
+                    <TouchableOpacity onPress={() => deleteEvent()}>
                         <Octicons name='trash' size = {28} color='black' style={{margin:5}}/> 
                     </TouchableOpacity>
-                    <TouchableOpacity style={[modalTheme.containerButton, {borderColor:'black'}]} onPress={() => showModal(false, true)}>
+                    <TouchableOpacity onPress={() => showModal(false, true)}>
                         <Octicons name='pencil' size = {28} color='black' style={{margin:5}}/> 
                     </TouchableOpacity>
                 </View>
