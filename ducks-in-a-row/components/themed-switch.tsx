@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {Switch, StyleSheet, View} from 'react-native';
 import { ThemedText } from './themed-text';
 type ThemedSwitchProps = {
@@ -8,6 +8,12 @@ type ThemedSwitchProps = {
 };
 export function ThemedSwitch({label="", onChangeSwitch, value=false}:ThemedSwitchProps) {
   const [isEnabled, setIsEnabled] = useState(value);
+
+  // Sync isEnabled with value prop changes
+  useEffect(() => {
+    setIsEnabled(value);
+  }, [value]);
+
   function toggleSwitch() {
       onChangeSwitch(!isEnabled);
       setIsEnabled(!isEnabled);
@@ -22,6 +28,7 @@ export function ThemedSwitch({label="", onChangeSwitch, value=false}:ThemedSwitc
                 ios_backgroundColor="#f4f4f3"
                 onValueChange={toggleSwitch}
                 value={isEnabled}
+                onTouchStart={(e) => e.stopPropagation()}
         />
     </View>
     

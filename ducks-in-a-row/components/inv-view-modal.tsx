@@ -54,7 +54,7 @@ export default function InvViewModal(props: ModalProps) {
                         </View>
                         <View style={styles.rowStart}> 
                             <IconSymbol size={30} name="calendar" color="#000"/>
-                            <ThemedText type="subtitle">Purchase Date: <ThemedText type="secondarySubtitle">{props.item.last_purchased_date.toDateString()}</ThemedText></ThemedText>
+                            <ThemedText type="subtitle">Purchase Date: <ThemedText type="secondarySubtitle">{props.item.last_purchased_date ? new Date(props.item.last_purchased_date).toLocaleDateString()  : "N/A"}</ThemedText></ThemedText>
                         </View>
                         <View>                            
                             <ThemedSwitch 
