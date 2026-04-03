@@ -14,7 +14,7 @@ import DateTimePicker, { DateTimePickerEvent, Event } from '@react-native-commun
 import RNDateTimePicker from '@react-native-community/datetimepicker';
 import { IconSymbol } from './ui/icon-symbol';
 import ModalCalendarForm from './modal-calendar-form';
-import {CalendarEvent as APICalendarEvent, EventDetails as APIEventDetails, getEventId} from '@/api/calendar';
+import {CalendarEvent as APICalendarEvent, EventDetails as APIEventDetails,deleteEvent as APIDeleteEvent, getEventId} from '@/api/calendar';
 import { useFocusEffect } from 'expo-router';
 
 type EventModalProps = PropsWithChildren<{
@@ -22,7 +22,7 @@ type EventModalProps = PropsWithChildren<{
     pendingEvent?: APIEventDetails|null;
     owner?: boolean;
     onClose?: any;
-    updateCal?: any;
+    updateEvents: ()=>Promise<void>;
 }>
 
 export interface CalendarEvent extends ICalendarEventBase {
@@ -159,14 +159,13 @@ export default function EventModal({event, owner=false, pendingEvent, ...props}:
 
     async function showModal(approval: boolean, edit: boolean)
     {
-        setApprovalModalVisible(approval);
-        setEditModal(edit);
-        if(props.updateCal)
+        setApprovalModalVisible(prev => !prev);
+        setEditModal(prev => !prev); 
+        if(editModal && props.updateEvents)
         {
-            props.updateCal();
-        }
-    
-        if(event)
+            await props.updateEvents();
+        }   
+        if(editModal && event)
         {
             event = await getEventId(event.id);
             console.log("Updated event: " + event);
@@ -189,9 +188,20 @@ export default function EventModal({event, owner=false, pendingEvent, ...props}:
     {
         //TODO: Add in reminding roommate of event apporval
     }
-    function deleteEvent() 
+    async function deleteEvent() 
     {
-        //TODO: Add in deletion functionality
+        try {
+            if(event)
+            {
+                await APIDeleteEvent(event.id);
+            }
+            if(props.updateEvents) {
+                await props.updateEvents();
+            }
+            close();
+        } catch (e: any) {
+            console.log("Error deleting event: " + e);
+        }
     }
   return (
     <View>
@@ -204,15 +214,15 @@ export default function EventModal({event, owner=false, pendingEvent, ...props}:
         >
             <View style ={modalTheme.container}>
             <View style={modalTheme.rowSpace}>
-                <TouchableOpacity style={modalTheme.containerButton} onPress={() => close()}>
+                <TouchableOpacity  onPress={() => close()}>
                     <Octicons name='x' size = {28} color='#000000'/> 
                 </TouchableOpacity>
                 <View style={{margin:30}}/>
                {owner&& <View style={[modalTheme.rowEnd, {gap:10} ]}>
-                    <TouchableOpacity style={[modalTheme.containerButton, {borderColor:'black'}]} onPress={() => deleteEvent()}>
+                    <TouchableOpacity onPress={() => deleteEvent()}>
                         <Octicons name='trash' size = {28} color='black' style={{margin:5}}/> 
                     </TouchableOpacity>
-                    <TouchableOpacity style={[modalTheme.containerButton, {borderColor:'black'}]} onPress={() => showModal(false, true)}>
+                    <TouchableOpacity onPress={() => showModal(false, true)}>
                         <Octicons name='pencil' size = {28} color='black' style={{margin:5}}/> 
                     </TouchableOpacity>
                 </View>
@@ -221,22 +231,29 @@ export default function EventModal({event, owner=false, pendingEvent, ...props}:
             <ThemedText type='title'>{title}</ThemedText>
             <ThemedText type='secondarySubtitle'>{details}</ThemedText>
             <View style={modalTheme.rowStart}>
-                <IconSymbol size={20} name="calendar" color='black'/>
+                <IconSymbol size={20} name="calendar" color='#5B6267'/>
                 <ThemedText>{printDate}</ThemedText>
             </View>
             <View style={modalTheme.rowStart}>
-                <IconSymbol size={20} name="pin" color='black'/>
+                <IconSymbol size={20} name="pin" color='#5B6267'/>
                 <ThemedText>Location: {location}</ThemedText>
             </View>
             <View style={modalTheme.rowStart}>
-                <IconSymbol size={20} name="person" color='black'/>
+                <IconSymbol size={20} name="person" color='#5B6267'/>
                 <ThemedText>Created by: {owner? "You" : event?.event_owner_name}</ThemedText>
             </View>
             <View style={{width:'100%', marginTop: 50}}>
                 <View style={{borderBottomColor: 'rgba(215, 209, 209, 1)', borderBottomWidth: 1, marginTop: 10, marginBottom: 10}}/>
             </View>
             <ThemedText type='title'>Roommate Approval</ThemedText>
-            <ThemedText type='subtitle'>{approved} of {total} roommates have approved</ThemedText>
+            {event?.requires_approval &&
+                <ThemedText type='subtitle'>{approved} of {total} roommates have approved</ThemedText>
+
+            }
+            {!event?.requires_approval &&
+                <ThemedText type='subtitle'>No roommate approvals requested for event</ThemedText>
+
+            }
             {pendingEvent &&
             pendingEvent.approvals.map((e) => {
                 let circleStyle = modalTheme.avatarCircleYellow;
@@ -265,7 +282,7 @@ export default function EventModal({event, owner=false, pendingEvent, ...props}:
             </View>
         </Modal>
         {editModal && (
-            <ModalCalendarForm formTitle="Edit Event" edit={true} event={event} onClose={() => showModal(true, false)}/>
+            <ModalCalendarForm formTitle="Edit Event" edit={true} event={event} onClose={() => showModal(true, false)} updateEvents={props.updateEvents}/>
         )}
     </View>
   )

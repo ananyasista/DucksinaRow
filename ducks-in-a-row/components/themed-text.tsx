@@ -51,7 +51,8 @@ const styles = StyleSheet.create({
   default: {
     fontSize: 16,
     lineHeight: 24,
-    fontFamily: "Cantarell_400Regular"
+    fontFamily: "Cantarell_400Regular",
+    color: "#143348"
   },
   defaultSemiBold: {
     fontSize: 16,
@@ -60,12 +61,13 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontFamily: "PTSansCaption_700Bold"
-    
+    fontFamily: "PTSansCaption_700Bold",
+    color: "#143348"
   },
   subtitle: {
     fontSize: 24,
-    fontFamily: 'Rubik_400Regular'
+    fontFamily: 'Rubik_400Regular',
+    color: "#143348"
   },
   secondarySubtitle: {
     marginTop: 0,
@@ -78,7 +80,19 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 12,
-    fontFamily: 'Cantarell_400Regular'
+    fontFamily: 'Cantarell_400Regular',
+    color: "#143348"
+  },
+  boldText: {
+    fontSize:16,
+    fontFamily: "Cantarell_700Bold",
+    color: "#143348"
+  },
+  text: {
+    fontSize: 12,
+    fontFamily: "Cantarell_400Regular",
+    color: "#143348"
+
   },
   errorText: {
     color: 'red',
@@ -90,5 +104,6 @@ const styles = StyleSheet.create({
     lineHeight: 30,
     fontSize: 16,
     color: '#0a7ea4',
+    fontFamily: "Cantarell_400Regular"
   },
 });

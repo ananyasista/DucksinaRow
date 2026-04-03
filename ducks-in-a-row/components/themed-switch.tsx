@@ -4,10 +4,11 @@ import { ThemedText } from './themed-text';
 type ThemedSwitchProps = {
     label:string;
     value: boolean;
+    onChangeSwitch: (set: boolean)=> void;
+    editable?: boolean;
     labelType?: 'default' | 'title' | 'defaultSemiBold' | 'subtitle' | 'secondarySubtitle' | 'link' | 'boldText' | 'text' | 'errorText';
-    onChangeSwitch: (set:boolean)=> void;
 };
-export function ThemedSwitch({label="", onChangeSwitch, value=false, labelType}:ThemedSwitchProps) {
+export function ThemedSwitch({label="", onChangeSwitch, value=false, editable=true, labelType}:ThemedSwitchProps) {
   const [isEnabled, setIsEnabled] = useState(value);
 
   // Sync isEnabled with value prop changes
@@ -16,8 +17,11 @@ export function ThemedSwitch({label="", onChangeSwitch, value=false, labelType}:
   }, [value]);
 
   function toggleSwitch() {
+    if(editable)
+    {
       onChangeSwitch(!isEnabled);
-      setIsEnabled(!isEnabled);
+      setIsEnabled(prev => !prev);
+    }
   }
 
   return (
