@@ -65,6 +65,7 @@ export default function InvFilterModal(props: ModalProps) {
                         <View style={styles.chipView}>
                             {props.locationList.map((name => (
                                 <Chip 
+                                    key={name}
                                     title={name} 
                                     onPress={() => {
                                         props.setLocationFilterList(prev => {
@@ -156,7 +157,8 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         gap: 12,
         paddingTop: 10,
-        paddingBottom: 10
+        paddingBottom: 10,
+        flexWrap: 'wrap'
     },
     
     header: {

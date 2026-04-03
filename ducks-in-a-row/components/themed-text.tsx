@@ -76,15 +76,6 @@ const styles = StyleSheet.create({
   },
   boldText: {
     fontSize:16,
-    fontFamily: 'Cantarell_700Bold'
-  },
-  text: {
-    fontSize: 12,
-    fontFamily: 'Cantarell_400Regular',
-    color: "#143348"
-  },
-  boldText: {
-    fontSize:16,
     fontFamily: "Cantarell_700Bold",
     color: "#143348"
   },
