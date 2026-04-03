@@ -72,12 +72,6 @@ export async function listHouseholdEvents(): Promise<CalendarEvent[]> {
   return res.data;
 }
 
-// Upcoming events
-export async function listUpcomingEvents(): Promise<CalendarEvent[]> {
-  const res = await api.get("/calendar/events/upcomingEvents/");
-  return res.data;
-}
-
 // Filtered household events
 export async function getFilterOptions(
   filters: CalendarFilterOptions = {}
