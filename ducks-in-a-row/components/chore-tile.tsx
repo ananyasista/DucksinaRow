@@ -63,7 +63,7 @@ export default function ChoreTile(props: ChoreTileProps){
 
                     {/* MIDDLE: PROFILE */}
                     <View style={styles.profileContainer}>
-                        <View style={styles.profile}>
+                        <View style={[styles.profile, {backgroundColor: props.assignee?.display_color}]}>
                             <Text style={{color: '#fff'}}>
                                 {(props.assignee?.first_name ?? "U").charAt(0)}
                             </Text>

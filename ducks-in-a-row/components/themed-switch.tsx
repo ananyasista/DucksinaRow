@@ -1,27 +1,39 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {Switch, StyleSheet, View} from 'react-native';
 import { ThemedText } from './themed-text';
 type ThemedSwitchProps = {
     label:string;
     value: boolean;
     onChangeSwitch: (set: boolean)=> void;
+    editable?: boolean;
+    labelType?: 'default' | 'title' | 'defaultSemiBold' | 'subtitle' | 'secondarySubtitle' | 'link' | 'boldText' | 'text' | 'errorText';
 };
-export function ThemedSwitch({label="", onChangeSwitch, value=false}:ThemedSwitchProps) {
+export function ThemedSwitch({label="", onChangeSwitch, value=false, editable=true, labelType}:ThemedSwitchProps) {
   const [isEnabled, setIsEnabled] = useState(value);
+
+  // Sync isEnabled with value prop changes
+  useEffect(() => {
+    setIsEnabled(value);
+  }, [value]);
+
   function toggleSwitch() {
+    if(editable)
+    {
       onChangeSwitch(!isEnabled);
-      setIsEnabled(!isEnabled);
+      setIsEnabled(prev => !prev);
+    }
   }
 
   return (
     <View style={styles.toggleRow}>
-        <ThemedText type='boldText'>{label}</ThemedText>
+        <ThemedText type={labelType}>{label}</ThemedText>
         <Switch
                 trackColor={{false: '#f4f4f3', true: '#FAAE43'}}
                 thumbColor={isEnabled ? '#f4f4f3': '#FAAE43'}
                 ios_backgroundColor="#f4f4f3"
                 onValueChange={toggleSwitch}
                 value={isEnabled}
+                onTouchStart={(e) => e.stopPropagation()}
         />
     </View>
     

@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework.authtoken",
     "corsheaders",
+    "channels",
+    "channels_redis",
     "api", # APP NAME
 ]
 
@@ -135,3 +137,16 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# FOR WEB SOCKET & CHANNELS
+ASGI_APPLICATION = "api.asgi.application"
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)]
+        }
+        # "BACKEND": "channels.layers.InMemoryChannelLayer" # TESTING ONLY, SWITCH COMMENTED OUT WHEN READY FOR ACTUAL
+    }
+}

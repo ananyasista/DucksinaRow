@@ -99,7 +99,8 @@ export default function ProfileScreen() {
             <View style={styles.card}>
               <View style={styles.rowSpace}>
                 <Text style={styles.cardTitle}>Your Profile</Text>
-                  <Pressable
+                   <Pressable
+                    onPress={() => router.push("/profile-edit?mode=edit")}
                   >
                     <IconSymbol name='pencil' color='black' size={20} style={{marginBottom:12}}/>
                 </Pressable>

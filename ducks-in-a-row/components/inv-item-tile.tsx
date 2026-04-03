@@ -13,14 +13,6 @@ type InvItemTileProps = {
 }
 
 export default function InvItemTile(props: InvItemTileProps){
-    // const [restock, setRestock] = useState(props.restock);
-
-    // const handleToggle = (value: boolean) => {
-    //     const newValue = !value;
-
-    //     props.onChange(newValue);
-    // }
-
     return (
         <TouchableOpacity onPress={props.onPress}>
             <View style={[styles.tile, props.restock && styles.restockTile]}>
@@ -29,7 +21,7 @@ export default function InvItemTile(props: InvItemTileProps){
                 <View style={styles.subView}>
                     <ThemedText type="secondarySubtitle">Stock: {props.quantity}</ThemedText>
                     <View>
-                        <ThemedSwitch label="Restock?" value={!!props.restock} onChangeSwitch={props.onChange}/>
+                        <ThemedSwitch label="Restock Needed? " value={props.restock} onChangeSwitch={props.onChange}/>
                     </View>
                 </View>
             </View>

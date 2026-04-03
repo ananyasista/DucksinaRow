@@ -2,34 +2,12 @@ from rest_framework import serializers
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime, parse_date
 from ..models import Chore, ChoreAssignment
-from .serializers import SimpleUserSerializer, User
+from .serializers import SimpleUserSerializer, User, ensure_aware_datetime
 from datetime import timedelta
 import datetime
 
-def ensure_aware_datetime(value, all_day=False):
-    """
-    Converts strings or naive datetimes into timezone-aware datetimes.
-    If all_day is True, sets time to midnight.
-    """
-    if isinstance(value, str):
-        # Try full datetime first
-        dt = parse_datetime(value)
-        if dt is None:
-            # Parse as date-only
-            d = parse_date(value)
-            dt = datetime.datetime.combine(d, datetime.time.min)
-    elif isinstance(value, datetime.date) and not isinstance(value, datetime.datetime):
-        dt = datetime.datetime.combine(value, datetime.time.min)
-    else:
-        dt = value
-
-    if all_day:
-        dt = dt.replace(hour=0, minute=0, second=0, microsecond=0)
-
-    if timezone.is_naive(dt):
-        dt = timezone.make_aware(dt)
-
-    return dt
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 class ChoreMiniSerializer(serializers.ModelSerializer):
     roommates_involved = SimpleUserSerializer(many=True, read_only=True)
@@ -131,6 +109,7 @@ class ChoreSerializer(serializers.ModelSerializer):
                     latest_assignment.completed_date = timezone.now()
             
             latest_assignment.save()
+            broadcast_assignment_update(latest_assignment)
 
         # Decide if we should create next assignment
         if completed is True:
@@ -141,6 +120,8 @@ class ChoreSerializer(serializers.ModelSerializer):
 
             if should_create_next:
                 self._create_next_assignment(instance, latest_assignment)
+        
+        broadcast_chore_update(instance)
 
         return instance
     
@@ -194,7 +175,7 @@ class ChoreSerializer(serializers.ModelSerializer):
         next_assignee = roommates[1] if len(roommates) > 1 else user
 
         # Create first assignment
-        ChoreAssignment.objects.create(
+        first_assignment = ChoreAssignment.objects.create(
             chore=chore,
             assignee=assignee,
             next_assignee=next_assignee,
@@ -202,6 +183,8 @@ class ChoreSerializer(serializers.ModelSerializer):
             completed=completed,
             all_day=all_day
         )
+        broadcast_chore_update(chore)
+        broadcast_assignment_update(first_assignment)
 
         return chore
     
@@ -238,3 +221,28 @@ class ChoreSerializer(serializers.ModelSerializer):
             all_day=current_assignment.all_day,
             completed=False
         )
+
+
+def broadcast_chore_update(chore):
+    print("SENDING CHORE DATA...")
+    channel_layer = get_channel_layer()
+
+    async_to_sync(channel_layer.group_send)(
+        f"household_{chore.household_id}",
+        {
+            "type": "chore_updated",
+            "payload": ChoreSerializer(chore).data
+        }
+    )
+
+def broadcast_assignment_update(assignment):
+    print("SENDING ASSIGNMENT DATA...")
+    channel_layer = get_channel_layer()
+
+    async_to_sync(channel_layer.group_send)(
+        f"household_{assignment.chore.household_id}",
+        {
+            "type": "assignment_updated",
+            "payload": ChoreAssignmentSerializer(assignment).data
+        }
+    )

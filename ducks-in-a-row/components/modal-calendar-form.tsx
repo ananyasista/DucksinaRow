@@ -19,11 +19,12 @@ import {CalendarEvent as APICalendarEvent, createEvent, updateEvent, CalendarEve
 type ModalProps = PropsWithChildren<{
     formTitle:string;
     edit?: boolean;
-    event?: APICalendarEvent | null;
-    onClose?: any;
+    event: APICalendarEvent | null;
+    onClose:() => Promise<void>;
+    updateEvents: ()=>Promise<void>;
 }>;
 
-export default function ModalCalendarForm({edit = false,event, onClose, ...props}: ModalProps) {
+export default function ModalCalendarForm({edit = false,event = null, ...props}: ModalProps) {
     const [addVisible, setAddVisible] = useState(edit);
     const [startDate, setStartDate] = useState(new Date());
     const [endDate, setEndDate] = useState(new Date());
@@ -38,8 +39,8 @@ export default function ModalCalendarForm({edit = false,event, onClose, ...props
     const [eventDescription, setEventDescription] = useState(event?.details);
     const [eventLocation, setEventLocation] = useState(event?.location);
     const [allDay, setAllDay] = useState(false);
-    const [needsApproval, setNeedsApproval] = useState(true);
-
+    const [needsApproval, setNeedsApproval] = useState<boolean>(false);
+    const [showRoommateSwitch] = useState(event === null);
     const onChangeStart = (event:DateTimePickerEvent, selectedDate?:Date) => {
       const currentDate = selectedDate ? selectedDate : new Date(todayInMinutes());
       setStartDate(currentDate);
@@ -68,19 +69,21 @@ export default function ModalCalendarForm({edit = false,event, onClose, ...props
       endDate.setHours(endDate.getHours()+1);
     };
 
-    const close = () => {
+    const close = async () => {
         setAddVisible(false);
-        onClose();
+        await props.updateEvents();
+        props.onClose();
     }
-    
+
     const save = async () => {
-        console.log("inside save");
+        console.log("Trying to save...");
         var errors = setErrors();
         if(!errors)
         {
             return; //Errors -> not ready to save;
         }
         try {
+            console.log("Saving... needs approval: " + needsApproval);
             const cal: CalendarEventCreateInput = {
                 title: eventTitle ?? "",
                 details: eventDescription,
@@ -89,17 +92,21 @@ export default function ModalCalendarForm({edit = false,event, onClose, ...props
                 end_date: endDate.toISOString(),
                 all_day: allDay,
                 repeat: "none",
-                requires_approval: needsApproval,
+                requires_approval: needsApproval ? true: false,
             }
             if(event)
             {
                 await updateEvent(event.id, cal);
+                console.log("Successful update event");
 
             } else {
                 await createEvent(cal);
-                console.log("Succesful create");
+                console.log("Succesful create event");
             }
-            
+            if(props.updateEvents)
+            {
+                await props.updateEvents();
+            }
         } catch (e:any) {
             console.log("Error saving event modal: " + e);
         }
@@ -151,12 +158,12 @@ export default function ModalCalendarForm({edit = false,event, onClose, ...props
             onRequestClose = {() => close()} 
         >
             <View style={modalTheme.header}>
-                <TouchableOpacity style={modalTheme.cancelButton} onPress={() => close()}>
-                    <Text style={modalTheme.cancelText}>Cancel</Text>
+                <TouchableOpacity style={modalTheme.cancelSaveButton} onPress={() => close()}>
+                    <Text style={modalTheme.cancelSaveText}>Cancel</Text>
                 </TouchableOpacity>
                 <Text style={modalTheme.headerText}>{props.formTitle}</Text>
-                <TouchableOpacity style={modalTheme.saveButton} onPress={() => save()}>
-                    <Text style={modalTheme.saveText}>Save</Text>
+                <TouchableOpacity style={modalTheme.cancelSaveButton} onPress={() => save()}>
+                    <Text style={modalTheme.cancelSaveText}>Save</Text>
                 </TouchableOpacity>
             </View>
             <ScrollView>
@@ -166,7 +173,7 @@ export default function ModalCalendarForm({edit = false,event, onClose, ...props
                 <ThemedTextInput onChangeText={setEventTitle}placeholder="Item Name" defaultValue={event?.title}/>
                 <ThemedText type="boldText">Description:</ThemedText>
                 <ThemedTextInput onChangeText={setEventDescription} size="large" multiline={true} placeholder="Add Details" defaultValue={event?.details}/>
-                <ThemedSwitch onChangeSwitch={setAllDay} label="All-Day" />
+                <ThemedSwitch onChangeSwitch={setAllDay} label="All-Day" value={event?.all_day ?? false} />
                 
                 <View onLayout={showDatepicker}>
                 {startDateError && (<ThemedText type='errorText'>Start date is required</ThemedText>)}
@@ -235,8 +242,11 @@ export default function ModalCalendarForm({edit = false,event, onClose, ...props
                 </View>
                 <ThemedText type="boldText">Location:</ThemedText>
                 <ThemedTextInput onChangeText={setEventLocation} placeholder='Living Room'/>
-                <ThemedSwitch onChangeSwitch={setNeedsApproval} label="Needs Roommates Approval?"/>
-                <ThemedText type='text'>Notify all roommates to approve this event</ThemedText>
+                <View>
+                    <ThemedSwitch onChangeSwitch={setNeedsApproval} label="Needs Roommates Approval?" value={false} editable = {showRoommateSwitch}/>
+                    <ThemedText type='text'>Field not editable once event is created</ThemedText>
+                </View>
+                
             </View>
             <></><></><></>
             </ScrollView>
@@ -271,7 +281,7 @@ const modalTheme = StyleSheet.create({
         fontWeight: 600
     },
     addButton: {
-        backgroundColor: '#087d4b',
+        backgroundColor: '#79997E',
         width: 50,
         height: 50,
         borderRadius: 30,
@@ -281,7 +291,7 @@ const modalTheme = StyleSheet.create({
         bottom: 40,
         right: 30,
     },
-    cancelButton: {
+    cancelSaveButton: {
         backgroundColor: '#fff',
         borderWidth: 2,
         borderRadius: 10,
@@ -291,7 +301,7 @@ const modalTheme = StyleSheet.create({
         width: 100,
         height: 50
     },
-    cancelText: {
+    cancelSaveText: {
         color: '#000',
         fontSize: 16,
         fontWeight: 500

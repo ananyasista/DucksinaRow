@@ -6,11 +6,12 @@ from rest_framework.decorators import action
 from django.db.models import Q, Case, When, IntegerField, BooleanField, ExpressionWrapper, OuterRef, Subquery
 from django.utils import timezone
 
-from ..models import Chore, ChoreAssignment, User
+from ..models import Chore, ChoreAssignment, User, LocationChoices
 from ..serializers.chores_serializers import (
     ChoreSerializer,
     ChoreAssignmentSerializer
 )
+from ..serializers.serializers import ensure_aware_datetime
 
 # CHORE VIEWSET (TEMPLATE to make chores)
 class ChoreViewSet(viewsets.ModelViewSet):
@@ -112,17 +113,22 @@ class ChoreAssignmentViewSet(viewsets.ModelViewSet):
         # Location (from chore)
         location = self.request.query_params.get("location")
         if location:
-            queryset = queryset.filter(chore__location__icontains=location)
+            location_list = [loc.strip() for loc in location.split(",")]
+            queryset = queryset.filter(chore__location__in=location_list)
 
         # Date filters
         start = self.request.query_params.get("start")
         end = self.request.query_params.get("end")
         if start and end:
-            queryset = queryset.filter(due_date__range=[start, end])
+            start_dt = ensure_aware_datetime(start)
+            end_dt = ensure_aware_datetime(end)
+            queryset = queryset.filter(due_date__range=[start_dt, end_dt])
         elif start:
-            queryset = queryset.filter(due_date__gte=start)
+            start_dt = ensure_aware_datetime(start)
+            queryset = queryset.filter(due_date__gte=start_dt)
         elif end:
-            queryset = queryset.filter(due_date__lte=end)
+            end_dt = ensure_aware_datetime(end)
+            queryset = queryset.filter(due_date__lte=end_dt)
 
         # Sorting: overdue first, incomplete before complete
         queryset = queryset.annotate(
@@ -161,18 +167,15 @@ class ChoreAssignmentViewSet(viewsets.ModelViewSet):
         if not user.is_superuser:
             queryset = queryset.filter(chore__household=user.household)
 
-        locations = queryset.exclude(
-            chore__location__isnull=True
-        ).exclude(
-            chore__location=""
-        ).values_list("chore__location", flat=True).distinct()
+        # Return all predefined location choices
+        locations = [choice[0] for choice in LocationChoices.choices]
 
         roommates = User.objects.filter(
             household=user.household
         ).values("id", "first_name")
 
         return Response({
-            "locations": list(locations),
+            "locations": locations,
             "completed_options": [
                 {"value": True, "label": "Completed"},
                 {"value": False, "label": "Incomplete"},

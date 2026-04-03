@@ -8,7 +8,7 @@ from django.utils import timezone
 
 from rest_framework import viewsets
 from ..serializers.inventory_serializers import InventoryListSerializer, InventorySerializer
-from ..models import Items, User
+from ..models import Items, User, LocationChoices
 
 class InventoryViewSet(viewsets.ModelViewSet):
     queryset = Items.objects.all()
@@ -44,7 +44,8 @@ class InventoryViewSet(viewsets.ModelViewSet):
         # Filter: Location
         location = self.request.query_params.get("location")
         if location:
-            queryset = queryset.filter(location__icontains=location)
+            location_list = [loc.strip() for loc in location.split(",")]
+            queryset = queryset.filter(location__in=location_list)
 
         return queryset
 
@@ -66,12 +67,8 @@ class InventoryViewSet(viewsets.ModelViewSet):
         else:
             items = Items.objects.filter(household=user.household)
 
-        # Unique locations
-        locations = (
-            items.exclude(location="")
-            .values_list("location", flat=True)
-            .distinct()
-        )
+        # Return all predefined location choices
+        locations = [choice[0] for choice in LocationChoices.choices]
 
         # Roommates in this household
         roommates = User.objects.filter(
@@ -79,7 +76,7 @@ class InventoryViewSet(viewsets.ModelViewSet):
         ).values("id", "first_name")
 
         data = {
-            "locations": list(locations),
+            "locations": locations,
             "restock": [
                 {"value": True, "label": "Need Restock"},
                 {"value": False, "label": "Stocked"},

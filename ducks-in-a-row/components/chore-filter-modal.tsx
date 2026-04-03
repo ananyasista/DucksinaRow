@@ -17,8 +17,8 @@ type ModalProps = PropsWithChildren<{
     setLocationFilterList: React.Dispatch<React.SetStateAction<string[]>>;
     setAssigneeFilterList: React.Dispatch<React.SetStateAction<string[]>>;
     setCompletedFilter: React.Dispatch<React.SetStateAction<boolean>>;
-    setEndDateFilter: React.Dispatch<React.SetStateAction<Date>>;
-    setStartDateFilter: React.Dispatch<React.SetStateAction<Date>>;
+    setEndDateFilter: React.Dispatch<React.SetStateAction<Date | undefined>>;
+    setStartDateFilter: React.Dispatch<React.SetStateAction<Date | undefined>>;
 
     assigneeList: {
         email: string,
@@ -31,10 +31,12 @@ type ModalProps = PropsWithChildren<{
     locationList: string[];
 
     onApply: () => void;
+    onClear?: () => void;
 }>;
 
 export default function ChoreFilterModal(props: ModalProps) {
     const [visible, setVisible] = useState(false);
+    const [dateVisible, setDateVisible] = useState(false);
     
     const onChangeStartDate = (event: DateTimePickerEvent, selectedDate?: Date) => {
         const currentDate = selectedDate ? selectedDate : new Date();
@@ -53,6 +55,21 @@ export default function ChoreFilterModal(props: ModalProps) {
         props.setCompletedFilter(true);
         props.setStartDateFilter(new Date());
         props.setEndDateFilter(new Date());
+        props.onClear?.();
+
+        setVisible(false);
+    }
+
+    const dateToggle = () => {
+        if(dateVisible){
+            props.setStartDateFilter(undefined);
+            props.setEndDateFilter(undefined);
+        } else {
+            props.setStartDateFilter(new Date());
+            props.setEndDateFilter(new Date());
+        }
+
+        setDateVisible(!dateVisible);
     }
 
     return (
@@ -99,51 +116,11 @@ export default function ChoreFilterModal(props: ModalProps) {
 
                     </View>
 
-                    <View>
-                        <ThemedSwitch label="Show Completed" value={props.completedFilter} onChangeSwitch={() => props.setCompletedFilter(prev => !prev)}/>
-                    </View>
-
-                    <View>
-                        <ThemedText type='subtitle'>Due Date Range</ThemedText>
-                        <View style={{flexDirection: 'row', justifyContent: 'space-around'}}>
-                            <View style={{justifyContent: 'center', gap: 7}}>
-                                <ThemedText type='secondarySubtitle'>Start Date</ThemedText>
-                                <View style={{flexDirection: 'row'}}>
-                                    <IconSymbol name='calendar' size={30} color="#143348"/>
-                                    <DateTimePicker
-                                        testID="dateTimePicker"
-                                        value={props.startDateFilter}
-                                        is24Hour={true}
-                                        onChange={onChangeStartDate}
-                                        mode={'date'}
-                                        display = 'default'
-                                        themeVariant='light'
-                                    />
-                                </View>
-                            </View>
-                            <View style={{justifyContent: 'center', gap: 7}}>
-                                <ThemedText type='secondarySubtitle'>End Date</ThemedText>
-                                <View style={{flexDirection: 'row'}}>
-                                    <IconSymbol name='calendar' size={30} color="#143348"/>
-                                    <DateTimePicker
-                                        testID="dateTimePicker"
-                                        value={props.endDateFilter}
-                                        is24Hour={true}
-                                        onChange={onChangeEndDate}
-                                        mode={'date'}
-                                        display = 'default'
-                                        themeVariant='light'
-                                    />
-                                </View>
-                            </View>
-                        </View>
-                        
-                    </View>
-
                     <ThemedText type='subtitle'>Location</ThemedText>
                         <View style={styles.chipView}>
                             {props.locationList.map((name => (
                                 <Chip 
+                                    key={name}
                                     title={name} 
                                     onPress={() => {
                                         props.setLocationFilterList(prev => {
@@ -158,6 +135,56 @@ export default function ChoreFilterModal(props: ModalProps) {
                             )))}
 
                         </View>
+
+
+                    <View style={{gap: 10}}>
+                        <ThemedText type='subtitle'>Due Date Range</ThemedText>
+                        <ThemedSwitch label='Set Due Date Range' value={dateVisible} onChangeSwitch={() => dateToggle()} labelType='subtitle'></ThemedSwitch>
+                        <View style={{flexDirection: 'row', justifyContent: 'space-around'}}>
+                            {dateVisible && (<>
+                            
+                            <View style={{justifyContent: 'center', gap: 7}}>
+                                {/* <ThemedText type='boldText'>Start Date</ThemedText> */}
+                                <View style={{flexDirection: 'row'}}>
+                                    <IconSymbol name='calendar' size={30} color="#143348"/>
+                                    <DateTimePicker
+                                        testID="dateTimePicker"
+                                        value={props.startDateFilter}
+                                        is24Hour={true}
+                                        onChange={onChangeStartDate}
+                                        mode={'date'}
+                                        display = 'default'
+                                        themeVariant='light'
+                                    />
+                                </View>
+                            </View>
+                            <View style={{justifyContent: 'center', gap: 7}}>
+                                {/* <ThemedText type='secondarySubtitle'>End Date</ThemedText> */}
+                                <View style={{flexDirection: 'row'}}>
+                                    <IconSymbol name='calendar' size={30} color="#143348"/>
+                                    <DateTimePicker
+                                        testID="dateTimePicker"
+                                        value={props.endDateFilter}
+                                        is24Hour={true}
+                                        onChange={onChangeEndDate}
+                                        mode={'date'}
+                                        display = 'default'
+                                        themeVariant='light'
+                                    />
+                                </View>
+                            </View>
+                            
+                            </>)}
+                            
+                        </View>
+                        
+                    </View>
+
+                    <View>
+                        <ThemedSwitch label="Show Completed" value={props.completedFilter} labelType="subtitle" onChangeSwitch={() => props.setCompletedFilter(prev => !prev)}/>
+                    </View>
+
+                    
                     </View>
                     
                     <View style={{flexDirection: 'row', justifyContent: 'space-evenly'}}>
@@ -205,7 +232,7 @@ const styles = StyleSheet.create({
     chipView: {
         flexDirection: 'row',
         gap: 12,
-        paddingTop: 10,
+        paddingTop: 0,
         paddingBottom: 10,
         flexWrap: 'wrap',
         width: '100%',
