@@ -2,6 +2,10 @@ import { StyleSheet, Text, type TextProps } from 'react-native';
 
 import { useThemeColor } from '@/hooks/use-theme-color';
 
+import { useFonts, Cantarell_400Regular, Cantarell_700Bold } from '@expo-google-fonts/cantarell'
+import {PTSansCaption_700Bold} from '@expo-google-fonts/pt-sans-caption'
+import {Rubik_400Regular, Rubik_300Light} from '@expo-google-fonts/rubik'
+
 export type ThemedTextProps = TextProps & {
   lightColor?: string;
   darkColor?: string;
@@ -15,6 +19,14 @@ export function ThemedText({
   type = 'default',
   ...rest
 }: ThemedTextProps) {
+
+  const [fontsLoaded] = useFonts({
+    Cantarell_400Regular,
+    Cantarell_700Bold,
+    PTSansCaption_700Bold,
+    Rubik_400Regular,
+    Rubik_300Light
+  });
 
   return (
     <Text
@@ -39,38 +51,39 @@ const styles = StyleSheet.create({
   default: {
     fontSize: 16,
     lineHeight: 24,
+    fontFamily: "Cantarell_400Regular"
   },
   defaultSemiBold: {
     fontSize: 16,
     lineHeight: 24,
-    fontWeight: '600',
+    fontFamily: 'Cantarell_700Bold'
   },
   title: {
     fontSize: 32,
-    fontWeight: 700,
+    fontFamily: "PTSansCaption_700Bold"
     
   },
   subtitle: {
     fontSize: 24,
-    fontWeight: 400,
+    fontFamily: 'Rubik_400Regular'
   },
   secondarySubtitle: {
     marginTop: 0,
     fontSize: 20,
-    fontWeight: 400,
+    fontFamily: 'Rubik_300Light',
   },
   boldText: {
     fontSize:16,
-    fontWeight: 600
+    fontFamily: 'Cantarell_700Bold'
   },
   text: {
     fontSize: 12,
-    fontWeight: 300
+    fontFamily: 'Cantarell_400Regular'
   },
   errorText: {
     color: 'red',
     fontSize: 12,
-    fontWeight: 300
+    fontFamily: 'Cantarell_700Bold'
   },
   
   link: {

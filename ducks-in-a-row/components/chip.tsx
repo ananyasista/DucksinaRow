@@ -1,6 +1,7 @@
 import { View, StyleSheet, Text, Pressable, TouchableOpacity } from 'react-native';
 import { IconSymbol, IconSymbolName } from './ui/icon-symbol';
 import { PropsWithChildren } from 'react';
+import { ThemedText } from './themed-text';
 
 type ChipProps = PropsWithChildren<{
   title: string;
@@ -42,11 +43,11 @@ export default function Chip({
         />
       )}
 
-      <Text style={[
+      <ThemedText type='text' style={[
         styles.title, 
         isSelectable && !selected && styles.unselectedTitle,
         selected && styles.selectedTitle
-      ]}>{title}</Text>
+      ]}>{title}</ThemedText>
 
       {children}
 
