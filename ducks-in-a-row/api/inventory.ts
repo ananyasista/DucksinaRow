@@ -43,7 +43,7 @@ export const getInventory = async (filters?: {
 export const getItemById = async (id: string) => {
   const response = await api.get<InventoryDetails>(`/inventory/${id}/`);
   // console.log(response.data);
-  // console.log(response.data.last_purchased_by);
+  console.log(response.data.last_purchased_date);
   return response.data;
 };
 

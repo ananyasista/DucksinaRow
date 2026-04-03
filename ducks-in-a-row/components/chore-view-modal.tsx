@@ -1,7 +1,7 @@
 import {View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native'
 import Chip from './chip';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { IconSymbol } from './ui/icon-symbol';
 import { ChoreAssignment } from '@/api/chores';
 import { ThemedText } from './themed-text';
@@ -19,6 +19,11 @@ type ModalProps = {
 export default function ChoreViewModal(props: ModalProps) {
 
     const [complete, setComplete] = useState(props.chore.completed ?? false);
+
+    // Sync complete state when chore prop changes
+    useEffect(() => {
+        setComplete(props.chore.completed ?? false);
+    }, [props.chore.completed]);
 
     const handleComplete = () => {
         const newValue = !complete;
@@ -105,7 +110,7 @@ export default function ChoreViewModal(props: ModalProps) {
                         } 
                         { props.chore.completed && 
                             <TouchableOpacity style={styles.completeButton} onPress={handleComplete}>
-                                <ThemedText type='subtitle'>Chore Completed!</ThemedText>
+                                <ThemedText type='subtitle'>Mark as Incomplete</ThemedText>
                             </TouchableOpacity>
                         }
                     </SafeAreaView>

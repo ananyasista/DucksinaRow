@@ -141,6 +141,28 @@ export default function ChoreItemModal(props: ModalProps) {
         }
     }, [props.chore]);
 
+    const resetChore = () => {
+        props.chore ? (
+            props.onClose()
+        ) : (
+            setChoreTitle(''),
+            setChoreDetails(''),
+            setChoreLocation(null),
+            setRoommatesInvolved([]),
+            setRepeatUnit('Weeks'),
+            setDate(new Date()),
+            setChoreRotate(false),
+            setDueDate(new Date()),
+            setAllDay(true),
+            setRepeatValue(1),
+            setPassToNextUnit('Weeks'),
+            setPassToNextValue(1),
+            props.onClose()
+        )
+
+    };
+
+
     return (
         <View  style={{flex: 1, paddingBottom: 50}}>
             <Modal
@@ -160,30 +182,13 @@ export default function ChoreItemModal(props: ModalProps) {
                         <View style={styles.header}>
                             <TouchableOpacity style={styles.cancelButton} 
                                 onPress={() => {
-                                    props.chore ? (
-                                        props.onClose()
-                                    ) : (
-                                        setChoreTitle(''),
-                                        setChoreDetails(''),
-                                        setChoreLocation(null),
-                                        setRoommatesInvolved([]),
-                                        setRepeatUnit('Weeks'),
-                                        setDate(new Date()),
-                                        setChoreRotate(false),
-                                        setDueDate(new Date()),
-                                        setAllDay(true),
-                                        setRepeatValue(1),
-                                        setPassToNextUnit('Weeks'),
-                                        setPassToNextValue(1),
-                                        props.onClose()
-                                    )
-                                    
+                                    resetChore();                                    
                                 }}
                             >
                                 <ThemedText type='default'>Cancel</ThemedText>
                             </TouchableOpacity>
                             <ThemedText type='subtitle'>{props.title}</ThemedText>
-                            <TouchableOpacity style={styles.cancelButton} onPress={() => handleSave()}>
+                            <TouchableOpacity style={styles.cancelButton} onPress={() => {handleSave(); resetChore();}}>
                                 <ThemedText type='default'>Save</ThemedText>
                             </TouchableOpacity>
                         </View>
@@ -292,6 +297,7 @@ export default function ChoreItemModal(props: ModalProps) {
                                                 setItems={setRepeatInt}
                                                 style={styles.input}
                                                 dropDownContainerStyle={styles.dropdownMenu}
+                                                listMode='SCROLLVIEW'
                                             />
                                         </View>    
                                     </View>

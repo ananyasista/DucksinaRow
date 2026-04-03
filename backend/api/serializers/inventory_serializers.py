@@ -2,7 +2,11 @@ from rest_framework import serializers
 from django.utils import timezone
 from ..models import Items
 from .serializers import SimpleUserSerializer, User
-from ..serializers.chores_serializers import ensure_aware_datetime
+from ..serializers.serializers import ensure_aware_datetime
+import datetime
+
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 class InventoryListSerializer(serializers.ModelSerializer):
     last_purchased_by = SimpleUserSerializer(read_only=True)
@@ -70,13 +74,17 @@ class InventorySerializer(serializers.ModelSerializer):
         # Auto-set the current user
         user = self.context["request"].user
         validated_data["last_purchased_by"] = user
-        validated_data["last_purchased_date"] = timezone.now().date()
+        validated_data["last_purchased_date"] = timezone.now()
 
         # Also set household if needed
         if "household" not in validated_data:
             validated_data["household"] = user.household
 
-        return super().create(validated_data)
+        item = super().create(validated_data)
+
+        broadcast_inventory_update(item)
+
+        return item
     
     def update(self, instance, validated_data):
         was_restock_needed = instance.restock_needed
@@ -88,8 +96,25 @@ class InventorySerializer(serializers.ModelSerializer):
 
         # If item was restocked
         if was_restock_needed and not instance.restock_needed:
-            instance.last_purchased_date = timezone.localdate()
+            instance.last_purchased_date = ensure_aware_datetime(datetime.datetime.now(), False)
+            print("ADDED DATE: ", instance.last_purchased_date)
             instance.last_purchased_by = self.context["request"].user
             instance.save(update_fields=["last_purchased_date", "last_purchased_by"])
         
+        broadcast_inventory_update(instance)
+        
         return instance
+
+def broadcast_inventory_update(item):
+    channel_layer = get_channel_layer()
+
+    print("SENDING ITEM DATA....", item)
+    print(InventorySerializer(item).data)
+
+    async_to_sync(channel_layer.group_send)(
+        f"household_{item.household_id}",
+        {
+            "type": "inventory_updated",
+            "payload": InventorySerializer(item).data
+        }
+    )

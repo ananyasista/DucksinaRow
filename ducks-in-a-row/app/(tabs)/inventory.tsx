@@ -1,8 +1,7 @@
-import {StyleSheet, View, Text, ScrollView, TouchableOpacity, TextInput } from 'react-native';
+import {StyleSheet, View, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { useState, useEffect } from 'react';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Link } from 'expo-router';
 
 import InvFilterModal from '@/components/inv-filter-modal';
 import InvItemModal from '@/components/inv-item-modal';
@@ -14,8 +13,12 @@ import InvViewModal from '@/components/inv-view-modal';
 import * as invAPI from '@/api/inventory';
 import { ThemedText } from '@/components/themed-text';
 
+import { useInventorySocket } from '@/hooks/use-inventory-socket';
+
+
 export default function InventoryScreen() {
   const [itemList, setItemList] = useState<invAPI.InventoryDetails[]>([]);
+  const { inventory: socketInventory } = useInventorySocket();
   const [locationList, setLocationList] = useState<string[]>([]);
   const [purchaseList, setPurchaseList] = useState<{ label: string; value: string }[]>([]);
 
@@ -41,9 +44,35 @@ export default function InventoryScreen() {
     };
 
     loadData();
-    itemList.map(item => console.log("ITEM:", item.name, item.restock_needed));
-    
   }, []);
+
+  // Merge socket updates into itemList and selectedItem
+  useEffect(() => {
+    if (socketInventory.length > 0) {
+      setItemList(prev => {
+        const updated = [...prev];
+        socketInventory.forEach(socketItem => {
+          const index = updated.findIndex(i => i.id === socketItem.id);
+          if (index > -1) {
+            // Update existing item
+            updated[index] = socketItem;
+          } else {
+            // Add new item from socket
+            updated.push(socketItem);
+          }
+        });
+        return updated;
+      });
+
+      // Update selectedItem if it's being viewed and received a socket update
+      if (selectedItem) {
+        const updatedItem = socketInventory.find(item => item.id === selectedItem.id);
+        if (updatedItem) {
+          setSelectedItem(updatedItem);
+        }
+      }
+    }
+  }, [socketInventory, selectedItem?.id]);
 
   const applyFilterChanges = async () => {
     const data = await invAPI.getInventory({restock_needed: stockFilter, purchased_by: purchaseFilterList, location: locationFilterList});
@@ -54,6 +83,7 @@ export default function InventoryScreen() {
   const refreshItems = async () => {
     const data = await invAPI.getInventory();
     setItemList(data);
+    return data;
   }
 
   const getItem = async (id: string) => {
@@ -62,14 +92,31 @@ export default function InventoryScreen() {
     setSelectedItem(item);
   }
 
-  const handleRestockToggle = async (newValue: boolean, item: string) => {
-    const id = item;
-    setItemList(prev => prev.map(i => i.id === id ? { ...i, restock_needed: restock } : i));
+  const handleRestockToggle = async (newValue: boolean, itemId: string) => {
+    // Optimistic update: immediately update UI with the new value
+    const originalItem = itemList.find(i => i.id === itemId);
+    setItemList(prev => prev.map(i => i.id === itemId ? { ...i, restock_needed: newValue } : i));
 
-    await invAPI.updateItem(item, {
-      restock_needed: newValue,
-    })
-    await refreshItems();
+    // Update selected item if currently viewing it
+    if (selectedItem?.id === itemId) {
+      setSelectedItem(prev => prev ? { ...prev, restock_needed: newValue } : prev);
+    }
+
+    try {
+      // Persist change to backend
+      await invAPI.updateItem(itemId, {
+        restock_needed: newValue,
+      });
+    } catch (error) {
+      // Revert on error
+      if (originalItem) {
+        setItemList(prev => prev.map(i => i.id === itemId ? originalItem : i));
+        if (selectedItem?.id === itemId) {
+          setSelectedItem(originalItem);
+        }
+      }
+      console.error('Failed to update restock status:', error);
+    }
   }
  
   return (
@@ -89,6 +136,7 @@ export default function InventoryScreen() {
               locationList={locationList}
               purchaseList={purchaseList}
               onApply={() => applyFilterChanges()}
+              onClear={() => refreshItems()}
             />
             <TextInput 
                 style={styles.input}
@@ -98,7 +146,8 @@ export default function InventoryScreen() {
                 placeholderTextColor='rgba(171, 164, 164, 0.58)'
             />
           </View>
-          
+
+          {/* VIEW TILES */}
           <View style={styles.section}>
             {itemList
                 .filter(item => {
@@ -113,7 +162,7 @@ export default function InventoryScreen() {
                   category={item.location ?? ''}
                   restock={item.restock_needed}
                   quantity={item.quantity}
-                  onChange={() => handleRestockToggle(item.restock_needed, item.id)} // consider passing by reference 
+                  onChange={(value) => handleRestockToggle(value, item.id)} // consider passing by reference 
                   onPress={() => {
                     getItem(item.id);
                     setViewItemVisible(true);
@@ -122,7 +171,8 @@ export default function InventoryScreen() {
               ))
             }
           </View>
-
+          
+          {/* CREATE ITEM */}
           <InvItemModal 
             visible = {addItemVisible}
             onClose = {() => setAddItemVisible(false)}
@@ -140,13 +190,22 @@ export default function InventoryScreen() {
             }}
           />
 
+          {/* VIEW ITME MODAL */}
           {selectedItem && (
             <InvViewModal 
               item = {selectedItem}
               visible = {viewItemVisible}
               onClose={() => {
                 setViewItemVisible(false)
-                refreshItems();
+                // Refresh data and sync selectedItem with fresh data
+                refreshItems().then((freshData) => {
+                  if (selectedItem) {
+                    const updatedItem = freshData.find(i => i.id === selectedItem.id);
+                    if (updatedItem) {
+                      setSelectedItem(updatedItem);
+                    }
+                  }
+                });
               }}
               onEdit = {() => {
                 setViewItemVisible(false);
@@ -161,6 +220,7 @@ export default function InventoryScreen() {
             />
           )}
 
+          {/* EDIT ITEM */}
           {selectedItem && (
             <InvItemModal 
             visible = {editItemVisible}

@@ -128,6 +128,7 @@ export default function InvItemModal(props: ModalProps) {
                                     setItems={setLocations}
                                     style={styles.input}
                                     dropDownContainerStyle={styles.dropdownMenu}
+                                    listMode='SCROLLVIEW'
                                 />
                             </View>
                         </SafeAreaView>
