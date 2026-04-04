@@ -102,6 +102,7 @@ export default function ModalCalendarForm({edit = false,event = null, ...props}:
             } else {
                 await createEvent(cal);
                 console.log("Succesful create event");
+                console.log("CALENDAR EVENT MADE:", cal.requires_approval);
             }
             if(props.updateEvents)
             {
@@ -243,7 +244,7 @@ export default function ModalCalendarForm({edit = false,event = null, ...props}:
                 <ThemedText type="boldText">Location:</ThemedText>
                 <ThemedTextInput onChangeText={setEventLocation} placeholder='Living Room'/>
                 <View>
-                    <ThemedSwitch onChangeSwitch={setNeedsApproval} label="Needs Roommates Approval?" value={false} editable = {showRoommateSwitch}/>
+                    <ThemedSwitch onChangeSwitch={setNeedsApproval} label="Needs Roommates Approval?" value={needsApproval} editable = {showRoommateSwitch}/>
                     <ThemedText type='text'>Field not editable once event is created</ThemedText>
                 </View>
                 
