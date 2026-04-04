@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django.db.models import Q
 
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -149,12 +150,15 @@ class CalendarEventViewSet(viewsets.ViewSet):
     # Get all approval rows for the current user > "Needs Approval" section
     @action(detail=False, methods=["get"], url_path="needs-approval")
     def needs_approval(self, request):
+        today = timezone.localdate()
+
         approvals = EventApprovals.objects.filter(
             user=request.user,
             approved=False,
             response_time__isnull=True,
             event__household=request.user.household,
-            event__requires_approval=True
+            event__requires_approval=True,
+            event__start_date__date__gte=today
         ).select_related(
             "event",
             "event__event_owner"
@@ -168,8 +172,12 @@ class CalendarEventViewSet(viewsets.ViewSet):
     # Get all events for the current user's household > "My Events" section
     @action(detail=False, methods=["get"], url_path="my-events")
     def my_events(self, request):
+        today = timezone.localdate()
+
         events = self.get_queryset().filter(
             event_owner=request.user
+        ).filter(
+            start_date__date__gte=today
         ).order_by("start_date")
 
         serializer = CalendarEventListSerializer(events, many=True)
