@@ -38,8 +38,8 @@ export default function ModalCalendarForm({edit = false,event = null, ...props}:
     const [eventTitle, setEventTitle] = useState(event?.title);
     const [eventDescription, setEventDescription] = useState(event?.details);
     const [eventLocation, setEventLocation] = useState(event?.location);
-    const [allDay, setAllDay] = useState(false);
-    const [needsApproval, setNeedsApproval] = useState<boolean>(false);
+    const [allDay, setAllDay] = useState(event?.all_day ?? false);
+    const [needsApproval, setNeedsApproval] = useState(event?.requires_approval ?? false);
     const [showRoommateSwitch] = useState(event === null);
     const onChangeStart = (event:DateTimePickerEvent, selectedDate?:Date) => {
       const currentDate = selectedDate ? selectedDate : new Date(todayInMinutes());
@@ -76,7 +76,14 @@ export default function ModalCalendarForm({edit = false,event = null, ...props}:
     }
 
     const save = async () => {
-        console.log("Trying to save...");
+        console.log("Trying to save..."); //REMOVE REMOVE
+        console.log("Saving calendar event payload:", {
+            title: eventTitle ?? "",
+            requires_approval: needsApproval,
+            all_day: allDay,
+            start_date: startDate.toISOString(),
+            end_date: endDate.toISOString(),
+            });
         var errors = setErrors();
         if(!errors)
         {
@@ -137,11 +144,25 @@ export default function ModalCalendarForm({edit = false,event = null, ...props}:
         return !error;
     }
     function open() {
-        setEventTitleError(false);
-        setStartDateError(false);
-        setEndDateError(false);
-        setEndDateBeforeStartError(false);
-        setAddVisible(true);
+    setEventTitleError(false);
+    setStartDateError(false);
+    setEndDateError(false);
+    setEndDateBeforeStartError(false);
+
+    setEventTitle("");
+    setEventDescription("");
+    setEventLocation("");
+    setAllDay(false);
+    setNeedsApproval(false);
+
+    const now = new Date();
+    const end = new Date(now);
+    end.setHours(end.getHours() + 1);
+
+    setStartDate(now);
+    setEndDate(end);
+
+    setAddVisible(true);
     }
   return (
     <View >
