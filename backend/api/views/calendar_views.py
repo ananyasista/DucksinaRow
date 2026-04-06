@@ -16,6 +16,7 @@ from api.serializers.calendar_serializers import (
     CalendarEventDetailSerializer,
     NeedsApprovalSerializer,
     ApprovalRespondSerializer,
+    broadcast_calendar_update,
 )
 
 User = get_user_model()
@@ -115,6 +116,7 @@ class CalendarEventViewSet(viewsets.ViewSet):
 
             EventApprovals.objects.bulk_create(approval_rows)
 
+        broadcast_calendar_update(event)
         detail_serializer = CalendarEventDetailSerializer(event)
         return Response(detail_serializer.data, status=status.HTTP_201_CREATED)
 
@@ -132,6 +134,7 @@ class CalendarEventViewSet(viewsets.ViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
+        broadcast_calendar_update(event)
         return Response(CalendarEventDetailSerializer(event).data)
 
     # Delete an event
@@ -218,4 +221,5 @@ class CalendarEventViewSet(viewsets.ViewSet):
 
         approval.save()
 
+        broadcast_calendar_update(event)
         return Response(CalendarEventDetailSerializer(event).data)

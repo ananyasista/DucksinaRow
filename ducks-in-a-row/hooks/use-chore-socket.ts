@@ -5,7 +5,8 @@ export const useChoreSocket = () => {
     const [chores, setChores] = useState<ChoreAssignment[]>([]);
 
     useEffect(() => {
-        const socket = new WebSocket("ws://10.136.146.121:8000/ws/household/");
+        // UPDATE WITH YOUR COMPUTER'S LOCAL IP ADDRESS to RUN PROPERLY
+        const socket = new WebSocket("ws://10.138.250.29:8000/ws/household/");
 
         socket.onopen = () => console.log("Connected to chore WebSocket");
 
