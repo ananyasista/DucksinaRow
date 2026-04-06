@@ -40,7 +40,7 @@ const TestUser: ProfileResponse = {
 };
 
 export default function ProfileScreen() {
-  const [profile, setProfile] = useState<ProfileResponse>(TestUser);
+  const [profile, setProfile] = useState<ProfileResponse | null>(null);
   const [livingPrefs, setLivingPrefs] = useState<any>(null);
 
   const [roommates, setRoommates] = useState<Roommate[]>([]);
@@ -62,10 +62,8 @@ export default function ProfileScreen() {
       setRoommates(rms.filter((rm) => rm.id !== data.id));
     } catch (e: any) {
       console.log("PROFILE LOAD ERROR:", e?.response?.data || e?.message || e);
-      setError("Couldn't load profile. Showing demo data.");
-      setProfile(TestUser);
-      setLivingPrefs(TestUser.living_preferences);
-      setRoommates([]);
+      router.replace("/login");
+      return;
     } finally {
       setLoading(false);
     }

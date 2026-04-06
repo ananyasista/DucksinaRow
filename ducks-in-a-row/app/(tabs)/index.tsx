@@ -66,21 +66,24 @@ export default function HomeScreen() {
   const [eventDetails, setEventDetails] = useState(false);
   const [currEvent, setCurrEvent] = useState<EventDetails>();
   const [isOwner, setIsOwner] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   const loadHomeData = async () => {
     try {
+      const user = await me();
+
       const householdData = await getHouseholdName();
       setGroupName(householdData.household_name || 'Household');
 
-      const user = await me();
       const choreData = await getChoreAssignments({
-        completed: false, 
-        assignee: [user.id]
+        completed: false,
+        assignee: [user.id],
       });
 
       setChoreList(choreData);
     } catch (e: any) {
-      console.log('Home page error:', e?.response?.data || e.message);
+      console.log('Auth error:', e?.response?.data || e.message);
+      router.replace('/login'); 
     }
   };
 
@@ -106,6 +109,10 @@ export default function HomeScreen() {
       setPendingNum(i);
     } catch (e: any) {
       console.log('Home page error:', e?.response?.data || e.message);
+      if (e?.response?.status === 401) {
+        router.replace('/login');
+        return;
+      }
     }
   };
 
@@ -132,6 +139,10 @@ export default function HomeScreen() {
       loadUpcomingWeekEvents();
     } catch (e: any) {
       console.log('Home page error:', e?.response?.data || e.message);
+      if (e?.response?.status === 401) {
+        router.replace('/login');
+        return;
+      }
     }
   }
   const loadUpcomingWeekEvents = async () => {
@@ -191,6 +202,20 @@ export default function HomeScreen() {
     loadHomeData();
     onScreenLoad();
     loadUpcomingWeekEvents();
+  }, []);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        await me();
+        setIsAuthenticated(true);
+      } catch {
+        setIsAuthenticated(false);
+        router.replace('/login');
+      }
+    };
+
+    checkAuth();
   }, []);
 
   const tilesToShow = [
