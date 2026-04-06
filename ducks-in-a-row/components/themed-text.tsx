@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Cantarell_700Bold'
   },
   title: {
-    fontSize: 32,
+    fontSize: 30,
     fontFamily: "PTSansCaption_700Bold",
     color: "#143348"
   },

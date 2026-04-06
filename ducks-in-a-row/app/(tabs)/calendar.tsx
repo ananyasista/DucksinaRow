@@ -629,7 +629,9 @@ const calendarTheme = StyleSheet.create({
   },
   filterText: {
     color: '#fff',
-    fontSize: 12,
+    
+    fontSize:12,
+    fontFamily: "Cantarell_700Bold",
     fontWeight: 600,
     alignSelf: 'center',
     textAlign: 'center',
@@ -648,10 +650,12 @@ const calendarTheme = StyleSheet.create({
   }, 
   filterTextSelected: {
     color: '#EC8534',
-    fontSize: 12,
     fontWeight: 600,
     alignSelf: 'center',
     textAlign: 'center',
+    
+    fontSize:12,
+    fontFamily: "Cantarell_700Bold",
   },
   rowFilter: {
     flexDirection: 'row', 

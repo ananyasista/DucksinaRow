@@ -159,11 +159,11 @@ export default function ModalCalendarForm({edit = false,event = null, ...props}:
         >
             <View style={modalTheme.header}>
                 <TouchableOpacity style={modalTheme.cancelSaveButton} onPress={() => close()}>
-                    <Text style={modalTheme.cancelSaveText}>Cancel</Text>
+                    <ThemedText style={modalTheme.cancelSaveText}>Cancel</ThemedText>
                 </TouchableOpacity>
-                <Text style={modalTheme.headerText}>{props.formTitle}</Text>
+                <ThemedText type='title' style={modalTheme.headerText}>{props.formTitle}</ThemedText>
                 <TouchableOpacity style={modalTheme.cancelSaveButton} onPress={() => save()}>
-                    <Text style={modalTheme.cancelSaveText}>Save</Text>
+                    <ThemedText style={modalTheme.cancelSaveText}>Save</ThemedText>
                 </TouchableOpacity>
             </View>
             <ScrollView>
