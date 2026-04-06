@@ -64,9 +64,9 @@ export default function ChoreTile(props: ChoreTileProps){
                     {/* MIDDLE: PROFILE */}
                     <View style={styles.profileContainer}>
                         <View style={[styles.profile, {backgroundColor: props.assignee?.display_color}]}>
-                            <Text style={{color: '#fff'}}>
+                            <ThemedText type="default" style={{color: '#fff'}}>
                                 {(props.assignee?.first_name ?? "U").charAt(0)}
-                            </Text>
+                            </ThemedText>
                         </View>
 
                         <ThemedText numberOfLines={1} style={styles.assigneeText}>

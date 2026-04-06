@@ -13,6 +13,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedTextInput } from "@/components/text-input";
 import { LivingPreferences, me, updateProfile } from "@/api/auth";
+import { ThemedText } from "@/components/themed-text";
 
 type ProfileInfo = {
    id?: string;
@@ -128,7 +129,7 @@ export default function ProfileEdit() {
         <Text style={styles.backText}>← Back</Text>
       </Pressable>
 
-      <Text style={styles.title}>Profile Settings</Text>
+      <ThemedText type="title">Profile Settings</ThemedText>
       <EditTextField
         question="First Name:"
         value={profile?.first_name ?? null}
@@ -149,9 +150,9 @@ export default function ProfileEdit() {
         onPress={handleSave}
         disabled={saving}
       >
-        <Text style={styles.buttonText}>
+        <ThemedText style={styles.buttonText}>
           {saving ? "Saving..." : "Save Preferences"}
-        </Text>
+        </ThemedText>
       </Pressable>
     </ScrollView>
     </SafeAreaView>
@@ -169,7 +170,7 @@ function EditTextField({
 }) {
   return (
     <View style={styles.questionBlock}>
-      <Text style={styles.label}>{question}</Text>
+      <ThemedText type='boldText'>{question}</ThemedText>
       <View>
         <ThemedTextInput onChangeText={onChange} defaultValue={value === null ? undefined : value}/>
       </View>

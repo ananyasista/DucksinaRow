@@ -242,17 +242,15 @@ export default function EventModal({event, owner=false, pendingEvent, ...props}:
                 <IconSymbol size={20} name="person" color='#5B6267'/>
                 <ThemedText>Created by: {owner? "You" : event?.event_owner_name}</ThemedText>
             </View>
-            <View style={{width:'100%', marginTop: 50}}>
-                <View style={{borderBottomColor: 'rgba(215, 209, 209, 1)', borderBottomWidth: 1, marginTop: 10, marginBottom: 10}}/>
-            </View>
-            <ThemedText type='title'>Roommate Approval</ThemedText>
+            
             {event?.requires_approval &&
+             <View>
+                <View style={{width:'100%', marginTop: 50}}>
+                    <View style={{borderBottomColor: 'rgba(215, 209, 209, 1)', borderBottomWidth: 1, marginTop: 10, marginBottom: 10}}/>
+                </View>
+                <ThemedText type='title'>Roommate Approval</ThemedText>
                 <ThemedText type='subtitle'>{approved} of {total} roommates have approved</ThemedText>
-
-            }
-            {!event?.requires_approval &&
-                <ThemedText type='subtitle'>No roommate approvals requested for event</ThemedText>
-
+             </View>
             }
             {pendingEvent &&
             pendingEvent.approvals.map((e) => {

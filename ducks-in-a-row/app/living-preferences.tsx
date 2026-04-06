@@ -11,6 +11,7 @@ import {
 import { getLivingPreferences, updateLivingPreferences } from "../api/preferences";
 import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { ThemedText } from "@/components/themed-text";
 
 type LivingPrefs = {
   cleanliness: number | null;
@@ -124,13 +125,13 @@ export default function LivingPreferencesScreen() {
       
       {/* Back Button */}
       <Pressable style={styles.backButton} onPress={() => router.back()}>
-        <Text style={styles.backText}>← Back</Text>
+        <ThemedText style={styles.backText}>← Back</ThemedText>
       </Pressable>
 
-      <Text style={styles.title}>Living Preferences Survey</Text>
-      <Text style={styles.subtitle}>
+      <ThemedText type='title'>Living Preferences Survey</ThemedText>
+      <ThemedText style={styles.subtitle}>
         Answer these questions so your preferences can be saved to your profile.
-      </Text>
+      </ThemedText>
 
       <ScaleQuestion
         question="1. How clean do you prefer shared living spaces to be?"
@@ -209,9 +210,9 @@ export default function LivingPreferencesScreen() {
         onPress={handleSave}
         disabled={saving}
       >
-        <Text style={styles.buttonText}>
+        <ThemedText style={styles.buttonText}>
           {saving ? "Saving..." : "Save Preferences"}
-        </Text>
+        </ThemedText>
       </Pressable>
     </ScrollView>
     </SafeAreaView>
@@ -229,7 +230,7 @@ function ScaleQuestion({
 }) {
   return (
     <View style={styles.questionBlock}>
-      <Text style={styles.label}>{question}</Text>
+      <ThemedText style={styles.label}>{question}</ThemedText>
       <View style={styles.optionRow}>
         {SCALE_OPTIONS.map((option) => {
           const selected = value === option;
@@ -239,9 +240,9 @@ function ScaleQuestion({
               style={[styles.scaleChip, selected && styles.selectedChip]}
               onPress={() => onSelect(option)}
             >
-              <Text style={[styles.chipText, selected && styles.selectedChipText]}>
+              <ThemedText style={[styles.chipText, selected && styles.selectedChipText]}>
                 {option}
-              </Text>
+              </ThemedText>
             </Pressable>
           );
         })}
@@ -261,7 +262,7 @@ function BooleanQuestion({
 }) {
   return (
     <View style={styles.questionBlock}>
-      <Text style={styles.label}>{question}</Text>
+      <ThemedText style={styles.label}>{question}</ThemedText>
       <View style={styles.choiceContainer}>
         {["Yes", "No"].map((option) => {
           const boolValue = option === "Yes";
@@ -273,9 +274,9 @@ function BooleanQuestion({
               style={[styles.choiceChip, selected && styles.selectedChip]}
               onPress={() => onSelect(boolValue)}
             >
-              <Text style={[styles.chipText, selected && styles.selectedChipText]}>
+              <ThemedText style={[styles.chipText, selected && styles.selectedChipText]}>
                 {option}
-              </Text>
+              </ThemedText>
             </Pressable>
           );
         })}
@@ -297,7 +298,7 @@ function ChoiceQuestion({
 }) {
   return (
     <View style={styles.questionBlock}>
-      <Text style={styles.label}>{question}</Text>
+      <ThemedText style={styles.label}>{question}</ThemedText>
       <View style={styles.choiceContainer}>
         {options.map((option) => {
           const selected = value === option;
@@ -307,9 +308,9 @@ function ChoiceQuestion({
               style={[styles.choiceChip, selected && styles.selectedChip]}
               onPress={() => onSelect(option)}
             >
-              <Text style={[styles.chipText, selected && styles.selectedChipText]}>
+              <ThemedText style={[styles.chipText, selected && styles.selectedChipText]}>
                 {option}
-              </Text>
+              </ThemedText>
             </Pressable>
           );
         })}

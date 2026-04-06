@@ -19,6 +19,7 @@ import {
 } from '../../api/calendar';
 import EventModal from '@/components/modal-event';
 import React from 'react';
+import { ThemedText } from '@/components/themed-text';
 
 type HomeCalendarEvent = ICalendarEventBase & {
   details?: string;
@@ -29,7 +30,6 @@ type HomeCalendarEvent = ICalendarEventBase & {
 };
 
 const COLORS = {
-  cream: '#F7F1E7',
   card: '#FFFFFF',
   yellow: '#FEE27A',
   gold: '#FAAE43',
@@ -37,16 +37,16 @@ const COLORS = {
   rust: '#AC5736',
   sage: '#79997E',
   navy: '#143348',
-  muted: '#B6BCC7',
+  muted: '#666768',
   text: '#222222',
   white: '#FFFFFF',
   toggleGreen: '#18A51B',
 };
 
 const FONT = {
-  heading: 'System',
-  body: 'System',
-  bodyMedium: 'System',
+  heading: "PTSansCaption_700Bold",
+  body: 'Rubik_300Light',
+  bodyMedium: "Cantarell_400Regular",
 };
 
 const getInitial = (fullName?: string) => {
@@ -66,30 +66,40 @@ export default function HomeScreen() {
   const [eventDetails, setEventDetails] = useState(false);
   const [currEvent, setCurrEvent] = useState<EventDetails>();
   const [isOwner, setIsOwner] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   const loadHomeData = async () => {
     try {
+      const user = await me();
+
       const householdData = await getHouseholdName();
       setGroupName(householdData.household_name || 'Household');
 
-      const user = await me();
       const choreData = await getChoreAssignments({
-        completed: false, 
-        assignee: [user.id]
+        completed: false,
+        assignee: [user.id],
       });
 
       setChoreList(choreData);
     } catch (e: any) {
-      console.log('Home page error:', e?.response?.data || e.message);
+      console.log('Auth error:', e?.response?.data || e.message);
+      router.replace('/login'); 
     }
   };
 
   const onScreenLoad = async () => {
     try {
       const currNeedsApproval = await listNeedsApproval();
-      const currGiveApproval = await listMyEvents();
+      const currMyEvents = await listMyEvents();
 
-      setMyEvents(currGiveApproval);
+      const currGiveApproval = currMyEvents.filter(
+        (event) =>
+          event.requires_approval &&
+          event.approval_counts &&
+          event.approval_counts.approved < event.approval_counts.total
+      );
+
+      setMyEvents(currMyEvents);
       setNeedsApproval(currNeedsApproval.length);
       setGiveApproval(currGiveApproval.length);
 
@@ -99,15 +109,26 @@ export default function HomeScreen() {
       setPendingNum(i);
     } catch (e: any) {
       console.log('Home page error:', e?.response?.data || e.message);
+      if (e?.response?.status === 401) {
+        router.replace('/login');
+        return;
+      }
     }
   };
 
   const updateEvents = async () => {
     try {
       const currNeedsApproval = await listNeedsApproval();
-      const currGiveApproval = await listMyEvents();
+      const currMyEvents = await listMyEvents();
 
-      setMyEvents(currGiveApproval);
+      const currGiveApproval = currMyEvents.filter(
+        (event) =>
+          event.requires_approval &&
+          event.approval_counts &&
+          event.approval_counts.approved < event.approval_counts.total
+      );
+
+      setMyEvents(currMyEvents);
       setNeedsApproval(currNeedsApproval.length);
       setGiveApproval(currGiveApproval.length);
 
@@ -118,6 +139,10 @@ export default function HomeScreen() {
       loadUpcomingWeekEvents();
     } catch (e: any) {
       console.log('Home page error:', e?.response?.data || e.message);
+      if (e?.response?.status === 401) {
+        router.replace('/login');
+        return;
+      }
     }
   }
   const loadUpcomingWeekEvents = async () => {
@@ -179,6 +204,20 @@ export default function HomeScreen() {
     loadUpcomingWeekEvents();
   }, []);
 
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        await me();
+        setIsAuthenticated(true);
+      } catch {
+        setIsAuthenticated(false);
+        router.replace('/login');
+      }
+    };
+
+    checkAuth();
+  }, []);
+
   const tilesToShow = [
     needsApproval >= 1 && {
       key: 'need',
@@ -211,20 +250,23 @@ export default function HomeScreen() {
           imageStyle={styles.heroBackgroundImage}
           resizeMode="cover"
         >
-          <Image
-            source={require('@/assets/images/home.png')}
+         
+          
+        </ImageBackground>
+       <Image
+            source={require('@/assets/images/ducksLogo.png')}
             style={styles.heroLogo}
             resizeMode="contain"
           />
-        </ImageBackground>
-
+          <View style ={styles.header}>
+          <ThemedText type='title'>Welcome Back, {groupName}!</ThemedText>
+          </View>
         <View style={styles.contentCard}>
           <ScrollView
             style={styles.scroll}
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
           >
-            <Text style={styles.welcomeText}>Welcome Back, {groupName}!</Text>
 
             {pendingNum >= 1 && (
               <View style={styles.section}>
@@ -403,11 +445,9 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: COLORS.cream,
   },
   screen: {
     flex: 1,
-    backgroundColor: COLORS.cream,
   },
   heroBackground: {
     position: 'absolute',
@@ -415,7 +455,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 285,
-    justifyContent: 'flex-end',
   },
   heroBackgroundImage: {
     width: '100%',
@@ -423,10 +462,11 @@ const styles = StyleSheet.create({
   },
   heroLogo: {
     position: 'absolute',
-    right: 18,
-    bottom: 22,
+    right: 40,
+    top:50, 
     width: 132,
     height: 96,
+    zIndex: 4, 
   },
   contentCard: {
     flex: 1,
@@ -444,6 +484,11 @@ const styles = StyleSheet.create({
     paddingTop: 26,
     paddingBottom: 34,
     gap: 34,
+  },
+  header: {
+    position: 'absolute',
+    top: 115, 
+    left: 20,
   },
   welcomeText: {
     fontFamily: FONT.heading,
@@ -483,6 +528,10 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     minHeight: 118,
     justifyContent: 'space-between',
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 2,
   },
   pendingLabel: {
     fontFamily: FONT.bodyMedium,
@@ -532,6 +581,11 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingHorizontal: 18,
     paddingVertical: 14,
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 2,
+    
   },
   choreCardText: {
     fontFamily: FONT.heading,

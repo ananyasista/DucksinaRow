@@ -58,6 +58,14 @@ export default function CalendarPage () {
 
     const [key, setKey] = useState(0);
 
+    function isTodayOrFuture(dateString: string) {
+      const eventDate = new Date(dateString);
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
+
+      return eventDate >= startOfToday;
+    }
+
     async function loadFilteredCalendarEvents(selectedOwnerIds: string[]) {
       try {
         const filteredEvents =
@@ -70,13 +78,9 @@ export default function CalendarPage () {
         const calenEvents: CalendarEvent[] = filteredEvents.map((event: APICalendarEvent) =>
           APICalEventToCalEvent(event)
         );
-        var upcoming: APICalendarEvent[] = [];
-        filteredEvents.map((event) => {
-          if(new Date(event.start_date) >= new Date())
-          {
-            upcoming.push(event);
-          }
-        })
+        const upcoming = filteredEvents.filter((event) =>
+          isTodayOrFuture(event.start_date)
+        );
 
         setFullDetailEvents(filteredEvents);
         setEvents(calenEvents);
@@ -150,13 +154,9 @@ export default function CalendarPage () {
         
         setEvents(calenEvents);
         setFullDetailEvents(allEvents);
-        var upcoming: APICalendarEvent[] = [];
-        allEvents.map((event) => {
-          if(new Date(event.start_date) >= new Date())
-          {
-            upcoming.push(event);
-          }
-        })
+        const upcoming = allEvents.filter((event) =>
+          isTodayOrFuture(event.start_date)
+        );
         setNeedsMyApproval(needMyApprovalEvents);
         setMyEvents(loadMyEvents);
         setUpcomingEvents(upcoming);
@@ -241,13 +241,9 @@ export default function CalendarPage () {
           loadNeedMyApproval.map((e) => (APIApprovalEventToAPICalEvent(e)));
         const refreshedMyEvents = await listMyEvents(); 
         const allEvents = await listHouseholdEvents();
-        var upcoming: APICalendarEvent[] = [];
-        allEvents.map((event) => {
-          if(new Date(event.start_date) >= new Date())
-          {
-            upcoming.push(event);
-          }
-        })
+        const upcoming = allEvents.filter((event) =>
+          isTodayOrFuture(event.start_date)
+        );
         setEvents(calenEvents);
         setFullDetailEvents(allEvents);
         setNeedsMyApproval(needMyApprovalEvents);
@@ -473,13 +469,20 @@ export default function CalendarPage () {
                 <ThemedText type='secondarySubtitle'>Upcoming Events in Your House</ThemedText>
               </View>
               {
-                upcomingEvents.map((event) => {
-                  if(new Date(event.start_date) > new Date())
-                  {
-                    return <EventTile key = {event.id} event = {event} owner= {profile ? event.event_owner_name === (profile.first_name + " " + profile.last_name) : false} details ={true} updateEvents={updateEvents}/>
-                  }
-                })
-              }   
+                upcomingEvents.map((event) => (
+                  <EventTile
+                    key={event.id}
+                    event={event}
+                    owner={
+                      profile
+                        ? event.event_owner_name === (profile.first_name + " " + profile.last_name)
+                        : false
+                    }
+                    details={true}
+                    updateEvents={updateEvents}
+                  />
+                ))
+              }  
               {upcomingEvents.length === 0 && 
                 <View style={calendarTheme.indent}><ThemedText type='text'>No upcoming events</ThemedText></View>              
               }
@@ -629,7 +632,9 @@ const calendarTheme = StyleSheet.create({
   },
   filterText: {
     color: '#fff',
-    fontSize: 12,
+    
+    fontSize:12,
+    fontFamily: "Cantarell_700Bold",
     fontWeight: 600,
     alignSelf: 'center',
     textAlign: 'center',
@@ -648,10 +653,12 @@ const calendarTheme = StyleSheet.create({
   }, 
   filterTextSelected: {
     color: '#EC8534',
-    fontSize: 12,
     fontWeight: 600,
     alignSelf: 'center',
     textAlign: 'center',
+    
+    fontSize:12,
+    fontFamily: "Cantarell_700Bold",
   },
   rowFilter: {
     flexDirection: 'row', 

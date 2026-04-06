@@ -138,7 +138,6 @@ export default function ChoreFilterModal(props: ModalProps) {
 
 
                     <View style={{gap: 10}}>
-                        <ThemedText type='subtitle'>Due Date Range</ThemedText>
                         <ThemedSwitch label='Set Due Date Range' value={dateVisible} onChangeSwitch={() => dateToggle()} labelType='subtitle'></ThemedSwitch>
                         <View style={{flexDirection: 'row', justifyContent: 'space-around'}}>
                             {dateVisible && (<>
@@ -194,10 +193,10 @@ export default function ChoreFilterModal(props: ModalProps) {
                                 props.onApply();
                                 setVisible(false);
                             }}>
-                            <Text style={styles.stateText}>Apply</Text>
+                            <ThemedText type="subtitle" style={styles.stateText}>Apply</ThemedText>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.stateButtons} onPress={() => onClear()}>
-                            <Text style={styles.stateText}>Clear</Text>
+                            <ThemedText type="subtitle" style={styles.stateText}>Clear</ThemedText>
                         </TouchableOpacity>
                     </View>
                     

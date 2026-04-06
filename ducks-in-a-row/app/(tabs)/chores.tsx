@@ -15,6 +15,8 @@ import { getHouseholdRoommates, getHouseholdName } from '@/api/household';
 
 import { useChoreSocket } from '@/hooks/use-chore-socket';
 
+import { ThemedText } from '@/components/themed-text';
+
 
 export default function ChoreScreen() {
   const [choresList, setChoresList] = useState<choreAPI.ChoreAssignment[]>([]);
@@ -172,7 +174,7 @@ export default function ChoreScreen() {
     <SafeAreaView style={{flex: 1}}>
       <ScrollView style={{paddingBottom: 100}}>
         <View style={styles.fullLayout}>
-          <Text style={styles.title}>Chores</Text>
+          <ThemedText type="title">Chores</ThemedText>
           <View style={{flexDirection: 'row', gap: 13}}>
             <ChoreFilterModal 
               title='Filters'
@@ -408,9 +410,14 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         position: 'absolute',
-        bottom: 25,
-        right: 25,
-        zIndex: 3000
+        bottom: 40,
+        right: 30,
+        zIndex: 100,
+        shadowColor: '#000',
+        shadowOffset: {width: 0, height: 2},
+        shadowOpacity: 0.3,
+        shadowRadius: 3,
+        elevation: 5
     },
   
   input: {
