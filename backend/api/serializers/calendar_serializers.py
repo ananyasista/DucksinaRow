@@ -2,6 +2,9 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from api.models import CalendarEvents, EventApprovals
 
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+
 User = get_user_model()
 
 # Returns user info in approvals/event responses
@@ -221,3 +224,16 @@ class ApprovalRespondSerializer(serializers.Serializer):
     """
 
     action = serializers.ChoiceField(choices=["approve", "decline"])
+
+def broadcast_calendar_update(event):
+    channel_layer = get_channel_layer()
+
+    print("SENDING CALENDAR DATA....", event)
+
+    async_to_sync(channel_layer.group_send)(
+        f"household_{event.household_id}",
+        {
+            "type": "calendar_updated",
+            "payload": CalendarEventDetailSerializer(event).data
+        }
+    )
