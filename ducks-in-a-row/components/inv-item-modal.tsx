@@ -78,11 +78,11 @@ export default function InvItemModal(props: ModalProps) {
                                     props.onClose()
                                 }}
                             >
-                                <Text style={styles.cancelText}>Cancel</Text>
+                                <ThemedText type="subtitle" style={styles.cancelText}>Cancel</ThemedText>
                             </TouchableOpacity>
                             <ThemedText type='subtitle'>{props.title}</ThemedText>
                             <TouchableOpacity style={styles.cancelButton} onPress={handleSave}>
-                                <Text style={styles.cancelText}>Save</Text>
+                                <ThemedText type="subtitle" style={styles.cancelText}>Save</ThemedText>
                             </TouchableOpacity>
                         </View>
 
