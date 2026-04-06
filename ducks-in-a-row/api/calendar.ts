@@ -66,7 +66,7 @@ export type CalendarFilterOptions = {
   owners?: string[]; // roommate user IDs
 };
 
-// All events in the current user's household
+// All events in the current user's household > Full Calendar View 
 export async function listHouseholdEvents(): Promise<CalendarEvent[]> {
   const res = await api.get("/calendar/events/");
   return res.data;

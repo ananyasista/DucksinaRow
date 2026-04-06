@@ -87,9 +87,16 @@ export default function HomeScreen() {
   const onScreenLoad = async () => {
     try {
       const currNeedsApproval = await listNeedsApproval();
-      const currGiveApproval = await listMyEvents();
+      const currMyEvents = await listMyEvents();
 
-      setMyEvents(currGiveApproval);
+      const currGiveApproval = currMyEvents.filter(
+        (event) =>
+          event.requires_approval &&
+          event.approval_counts &&
+          event.approval_counts.approved < event.approval_counts.total
+      );
+
+      setMyEvents(currMyEvents);
       setNeedsApproval(currNeedsApproval.length);
       setGiveApproval(currGiveApproval.length);
 
@@ -105,9 +112,16 @@ export default function HomeScreen() {
   const updateEvents = async () => {
     try {
       const currNeedsApproval = await listNeedsApproval();
-      const currGiveApproval = await listMyEvents();
+      const currMyEvents = await listMyEvents();
 
-      setMyEvents(currGiveApproval);
+      const currGiveApproval = currMyEvents.filter(
+        (event) =>
+          event.requires_approval &&
+          event.approval_counts &&
+          event.approval_counts.approved < event.approval_counts.total
+      );
+
+      setMyEvents(currMyEvents);
       setNeedsApproval(currNeedsApproval.length);
       setGiveApproval(currGiveApproval.length);
 
