@@ -17,28 +17,6 @@ import { me, ProfileResponse } from "../../api/auth";
 import { getLivingPreferences } from "../../api/preferences";
 import { getHouseholdRoommates, Roommate } from "../../api/household";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { ThemedText } from "@/components/themed-text";
-
-const TestUser: ProfileResponse = {
-  id: "demo",
-  email: "demo@example.com",
-  first_name: "Demo",
-  last_name: "User",
-  username: "demo-user",
-  household_join_code: null,
-  living_preferences: {
-    cleanliness: 3,
-    clean_up_your_space: false,
-    cook: false,
-    sharing_items: true,
-    pets: false,
-    guests: true,
-    personality_type: "TEST",
-    sleep_schedule: "",
-    smoking: false,
-    drinking_alcohol: false,
-  },
-};
 
 export default function ProfileScreen() {
   const [profile, setProfile] = useState<ProfileResponse | null>(null);
@@ -81,12 +59,26 @@ export default function ProfileScreen() {
     router.replace("/login");
   };
 
+  if (loading) {
+  return (
+    <SafeAreaView style={{ flex: 1 }}>
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator />
+      </View>
+    </SafeAreaView>
+  );
+}
+
+  if (!profile) {
+    return null;
+  }
+
   return (
     <SafeAreaView style={{ flex: 1}}>
       <ScrollView contentContainerStyle={styles.container}>
-        <ThemedText type='title'>
+        <Text style={styles.h1}>
           Hello, {profile.first_name || profile.username || "Roommate"}!
-        </ThemedText>
+        </Text>
 
         {loading ? (
           <ActivityIndicator style={{ marginTop: 12 }} />
@@ -97,7 +89,7 @@ export default function ProfileScreen() {
             {/* Profile Info */}
             <View style={styles.card}>
               <View style={styles.rowSpace}>
-                <ThemedText type='boldText'>Your Profile</ThemedText>
+                <Text style={styles.cardTitle}>Your Profile</Text>
                    <Pressable
                     onPress={() => router.push("/profile-edit?mode=edit")}
                   >
@@ -111,7 +103,7 @@ export default function ProfileScreen() {
 
             {/* Roommates */}
             <View style={styles.card}>
-              <ThemedText type='boldText'>Roommates</ThemedText>
+              <Text style={styles.cardTitle}>Roommates</Text>
 
               {roommates.length ? (
                 <View style={styles.avatarRow}>
@@ -127,11 +119,11 @@ export default function ProfileScreen() {
                         { backgroundColor: rm.display_color || PRIMARY },
                       ]}
                     >
-                      <ThemedText type='secondarySubtitle'>{initials(rm.full_name)}</ThemedText>
+                      <Text style={styles.avatarText}>{initials(rm.full_name)}</Text>
                     </View>
-                      <ThemedText type='text' numberOfLines={1}>
+                      <Text style={styles.avatarName} numberOfLines={1}>
                         {rm.first_name}
-                      </ThemedText>
+                      </Text>
                     </Pressable>
                   ))}
                 </View>
@@ -143,7 +135,7 @@ export default function ProfileScreen() {
             {/* Living Preferences */}
             <View style={styles.card}>
               <View style={styles.rowSpace}>
-                <ThemedText type='boldText'>Living Preferences</ThemedText>
+                <Text style={styles.cardTitle}>Living Preferences</Text>
                   <Pressable
                     onPress={() => router.push("/living-preferences?mode=edit")}
                   >
@@ -170,7 +162,7 @@ export default function ProfileScreen() {
 
 
             <Pressable style={styles.btnDanger} onPress={onLogout}>
-              <ThemedText style={styles.btnDangerText}>Log out</ThemedText>
+              <Text style={styles.btnDangerText}>Log out</Text>
             </Pressable>
 
             {/* Roommate Preferences Modal */}
@@ -219,7 +211,8 @@ export default function ProfileScreen() {
   );
 }
 
-function yesNo(v: boolean) {
+function yesNo(v?: boolean | null) {
+  if (v === null || v === undefined) return "N/A";
   return v ? "Yes" : "No";
 }
 
@@ -240,8 +233,8 @@ function initials(name?: string) {
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <View style={styles.row}>
-      <ThemedText type='default'>{label}</ThemedText>
-      <ThemedText type='default'>{value}</ThemedText>
+      <Text style={styles.rowLabel}>{label}</Text>
+      <Text style={styles.rowValue}>{value}</Text>
     </View>
   );
 }
