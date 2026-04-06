@@ -79,7 +79,7 @@ export default function ChoreViewModal(props: ModalProps) {
                                 </View>
                                 <View style={{flexDirection: 'row', gap: 5}}>
                                     <IconSymbol name='arrow.right.circle.fill' size={30} color="#000"/>
-                                    <Text style={styles.subHeading}>Next Up: <Text style={styles.text}>{props.chore.next_assignee?.first_name ?? ""}</Text></Text>
+                                    <ThemedText type="subtitle">Next Up: <ThemedText type="secondarySubtitle">{props.chore.next_assignee?.first_name ?? ""}</ThemedText></ThemedText>
                                 </View>
                                 <View>
                                     <View style={{flexDirection: 'row', gap: 5}}>

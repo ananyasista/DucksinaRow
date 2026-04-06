@@ -122,11 +122,11 @@ export default function InvFilterModal(props: ModalProps) {
                                 props.onApply();
                                 setVisible(false);
                         }}>
-                            <Text style={styles.stateText}>Apply</Text>
+                            <ThemedText type="subtitle" style={styles.stateText}>Apply</ThemedText>
                         </TouchableOpacity>
                         
                         <TouchableOpacity style={styles.stateButtons} onPress={() => onClear()}>
-                            <Text style={styles.stateText}>Clear</Text>
+                            <ThemedText type="subtitle" style={styles.stateText}>Clear</ThemedText>
                         </TouchableOpacity>
                     </View>
                 </SafeAreaView>
