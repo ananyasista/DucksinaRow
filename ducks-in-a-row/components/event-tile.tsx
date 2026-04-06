@@ -133,10 +133,10 @@ export function EventTile({event, owner,details= false, ...props}:EventTileProps
         <View style={eventTileStyle.titleContainer}>
             <ThemedText type="boldText">{event.title}</ThemedText>
             { owner && event.approval_status && (event.approval_status === "approved" ||(event.approval_counts &&event.approval_counts?.approved >= event.approval_counts.total)) && (
-                <Text style={eventTileStyle.approvedBubble}>Approved</Text>
+                <ThemedText style={eventTileStyle.approvedBubble}>Approved</ThemedText>
             )}
             { owner && event.approval_status && ((event.approval_counts && event.approval_counts?.approved < event.approval_counts.total)) && (
-                <Text style={eventTileStyle.pendingBubble}>Pending</Text>
+                <ThemedText style={eventTileStyle.pendingBubble}>Pending</ThemedText>
             )}
         </View>
         <ThemedText type='text'>{event.details}</ThemedText>
@@ -157,10 +157,10 @@ export function EventTile({event, owner,details= false, ...props}:EventTileProps
                 <ThemedText type='text'>Created By: {event.event_owner_name}</ThemedText>
                 <View style={eventTileStyle.buttonContainer}>
                         <TouchableOpacity style={eventTileStyle.declineButton} onPress={() => decline()}>
-                            <Text style={eventTileStyle.cancelText}>Decline</Text>
+                            <ThemedText style={eventTileStyle.cancelText}>Decline</ThemedText>
                         </TouchableOpacity>
                         <TouchableOpacity style={eventTileStyle.approveButton} onPress={() => approve()}>
-                            <Text style={eventTileStyle.saveText}>Approve</Text>
+                            <ThemedText style={eventTileStyle.saveText}>Approve</ThemedText>
                         </TouchableOpacity>
                 </View>
             </View>
@@ -169,20 +169,20 @@ export function EventTile({event, owner,details= false, ...props}:EventTileProps
         { (owner || details )&& !event.requires_approval && (
            <View style={eventTileStyle.titleContainer}>
             <IconSymbol size={20} name="checkmark" color='#5B6267'/>
-            <Text style={eventTileStyle.approvedText}>No approvals requested for event</Text>
+            <ThemedText type='text' style={eventTileStyle.approvedText}>No approvals requested for event</ThemedText>
          </View>
         )}
         { (owner || details )&& event.requires_approval && (event.approval_status === "approved" ||(event.approval_counts &&event.approval_counts?.approved >= event.approval_counts.total)) && (
            <View style={eventTileStyle.titleContainer}>
             <IconSymbol size={20} name="checkmark" color='#5B6267'/>
-            <Text style={eventTileStyle.approvedText}>Approved by all roommates</Text>
+            <ThemedText type='text' style={eventTileStyle.approvedText}>Approved by all roommates</ThemedText>
          </View>
         )}
        
         { (owner||details) && event.requires_approval && ((event.approval_counts &&event.approval_counts?.approved < event.approval_counts.total))&&  (
             <View style={eventTileStyle.titleContainer}>
                 <IconSymbol size={20} name="hourglass" color='#5B6267'/>
-                <Text style={eventTileStyle.pendingText}>Waiting for approval ({(event.approval_counts?.total ?? 0) - (event.approval_counts?.approved ?? 0)}/{event.approval_counts?.total} remaining)</Text>
+                <ThemedText type='text' style={eventTileStyle.pendingText}>Waiting for approval ({(event.approval_counts?.total ?? 0) - (event.approval_counts?.approved ?? 0)}/{event.approval_counts?.total} remaining)</ThemedText>
              </View>
         )}
         { eventDetails && (
@@ -232,7 +232,8 @@ const eventTileStyle = StyleSheet.create({
     paddingBottom: 5,
   },
   approvedText: {
-    color: '527E58',
+    color: '5B6267',
+    fontSize: 12,
   },
   pendingBubble: {
     color: 'rgba(220, 146, 34, 1)',

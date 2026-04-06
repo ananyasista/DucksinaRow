@@ -13,6 +13,7 @@ import {
 import { Link, router } from "expo-router";
 import { signup, me } from "../api/auth"
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { ThemedText } from "@/components/themed-text";
 
 export default function SignupScreen() {
   const [firstName, setFirstName] = useState(""); // Optional
@@ -97,13 +98,13 @@ export default function SignupScreen() {
       <View style={styles.card}>
         <Link href="/login" asChild>
           <Pressable>
-            <Text style={styles.backLink}>← Back to login</Text>
+            <ThemedText style={styles.backLink}>← Back to login</ThemedText>
           </Pressable>
         </Link>
 
-        <Text style={styles.h1}>Sign Up</Text>
+        <ThemedText type='title'>Sign Up</ThemedText>
 
-        <Text style={styles.label}>First Name*</Text>
+        <ThemedText type='boldText'>First Name*</ThemedText>
         <TextInput
           style={styles.input}
           placeholder="Enter your first name"
@@ -113,7 +114,7 @@ export default function SignupScreen() {
           onChangeText={setFirstName}
         />
 
-        <Text style={styles.label}>Last Name*</Text>
+        <ThemedText type='boldText'>Last Name*</ThemedText>
         <TextInput
           style={styles.input}
           placeholder="Enter your name"
@@ -123,7 +124,7 @@ export default function SignupScreen() {
           onChangeText={setLastName}
         />
 
-        <Text style={styles.label}>Email Address*</Text>
+        <ThemedText type='boldText'>Email Address*</ThemedText>
         <TextInput
           style={styles.input}
           placeholder="Enter your email"
@@ -134,7 +135,7 @@ export default function SignupScreen() {
           onChangeText={setEmail}
         />
 
-        <Text style={styles.label}>Password*</Text>
+        <ThemedText type='boldText'>Password*</ThemedText>
         <TextInput
           style={styles.input}
           placeholder="Enter your password"
@@ -144,7 +145,7 @@ export default function SignupScreen() {
           onChangeText={setPassword}
         />
 
-        <Text style={styles.label}>Verify Password*</Text>
+        <ThemedText type='boldText'>Verify Password*</ThemedText>
         <TextInput
           style={styles.input}
           placeholder="Re-enter your password"
@@ -154,10 +155,10 @@ export default function SignupScreen() {
           onChangeText={setVerifyPassword}
         />
 
-        <Text style={styles.label}>Group ID (Optional)</Text>
-        <Text style={styles.helper}>
+        <ThemedText type='boldText'>Group ID (Optional)</ThemedText>
+        <ThemedText style={styles.helper}>
           Leave blank to create a new group. Enter a 5-character code to join.
-        </Text>
+        </ThemedText>
         <TextInput
           style={styles.input}
           placeholder="ABCDE"
@@ -169,10 +170,10 @@ export default function SignupScreen() {
         />
 
         <Pressable style={[styles.button, loading && styles.buttonDisabled]} onPress={onSignup} disabled={loading}>
-          {loading ? <ActivityIndicator /> : <Text style={styles.buttonText}>Create Account</Text>}
+          {loading ? <ActivityIndicator /> : <ThemedText style={styles.buttonText}>Create Account</ThemedText>}
         </Pressable>
 
-        {!!msg && <Text style={styles.msg}>{msg}</Text>}
+        {!!msg && <ThemedText style={styles.msg}>{msg}</ThemedText>}
       </View>
     </KeyboardAvoidingView>
   );

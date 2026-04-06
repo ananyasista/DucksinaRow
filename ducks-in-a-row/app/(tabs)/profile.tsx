@@ -17,6 +17,7 @@ import { me, ProfileResponse } from "../../api/auth";
 import { getLivingPreferences } from "../../api/preferences";
 import { getHouseholdRoommates, Roommate } from "../../api/household";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { ThemedText } from "@/components/themed-text";
 
 const TestUser: ProfileResponse = {
   id: "demo",
@@ -83,9 +84,9 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={{ flex: 1}}>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.h1}>
+        <ThemedText type='title'>
           Hello, {profile.first_name || profile.username || "Roommate"}!
-        </Text>
+        </ThemedText>
 
         {loading ? (
           <ActivityIndicator style={{ marginTop: 12 }} />
@@ -96,7 +97,7 @@ export default function ProfileScreen() {
             {/* Profile Info */}
             <View style={styles.card}>
               <View style={styles.rowSpace}>
-                <Text style={styles.cardTitle}>Your Profile</Text>
+                <ThemedText type='boldText'>Your Profile</ThemedText>
                    <Pressable
                     onPress={() => router.push("/profile-edit?mode=edit")}
                   >
@@ -110,7 +111,7 @@ export default function ProfileScreen() {
 
             {/* Roommates */}
             <View style={styles.card}>
-              <Text style={styles.cardTitle}>Roommates</Text>
+              <ThemedText type='boldText'>Roommates</ThemedText>
 
               {roommates.length ? (
                 <View style={styles.avatarRow}>
@@ -126,11 +127,11 @@ export default function ProfileScreen() {
                         { backgroundColor: rm.display_color || PRIMARY },
                       ]}
                     >
-                      <Text style={styles.avatarText}>{initials(rm.full_name)}</Text>
+                      <ThemedText type='secondarySubtitle'>{initials(rm.full_name)}</ThemedText>
                     </View>
-                      <Text style={styles.avatarName} numberOfLines={1}>
+                      <ThemedText type='text' numberOfLines={1}>
                         {rm.first_name}
-                      </Text>
+                      </ThemedText>
                     </Pressable>
                   ))}
                 </View>
@@ -142,7 +143,7 @@ export default function ProfileScreen() {
             {/* Living Preferences */}
             <View style={styles.card}>
               <View style={styles.rowSpace}>
-                <Text style={styles.cardTitle}>Living Preferences</Text>
+                <ThemedText type='boldText'>Living Preferences</ThemedText>
                   <Pressable
                     onPress={() => router.push("/living-preferences?mode=edit")}
                   >
@@ -169,7 +170,7 @@ export default function ProfileScreen() {
 
 
             <Pressable style={styles.btnDanger} onPress={onLogout}>
-              <Text style={styles.btnDangerText}>Log out</Text>
+              <ThemedText style={styles.btnDangerText}>Log out</ThemedText>
             </Pressable>
 
             {/* Roommate Preferences Modal */}
@@ -239,8 +240,8 @@ function initials(name?: string) {
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <View style={styles.row}>
-      <Text style={styles.rowLabel}>{label}</Text>
-      <Text style={styles.rowValue}>{value}</Text>
+      <ThemedText type='default'>{label}</ThemedText>
+      <ThemedText type='default'>{value}</ThemedText>
     </View>
   );
 }

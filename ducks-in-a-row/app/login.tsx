@@ -9,9 +9,11 @@ import {
   Platform,
   ActivityIndicator,
 } from "react-native";
+import { Image } from 'react-native';
 import { Link, router } from "expo-router";
 import { login } from "../api/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { ThemedText } from "@/components/themed-text";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -56,13 +58,19 @@ export default function LoginScreen() {
       style={styles.screen}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
+      <Image
+          source={require('@/assets/images/ducksLogo.png')}
+          style={styles.heroLogo}
+          resizeMode="contain"
+        />
       <View style={styles.card}>
-        <Text style={styles.brand}>Ducks in a Row</Text>
-        <Text style={styles.subtitle}>Your roommate management app</Text>
+         
+        <ThemedText type='title'>Ducks in a Row</ThemedText>
+        <ThemedText style={styles.subtitle}>Your roommate management app</ThemedText>
 
-        <Text style={styles.h1}>Login</Text>
+        <ThemedText type='subtitle'>Login</ThemedText>
 
-        <Text style={styles.label}>Email</Text>
+        <ThemedText type='boldText'>Email</ThemedText>
         <TextInput
           style={styles.input}
           placeholder="Email"
@@ -74,9 +82,9 @@ export default function LoginScreen() {
         />
 
         <View style={styles.rowBetween}>
-          <Text style={styles.label}>Password</Text>
+          <ThemedText  type='boldText' >Password</ThemedText>
           <Pressable onPress={() => setMsg("Forgot password not implemented yet.")}>
-            <Text style={styles.linkSmall}>Forgot Password?</Text>
+            <ThemedText style={styles.linkSmall}>Forgot Password?</ThemedText>
           </Pressable>
         </View>
 
@@ -97,15 +105,15 @@ export default function LoginScreen() {
 
         <View style={styles.dividerRow}>
           <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>Or sign in with</Text>
+          <ThemedText style={styles.dividerText}>Or sign in with</ThemedText>
           <View style={styles.dividerLine} />
         </View>
 
         <View style={styles.bottomRow}>
-          <Text style={styles.bottomText}>Don’t have an account? </Text>
+          <ThemedText style={styles.bottomText}>Don’t have an account? </ThemedText>
           <Link href="/signup" asChild>
             <Pressable>
-              <Text style={styles.link}>Sign up!</Text>
+              <ThemedText style={styles.link}>Sign up!</ThemedText>
             </Pressable>
           </Link>
         </View>
@@ -122,6 +130,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#F2F2F2",
     justifyContent: "center",
     padding: 18,
+  },
+   heroLogo: {
+    width: 250,
+    height: 125,
+    alignSelf: 'center',
+
   },
   card: {
     backgroundColor: "#fff",
