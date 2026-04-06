@@ -3,6 +3,7 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 from datetime import timedelta
 from django.contrib.auth.hashers import make_password
+from rest_framework.authtoken.models import Token
 from api.models import (
     Household,
     User,
@@ -74,6 +75,10 @@ class Command(BaseCommand):
                 user.save()
 
             users.append(user)
+
+            # Create token for user
+            Token.objects.get_or_create(user=user)
+
             self.stdout.write(self.style.SUCCESS(f"Created user: {user.email} with color {user.display_color}"))
 
         # --- Create Living Preferences ---
