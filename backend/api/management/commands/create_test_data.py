@@ -189,8 +189,28 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.WARNING(f"No members in household {hh.household_name}, skipping events"))
                 continue
 
+            # Time Specific Events (15-minute increments, same day)
             for event_name in ["House Meeting", "Dinner Party"]:
                 owner = random.choice(members)  # pick from household members
+                date_offset = random.randint(0, 5)
+                base_date = timezone.now() + timedelta(days=date_offset)
+
+                # Create start time with 15-minute increments (00, 15, 30, 45)
+                hour = random.randint(8, 20)  # 8 AM to 8 PM
+                minute = random.choice([0, 15, 30, 45])
+                start_date = base_date.replace(hour=hour, minute=minute, second=0, microsecond=0)
+
+                # Create end time on same day with 15-minute increments (1-3 hours after start)
+                duration_minutes = random.choice([15, 30, 45, 60, 90, 120, 180])  # 15 min to 3 hours
+                end_minute = (minute + duration_minutes) % 60
+                end_hour = hour + (minute + duration_minutes) // 60
+
+                # Ensure end time is same day and before midnight
+                if end_hour >= 24:
+                    end_hour = 23
+                    end_minute = 45
+
+                end_date = base_date.replace(hour=end_hour, minute=end_minute, second=0, microsecond=0)
 
                 # create the event
                 event = CalendarEvents.objects.create(
@@ -198,8 +218,8 @@ class Command(BaseCommand):
                     title=event_name,
                     details=f"{event_name} at {hh.household_name}",
                     all_day=False,
-                    start_date=timezone.now() + timedelta(days=random.randint(0,5)),
-                    end_date=timezone.now() + timedelta(days=random.randint(0,5), hours=2),
+                    start_date=start_date,
+                    end_date=end_date,
                     repeat=random.choice([r[0] for r in RepeatChoices.choices]),
                     requires_approval=random.choice([True, False]),
                     location="Common Room",
@@ -220,6 +240,34 @@ class Command(BaseCommand):
                             response_time=timezone.now()
                         )
                         self.stdout.write(self.style.SUCCESS(f"Created event approval: {event.title} for {member.first_name}"))
+
+                self.stdout.write(self.style.SUCCESS(f"Created Event: {event.title} (Owner: {owner.first_name})"))
+
+            # ALL DAY EVENTS (can span multiple days, midnight times)
+            for event_name in ["Out of Town", "Tournament"]:
+                owner = random.choice(members)  # pick from household members
+                start_date_offset = random.randint(0, 5)
+                duration_days = random.randint(1, 5)  # 1-5 days
+
+                # All-day events set to midnight (00:00:00)
+                start_date = (timezone.now() + timedelta(days=start_date_offset)).replace(hour=0, minute=0, second=0, microsecond=0)
+                end_date = (start_date + timedelta(days=duration_days)).replace(hour=0, minute=0, second=0, microsecond=0)
+
+                # create the event
+                event = CalendarEvents.objects.create(
+                    household=hh,
+                    title=event_name,
+                    details=f"{event_name} at {hh.household_name}",
+                    all_day=True,
+                    start_date=start_date,
+                    end_date=end_date,
+                    repeat=random.choice([r[0] for r in RepeatChoices.choices]),
+                    requires_approval=False,
+                    location="Out of House",
+                    event_owner=owner,
+                    notification_value=random.randint(5, 60),
+                    notification_unit=random.choice([u[0] for u in NotificationUnitChoices.choices])
+                )
 
                 self.stdout.write(self.style.SUCCESS(f"Created Event: {event.title} (Owner: {owner.first_name})"))
 
