@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  ImageBackground,
 } from "react-native";
 import { Image } from 'react-native';
 import { Link, router } from "expo-router";
@@ -58,6 +59,12 @@ export default function LoginScreen() {
       style={styles.screen}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
+        <ImageBackground
+            source={require('@/assets/images/blueBackgroundTwo.png')}
+            style={styles.heroBackground}
+            imageStyle={styles.heroBackgroundImage}
+            resizeMode="cover"
+          ></ImageBackground>
       <Image
           source={require('@/assets/images/ducksLogo.png')}
           style={styles.heroLogo}
@@ -127,9 +134,17 @@ const PRIMARY = "#0B6B55";
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#F2F2F2",
     justifyContent: "center",
     padding: 18,
+  },
+  heroBackground: {
+    ...StyleSheet.absoluteFillObject,
+    
+  },
+  heroBackgroundImage: {
+    width: '100%',
+    height: '100%',
+    zIndex: 0
   },
    heroLogo: {
     width: 250,

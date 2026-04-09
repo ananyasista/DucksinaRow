@@ -177,6 +177,7 @@ export default function CalendarPage () {
         setCurrentMode(currentMode === 'week' ? 'month' : 'week');
     }
     
+    
     function switchToCalendar(mode?: Mode, date?: Date) {
       if(mode)
       {
@@ -203,7 +204,7 @@ export default function CalendarPage () {
 
       const pendingEvent = await getEventId(currEvent.id);
       setPendingEvent(pendingEvent);
-
+      
       const ownsEvent = myEvents.some((e) => e.id === currEvent.id);
       setIsOwner(ownsEvent);
 
@@ -533,20 +534,14 @@ const calendarTheme = StyleSheet.create({
     justifyContent: 'space-between',
     paddingLeft: 15,
     paddingRight: 15,
-    paddingBottom: 10
+    paddingBottom: 10,
+    marginTop: 20,
   },
   dateContainer: {
     flexDirection: 'row',
     alignContent: 'center',
-   
   },
-  tabs: {
-    flexDirection: 'row',
-    justifyContent: 'space-evenly',
-    backgroundColor: '#BFD7C8',
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-  },
+  
   tabsText: {
     color: '#000',
     fontSize: 32,
@@ -628,11 +623,11 @@ const calendarTheme = StyleSheet.create({
     borderRadius: 30,
     flexGrow: 1,
     textAlign: 'center',
-    justifyContent: 'center'    
+    justifyContent: 'center',
+    width: "15%"
   },
   filterText: {
     color: '#fff',
-    
     fontSize:12,
     fontFamily: "Cantarell_700Bold",
     fontWeight: 600,
@@ -649,7 +644,8 @@ const calendarTheme = StyleSheet.create({
     borderRadius: 30,
     flexGrow: 1,
     textAlign: 'center',
-    justifyContent: 'center'  
+    justifyContent: 'center',
+    width: "15%"  
   }, 
   filterTextSelected: {
     color: '#EC8534',

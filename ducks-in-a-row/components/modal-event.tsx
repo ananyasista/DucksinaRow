@@ -1,5 +1,5 @@
 import { Calendar, ICalendarEventBase, Mode } from 'react-native-big-calendar'
-import { StyleSheet, Dimensions, TouchableOpacity, Modal, Platform, SafeAreaView } from 'react-native';
+import { StyleSheet, Dimensions, TouchableOpacity, Modal, Platform, SafeAreaView, KeyboardAvoidingView } from 'react-native';
 import React, { useEffect, useState } from 'react';
 // import { View } from 'react-native-reanimated/lib/typescript/Animated';
 import { View, Text } from 'react-native';
@@ -47,6 +47,7 @@ export default function EventModal({event, owner=false, pendingEvent, ...props}:
     const [denied, setDenied] = useState(0);
     const total = pendingEvent?.approvals.length;
     useEffect(()=> {
+        console.log(event);
         setTitle(event?.title ?? "");
         if(event?.details){setDetails(event.details);}
         if(event?.start_date)
@@ -86,9 +87,9 @@ export default function EventModal({event, owner=false, pendingEvent, ...props}:
         date += abbrMonth[startDate.getMonth()] + " ";
         date += startDate.getDate();
         var day = startDate.getDate()+"";
-        const st = new RegExp("$1|21|31^");
-        const nd = new RegExp("$2|22^");
-        const rd = new RegExp("$3|23^");
+        const st = new RegExp("/^1|21|31$/");
+        const nd = new RegExp("/^2|22$/");
+        const rd = new RegExp("/^3|23$/");
         date +=  st.test(day)? "st" : 
                 nd.test(day)? "nd" :
                 rd.test(day)?"rd" :
@@ -99,15 +100,16 @@ export default function EventModal({event, owner=false, pendingEvent, ...props}:
         {
             date += "12:" + startDate.getMinutes();
         } else if(startDate.getHours() > 12) {
-            date += (startDate.getHours()%12) + ":"+ startDate.getMinutes();
+            date += (startDate.getHours()%12) + ":";
         } else {
-            date += startDate.getHours() + ":"+ startDate.getMinutes();
+            date += startDate.getHours() + ":";
         }
         
-        if(startDate.getMinutes() === 0)
+        if(startDate.getMinutes() < 10)
         {
             date += "0";
         }
+        date += startDate.getMinutes();
         date += " ";
         if(startDate.getHours() < 12)
         {
@@ -133,15 +135,15 @@ export default function EventModal({event, owner=false, pendingEvent, ...props}:
         {
             date += "12:" + endDate.getMinutes();
         } else if(endDate.getHours() > 12) {
-            date += (endDate.getHours()%12) + ":"+ endDate.getMinutes();
+            date += (endDate.getHours()%12) + ":";
         } else {
-            date += endDate.getHours() + ":"+ endDate.getMinutes();
+            date += endDate.getHours() + ":";
         }
-        
-        if(endDate.getMinutes() === 0)
+         if(endDate.getMinutes() < 10)
         {
             date += "0";
         }
+        date += endDate.getMinutes();
         date += " ";
         if(endDate.getHours() < 12)
         {
@@ -180,14 +182,6 @@ export default function EventModal({event, owner=false, pendingEvent, ...props}:
         
     }
 
-    function updateModal(title:string, detail:string, startDate: string, endDate: Date, location:string)
-    {
-        setTitle(title);
-    }
-    function notifyRoommate() 
-    {
-        //TODO: Add in reminding roommate of event apporval
-    }
     async function deleteEvent() 
     {
         try {
@@ -205,6 +199,7 @@ export default function EventModal({event, owner=false, pendingEvent, ...props}:
     }
   return (
     <View>
+        
         <Modal 
             animationType="slide"
             visible={approvalModalVisible}
@@ -212,6 +207,9 @@ export default function EventModal({event, owner=false, pendingEvent, ...props}:
             allowSwipeDismissal = {true}
             onRequestClose = {() => close()} 
         >
+            <View style={{height: 20}}></View>
+
+            <KeyboardAvoidingView>
             <View style ={modalTheme.container}>
             <View style={modalTheme.rowSpace}>
                 <TouchableOpacity  onPress={() => close()}>
@@ -278,6 +276,7 @@ export default function EventModal({event, owner=false, pendingEvent, ...props}:
                 );
             })}
             </View>
+            </KeyboardAvoidingView>
         </Modal>
         {editModal && (
             <ModalCalendarForm formTitle="Edit Event" edit={true} event={event} onClose={() => showModal(true, false)} updateEvents={props.updateEvents}/>

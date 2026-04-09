@@ -20,6 +20,7 @@ import {
 import EventModal from '@/components/modal-event';
 import React from 'react';
 import { ThemedText } from '@/components/themed-text';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 
 type HomeCalendarEvent = ICalendarEventBase & {
   details?: string;
@@ -235,7 +236,9 @@ export default function HomeScreen() {
 
   async function openEventDetails(event: any) {
     const selectedEvent = await getEventId(event.rawId);
+   
     const ownsEvent = myEvents.some((e) => e.id === selectedEvent.id);
+   
     setIsOwner(ownsEvent);
     setCurrEvent(selectedEvent);
     setEventDetails(true);
@@ -243,9 +246,8 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <View style={styles.screen}>
-        <ImageBackground
-          source={require('@/assets/images/blueBackground.png')}
+      <ImageBackground
+          source={require('@/assets/images/blueBackgroundTwo.png')}
           style={styles.heroBackground}
           imageStyle={styles.heroBackgroundImage}
           resizeMode="cover"
@@ -253,13 +255,14 @@ export default function HomeScreen() {
          
           
         </ImageBackground>
-       <Image
-            source={require('@/assets/images/ducksLogo.png')}
-            style={styles.heroLogo}
-            resizeMode="contain"
-          />
-          <View style ={styles.header}>
-          <ThemedText type='title'>Welcome Back, {groupName}!</ThemedText>
+      <View style={styles.screen}>
+        <View style={styles.rowCenter}>
+          <Image
+                source={require('@/assets/images/ducksLogo.png')}
+                style={styles.heroLogo}
+                resizeMode="contain"
+              />
+            <ThemedText type='title'>Welcome Back, {groupName}!</ThemedText>
           </View>
         <View style={styles.contentCard}>
           <ScrollView
@@ -267,10 +270,14 @@ export default function HomeScreen() {
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
           >
-
-            {pendingNum >= 1 && (
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Pending Events ({pendingNum}):</Text>
+                {pendingNum === 0 && 
+                  <View style={styles.row}>
+                    <IconSymbol size={20} name="checkmark" color='#5B6267'/>
+                    <Text style={styles.emptyText}> You have no pending events! </Text>
+                  </View>
+                }
                 <View style={styles.pendingGrid}>
                   {tilesToShow.map((tile) => (
                     <TouchableOpacity
@@ -292,12 +299,9 @@ export default function HomeScreen() {
                   ))}
                 </View>
               </View>
-            )}
 
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Quick To-Do List</Text>
-              <Text style={styles.sectionSubtitle}>All chores, inventory stuff</Text>
-
               {choreList.length >= 1 ? (
                 <View style={styles.todoList}>
                   {choreList.map((assignment) => {
@@ -363,13 +367,19 @@ export default function HomeScreen() {
                   })}
                 </View>
               ) : (
-                <Text style={styles.emptyText}>Your to-do list is empty!</Text>
+                <View style={styles.row}>
+                    <IconSymbol size={20} name="checkmark" color='#5B6267'/>
+                    <Text style={styles.emptyText}> Your to-do list is empty!</Text>
+                  </View>
               )}
             </View>
 
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Upcoming Week Events</Text>
-              <Text style={styles.sectionSubtitle}>Events coming up</Text>
+              <View style={styles.row}>
+                    <IconSymbol size={20} name="calendar" color='#5B6267'/>
+                    <Text style={styles.sectionSubtitle}> Events coming up</Text>
+              </View>
 
               {loadingEvents ? (
                 <Text style={styles.emptyText}>Loading events...</Text>
@@ -438,11 +448,13 @@ export default function HomeScreen() {
           />
         )}
       </View>
+      
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  
   safeArea: {
     flex: 1,
   },
@@ -451,26 +463,32 @@ const styles = StyleSheet.create({
   },
   heroBackground: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 285,
+    height: '100%',
+    width: '100%'
+  },
+  
+  rowCenter: {
+    marginTop: 30,
+    width: '100%',
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent:"center",
   },
   heroBackgroundImage: {
     width: '100%',
     height: '100%',
+    zIndex: 0
   },
   heroLogo: {
-    position: 'absolute',
-    right: 40,
-    top:50, 
-    width: 132,
+    alignItems:"center", 
+    width: 200,
     height: 96,
-    zIndex: 4, 
+    marginBottom: -10,
   },
   contentCard: {
     flex: 1,
-    marginTop: 160,
+    marginTop: 10,
     backgroundColor: COLORS.card,
     borderTopLeftRadius: 36,
     borderTopRightRadius: 36,
@@ -485,10 +503,10 @@ const styles = StyleSheet.create({
     paddingBottom: 34,
     gap: 34,
   },
-  header: {
-    position: 'absolute',
-    top: 115, 
-    left: 20,
+  row: {
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
   },
   welcomeText: {
     fontFamily: FONT.heading,
@@ -539,6 +557,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 19,
     fontWeight: '700',
+    margin: 6
   },
   pendingBottomRow: {
     flexDirection: 'row',

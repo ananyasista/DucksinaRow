@@ -1,5 +1,5 @@
 import { Calendar, ICalendarEventBase, Mode, todayInMinutes } from 'react-native-big-calendar'
-import { StyleSheet, Dimensions, TouchableOpacity, Modal, Platform, ScrollView} from 'react-native';
+import { StyleSheet, Dimensions, TouchableOpacity, Modal, Platform, ScrollView, KeyboardAvoidingView} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { use, useState } from 'react';
 // import { View } from 'react-native-reanimated/lib/typescript/Animated';
@@ -179,6 +179,8 @@ export default function ModalCalendarForm({edit = false,event = null, ...props}:
             allowSwipeDismissal = {true}
             onRequestClose = {() => close()} 
         >
+                                    <View style={{height: 20}}></View>
+
             <View style={modalTheme.header}>
                 <TouchableOpacity style={modalTheme.cancelSaveButton} onPress={() => close()}>
                     <ThemedText style={modalTheme.cancelSaveText}>Cancel</ThemedText>
@@ -188,7 +190,14 @@ export default function ModalCalendarForm({edit = false,event = null, ...props}:
                     <ThemedText style={modalTheme.cancelSaveText}>Save</ThemedText>
                 </TouchableOpacity>
             </View>
-            <ScrollView>
+            <KeyboardAvoidingView
+                style={{ flex: 1 }}
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                keyboardVerticalOffset={80}
+            >
+
+            <ScrollView >
+                
             <View style= {{flex: 1, padding: 16}}>
                 {eventTitleError && (<ThemedText type='errorText'>Event title is required</ThemedText>)}
                 <ThemedText type="boldText" >Event Title:</ThemedText>
@@ -272,8 +281,11 @@ export default function ModalCalendarForm({edit = false,event = null, ...props}:
             </View>
             <></><></><></>
             </ScrollView>
+                        </KeyboardAvoidingView>
 
         </Modal>
+                    
+
     </View>
   )
 }
