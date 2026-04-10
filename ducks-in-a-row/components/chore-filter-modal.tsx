@@ -12,8 +12,8 @@ type ModalProps = PropsWithChildren<{
     locationFilterList: string[];
     assigneeFilterList: string[];
     completedFilter: boolean;
-    startDateFilter: Date;
-    endDateFilter: Date;
+    startDateFilter: Date | undefined;
+    endDateFilter: Date | undefined;
     setLocationFilterList: React.Dispatch<React.SetStateAction<string[]>>;
     setAssigneeFilterList: React.Dispatch<React.SetStateAction<string[]>>;
     setCompletedFilter: React.Dispatch<React.SetStateAction<boolean>>;
@@ -53,8 +53,8 @@ export default function ChoreFilterModal(props: ModalProps) {
         props.setLocationFilterList([]);
         props.setAssigneeFilterList([]);
         props.setCompletedFilter(true);
-        props.setStartDateFilter(new Date());
-        props.setEndDateFilter(new Date());
+        props.setStartDateFilter(undefined);
+        props.setEndDateFilter(undefined);
         props.onClear?.();
 
         setVisible(false);
@@ -148,7 +148,7 @@ export default function ChoreFilterModal(props: ModalProps) {
                                     <IconSymbol name='calendar' size={30} color="#143348"/>
                                     <DateTimePicker
                                         testID="dateTimePicker"
-                                        value={props.startDateFilter}
+                                        value={props.startDateFilter || new Date()}
                                         is24Hour={true}
                                         onChange={onChangeStartDate}
                                         mode={'date'}
@@ -163,7 +163,7 @@ export default function ChoreFilterModal(props: ModalProps) {
                                     <IconSymbol name='calendar' size={30} color="#143348"/>
                                     <DateTimePicker
                                         testID="dateTimePicker"
-                                        value={props.endDateFilter}
+                                        value={props.endDateFilter || new Date()}
                                         is24Hour={true}
                                         onChange={onChangeEndDate}
                                         mode={'date'}
