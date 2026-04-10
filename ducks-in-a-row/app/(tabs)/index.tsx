@@ -191,9 +191,26 @@ export default function HomeScreen() {
       setLoadingEvents(false);
     }
   };
+
+  const loadCurrentChores = async () => {
+    try {
+      const user = await me();
+
+      const choreData = await getChoreAssignments({
+        completed: false,
+        assignee: [user.id],
+      });
+
+      setChoreList(choreData);
+    } catch (e: any) {
+      console.log('Auth error:', e?.response?.data || e.message);
+      router.replace('/login'); 
+    }
+  }
   useFocusEffect(
         React.useCallback(() => {
             loadUpcomingWeekEvents();
+            loadCurrentChores();
             updateEvents();
         }, [])
       );

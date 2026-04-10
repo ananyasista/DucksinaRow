@@ -211,10 +211,15 @@ export default function InventoryScreen() {
                 setViewItemVisible(false);
                 setEditItemVisible(true);
               }}
-              onDelete={() => {
-                invAPI.deleteItem(selectedItem.id);
-                setViewItemVisible(false);
-                refreshItems();
+              onDelete={async () => {
+                try {
+                  await invAPI.deleteItem(selectedItem.id);
+                  setSelectedItem(null);
+                  setViewItemVisible(false);
+                  await refreshItems();
+                } catch (error) {
+                  console.error('Failed to delete item:', error);
+                }
               }}
               onRestockChange={handleRestockToggle}
             />
