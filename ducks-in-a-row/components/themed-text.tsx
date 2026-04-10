@@ -4,12 +4,12 @@ import { useThemeColor } from '@/hooks/use-theme-color';
 
 import { useFonts, Cantarell_400Regular, Cantarell_700Bold } from '@expo-google-fonts/cantarell'
 import {PTSansCaption_700Bold} from '@expo-google-fonts/pt-sans-caption'
-import {Rubik_400Regular, Rubik_300Light} from '@expo-google-fonts/rubik'
+import {Rubik_400Regular, Rubik_300Light, Rubik_800ExtraBold} from '@expo-google-fonts/rubik'
 
 export type ThemedTextProps = TextProps & {
   lightColor?: string;
   darkColor?: string;
-  type?: 'default' | 'title' | 'defaultSemiBold' | 'subtitle' | 'secondarySubtitle' | 'link' | 'boldText' | 'text' | 'errorText';
+  type?: 'default' | 'title' | 'defaultSemiBold' | 'subtitle' | 'secondarySubtitle' | 'link' | 'boldText' | 'text' | 'errorText' | 'secondarySubtitleBold';
 };
 
 export function ThemedText({
@@ -40,6 +40,7 @@ export function ThemedText({
         type === 'boldText' ? styles.boldText : undefined,
         type === 'text' ? styles.text: undefined,
         type === 'errorText' ? styles.errorText: undefined,
+        type === 'secondarySubtitleBold' ? styles.secondarySubtitleBold : undefined,
         style,
       ]}
       {...rest}
@@ -73,6 +74,11 @@ const styles = StyleSheet.create({
     marginTop: 0,
     fontSize: 20,
     fontFamily: 'Rubik_300Light',
+  },
+  secondarySubtitleBold: {
+    marginTop: 0,
+    fontSize: 20,
+    fontFamily: 'Rubik_800ExtraBold',
   },
   boldText: {
     fontSize:16,

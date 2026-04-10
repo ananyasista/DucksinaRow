@@ -40,11 +40,15 @@ export default function CircularCheckbox({
 
 const styles = StyleSheet.create({
   circle: {
-    borderWidth: 2,
+    borderWidth: 1.25,
     borderColor: "#233426",
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#fffffffa",
+    backgroundColor: "#F6F6F5",
+    shadowColor: "#233426",
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 2
   },
 
   checkedCircle: {
