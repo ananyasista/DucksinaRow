@@ -30,8 +30,8 @@ export default function ChoreScreen() {
 
   const [locationFilterList, setLocationFilterList] = useState<string[]>([]);
   const [completedFilter, setCompletedFilter] = useState<boolean>(true);
-  const [startDateFilter, setStartDateFilter] = useState<Date>(new Date());
-  const [endDateFilter, setEndDateFilter] = useState<Date>(new Date());
+  const [startDateFilter, setStartDateFilter] = useState<Date | undefined>(undefined);
+  const [endDateFilter, setEndDateFilter] = useState<Date | undefined>(undefined);
   const [assigneeFilterList, setAssigneeFilterList] = useState<string[]>([]);
 
   const [householdId, setHouseholdId] = useState<string | null>(null);
@@ -248,6 +248,7 @@ export default function ChoreScreen() {
                         if (Object.keys(choreAssignmentPatch).length > 0) {
                           await choreAPI.updateAssignment(chore.id, choreAssignmentPatch);
                         }
+                        await applyFilterChanges();
                       } catch (err: any) {
                         console.log("ERROR RESPONSE:", err.response?.data);
                         console.log("STATUS:", err.response?.status);

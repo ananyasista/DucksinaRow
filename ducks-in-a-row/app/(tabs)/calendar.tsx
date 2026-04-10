@@ -31,6 +31,7 @@ export interface CalendarEvent extends ICalendarEventBase {
 export default function CalendarPage () {
     const { mode } = useLocalSearchParams(); //Home Page -> Calendar SPECIFICALLY Event view
     const [calendarHeight, setCalendarHeight] = useState(0);
+    const [headerHeight, setHeaderHeight] = useState(100);
     const month = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
     const [currentDate, setCurrentDate] = useState(new Date());
     const [currentMode, setCurrentMode] = useState<Mode>('week');
@@ -55,8 +56,72 @@ export default function CalendarPage () {
     const [roommates, setRoommates] = useState<Roommate[]>([]);
     const [filtersByRoommate, setFiltersByRoommate] = useState<string[]>([]);
     const [profile, setProfile] = useState<ProfileResponse>();
+    useEffect(() => {
+      const height = getMaxAllDayEventsPerDay(events, currentDate, currentMode);
+      setHeaderHeight(height);
+    }, [events, currentDate, currentMode]);
+    function getMaxAllDayEventsPerDay(
+      events: CalendarEvent[],
+      currentDate: Date,
+      currentMode: Mode
+    ): number {
+      // Month view default
+      if (currentMode === 'month') return 40;
 
+      let visibleDates: Date[] = [];
+
+      const start = new Date(currentDate);
+      const end = new Date(currentDate);
+
+      switch (currentMode) {
+        case 'day':
+          visibleDates = [currentDate];
+          break;
+        case '3days':
+          for (let i = 0; i < 3; i++) {
+            const date = new Date(currentDate);
+            date.setDate(date.getDate() + i);
+            visibleDates.push(date);
+          }
+          break;
+        case 'week':
+          const dayOfWeek = start.getDay(); // Sunday = 0
+          start.setDate(start.getDate() - dayOfWeek); // start of week
+          for (let i = 0; i < 7; i++) {
+            const date = new Date(start);
+            date.setDate(start.getDate() + i);
+            visibleDates.push(date);
+          }
+          break;
+        default:
+          visibleDates = [currentDate];
+      }
+
+      // Count all-day events per date
+      const allDayCounts = visibleDates.map((date) => {
+        return events.filter((event) => {
+          const startDate = new Date(event.start);
+          const endDate = new Date(event.end);
+          // check if the event spans this date
+          return (
+            event.title &&
+            startDate.setHours(0, 0, 0, 0) <= date.setHours(0, 0, 0, 0) &&
+            endDate.setHours(0, 0, 0, 0) >= date.setHours(0, 0, 0, 0)
+          );
+        }).length;
+      });
+
+      const maxAllDay = Math.max(...allDayCounts, 1); // minimum 1 row
+
+      // compute height: e.g., 20px per all-day event row + padding
+      console.log(maxAllDay);
+      const rowHeight =maxAllDay * 25 + 50; // cap at 200px
+
+      return rowHeight;
+    }
     const [key, setKey] = useState(0);
+
+      const [selected, setSelected] = useState('');
 
     function isTodayOrFuture(dateString: string) {
       const eventDate = new Date(dateString);
@@ -177,12 +242,14 @@ export default function CalendarPage () {
         setCurrentMode(currentMode === 'week' ? 'month' : 'week');
     }
     
+    
     function switchToCalendar(mode?: Mode, date?: Date) {
       if(mode)
       {
         router.setParams({mode:mode});
         setCurrentMode(mode);
       }
+      
       if(date)
       {
         setCurrentDate(date);
@@ -203,7 +270,7 @@ export default function CalendarPage () {
 
       const pendingEvent = await getEventId(currEvent.id);
       setPendingEvent(pendingEvent);
-
+      
       const ownsEvent = myEvents.some((e) => e.id === currEvent.id);
       setIsOwner(ownsEvent);
 
@@ -224,7 +291,9 @@ export default function CalendarPage () {
 
     async function updateEvents() {
       try {
-        
+      const height = getMaxAllDayEventsPerDay(events, currentDate, currentMode);
+      setHeaderHeight(height);
+
         setKey(prev => prev+1);
         const refreshedEvents =
           filtersByRoommate.length === 0
@@ -371,12 +440,14 @@ export default function CalendarPage () {
                 );
               })}
             </View>
+            
             <Calendar
               key ={key}
               events={events}
               height={calendarHeight}
               date={currentDate}
               maxVisibleEventCount={2}
+              headerContainerStyle={{ height: headerHeight }}
               eventCellStyle={(event) => {
                 const calEvent = event as CalendarEvent;
                 const color = calEvent.display_color || "#4DC591";
@@ -506,6 +577,7 @@ export default function CalendarPage () {
     </SafeAreaView>
   )
 }
+
 const theme = {
   background: '#rgb(248, 248, 248)',
   text: '#212523',
@@ -533,20 +605,14 @@ const calendarTheme = StyleSheet.create({
     justifyContent: 'space-between',
     paddingLeft: 15,
     paddingRight: 15,
-    paddingBottom: 10
+    paddingBottom: 10,
+    marginTop: 20,
   },
   dateContainer: {
     flexDirection: 'row',
     alignContent: 'center',
-   
   },
-  tabs: {
-    flexDirection: 'row',
-    justifyContent: 'space-evenly',
-    backgroundColor: '#BFD7C8',
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-  },
+  
   tabsText: {
     color: '#000',
     fontSize: 32,
@@ -628,11 +694,11 @@ const calendarTheme = StyleSheet.create({
     borderRadius: 30,
     flexGrow: 1,
     textAlign: 'center',
-    justifyContent: 'center'    
+    justifyContent: 'center',
+    width: "15%"
   },
   filterText: {
     color: '#fff',
-    
     fontSize:12,
     fontFamily: "Cantarell_700Bold",
     fontWeight: 600,
@@ -649,7 +715,8 @@ const calendarTheme = StyleSheet.create({
     borderRadius: 30,
     flexGrow: 1,
     textAlign: 'center',
-    justifyContent: 'center'  
+    justifyContent: 'center',
+    width: "15%"  
   }, 
   filterTextSelected: {
     color: '#EC8534',

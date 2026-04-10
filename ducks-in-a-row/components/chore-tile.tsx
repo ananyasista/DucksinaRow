@@ -52,35 +52,41 @@ export default function ChoreTile(props: ChoreTileProps){
         <TouchableOpacity onPress={props.onPress}>
             <View style={[styles.tile, props.completed && styles.restockTile]}>
                 <View style={styles.tileContainer}>
-                    {/* LEFT: TEXT */}
-                    <View style={styles.textContent}>
-                        <ThemedText type="secondarySubtitle">{props.title}</ThemedText>
-                        <ThemedText type="text">Repeats {props.repeat}</ThemedText>
-                        <ThemedText type="default">
-                            Due {formatDueDate(props.due_date)}
-                        </ThemedText>
-                    </View>
-
-                    {/* MIDDLE: PROFILE */}
-                    <View style={styles.profileContainer}>
-                        <View style={[styles.profile, {backgroundColor: props.assignee?.display_color}]}>
-                            <ThemedText type="default" style={{color: '#fff'}}>
-                                {(props.assignee?.first_name ?? "U").charAt(0)}
-                            </ThemedText>
-                        </View>
-
-                        <ThemedText numberOfLines={1} style={styles.assigneeText}>
-                            {props.assignee?.first_name ?? "Unassigned"}
-                        </ThemedText>
-                    </View>
-
-                    {/* RIGHT: CHECKBOX */}
+                    {/* LEFT: CHECKBOX */}
                     <View style={styles.checkboxContainer}>
-                        <CircularCheckbox 
+                        <CircularCheckbox
                             checked={checked}
                             onToggle={handleToggle}
                         />
                     </View>
+
+                    {/* MIDDLE & RIGHT: CONTENT */}
+                    <View style={styles.contentSection}>
+                        {/* ROW 1: TITLE AND REPEATS */}
+                        <View style={styles.choreTitleRow}>
+                            <ThemedText type="secondarySubtitle">{props.title}</ThemedText>
+                            <ThemedText type="default">Repeats {props.repeat}</ThemedText>
+                        </View>
+
+                        {/* ROW 2: PROFILE AND DUE DATE */}
+                        <View style={styles.choreUserRow}>
+                            <View style={styles.profileContainer}>
+                                <View style={[styles.profile, {backgroundColor: props.assignee?.display_color}]}>
+                                    <ThemedText type="text" style={{color: '#fff'}}>
+                                        {(props.assignee?.first_name ?? "U").charAt(0)}
+                                    </ThemedText>
+                                </View>
+
+                                <ThemedText numberOfLines={1} type="default" style={styles.assigneeText}>
+                                    {props.assignee?.first_name ?? "Unassigned"}
+                                </ThemedText>
+                            </View>
+                            <ThemedText type="default">
+                                Due {formatDueDate(props.due_date)}
+                            </ThemedText>
+                        </View>
+                    </View>
+
                 </View>
             </View>
         </TouchableOpacity>
@@ -99,18 +105,24 @@ const styles = StyleSheet.create({
         padding: 20,
         fontSize: 24,
         color: "#000000",
-        borderWidth: 2,
-        gap: 5
+        gap: 5,
+        shadowColor: "#000",
+        shadowOpacity: 0.06,
+        shadowRadius: 10,
+        elevation: 2,
     },
 
     restockTile: {
-        backgroundColor: "#f6f6f593",
+        backgroundColor: "#f9d8bf",
         borderRadius: 16,
         padding: 20,
         fontSize: 24,
         color: "#000000",
-        borderWidth: 2,
-        gap: 5
+        gap: 5,
+        shadowColor: "#000",
+        shadowOpacity: 0.06,
+        shadowRadius: 10,
+        elevation: 2
     },
 
     subheading: {
@@ -126,35 +138,48 @@ const styles = StyleSheet.create({
 
     content: {
         flexDirection: 'row',
-        justifyContent: 'space-between', 
+        justifyContent: 'space-between',
         alignItems: 'center'
     },
 
     profile: {
-        width: 28,
-        height: 28,
+        width: 20,
+        height: 20,
         borderRadius: 16,
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: '#3f4ba1',
     },
-    
+
     tileContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         width: '100%',
+        gap: 12,
     },
 
-    textContent: {
+    contentSection: {
         flex: 1,
-        paddingRight: 10, 
+        gap: 8,
+    },
+
+    choreTitleRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+
+    choreUserRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
     },
 
     profileContainer: {
-        width: 110,
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
+        gap: 4,
+        flex: 1,
     },
 
     checkboxContainer: {
@@ -164,6 +189,6 @@ const styles = StyleSheet.create({
     },
 
     assigneeText: {
-        maxWidth: 80, // prevents pushing checkbox
+        maxWidth: 80
     },
 })

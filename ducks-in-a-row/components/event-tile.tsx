@@ -42,15 +42,16 @@ export function EventTile({event, owner,details= false, ...props}:EventTileProps
         {
             date += "12:" + startDate.getMinutes();
         } else if(startDate.getHours() > 12) {
-            date += (startDate.getHours()%12) + ":"+ startDate.getMinutes();
+            date += (startDate.getHours()%12) + ":";
         } else {
-            date += startDate.getHours() + ":"+ startDate.getMinutes();
+            date += startDate.getHours() + ":";
         }
         
-        if(startDate.getMinutes() === 0)
+        if(startDate.getMinutes() < 10)
         {
             date += "0";
         }
+        date += startDate.getMinutes();
         date += " ";
         if(startDate.getHours() < 12)
         {
@@ -76,15 +77,15 @@ export function EventTile({event, owner,details= false, ...props}:EventTileProps
         {
             date += "12:" + endDate.getMinutes();
         } else if(endDate.getHours() > 12) {
-            date += (endDate.getHours()%12) + ":"+ endDate.getMinutes();
+            date += (endDate.getHours()%12) + ":";
         } else {
-            date += endDate.getHours() + ":"+ endDate.getMinutes();
+            date += endDate.getHours() + ":";
         }
-        
-        if(endDate.getMinutes() === 0)
+        if(endDate.getMinutes() < 10)
         {
             date += "0";
         }
+        date += endDate.getMinutes();
         date += " ";
         if(endDate.getHours() < 12)
         {
@@ -223,6 +224,7 @@ const eventTileStyle = StyleSheet.create({
     color: '#527E58',
     fontWeight: 600,
     fontSize: 10, 
+    
     backgroundColor: 'rgba(201, 239, 212, 1)',
     borderRadius: 34,
     marginLeft: 5,
@@ -271,7 +273,7 @@ const eventTileStyle = StyleSheet.create({
         paddingLeft: 30
     },
     cancelText: {
-        color: '#000',
+        color: "#fff",
         fontSize: 16,
         fontWeight: 500
     },
@@ -289,7 +291,7 @@ const eventTileStyle = StyleSheet.create({
         borderWidth: 1
     },
     saveText: {
-        // color: "#fff",
+        color: "#fff",
         fontSize: 16,
         fontWeight: 500
     }

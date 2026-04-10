@@ -16,10 +16,10 @@ export default function InvItemTile(props: InvItemTileProps){
     return (
         <TouchableOpacity onPress={props.onPress}>
             <View style={[styles.tile, props.restock && styles.restockTile]}>
-                <ThemedText type="subtitle">{props.title}</ThemedText>
-                <ThemedText type="secondarySubtitle">Category: {props.category}</ThemedText>
+                <ThemedText type="secondarySubtitleBold">{props.title}</ThemedText>
+                <ThemedText type="default">Category: {props.category}</ThemedText>
                 <View style={styles.subView}>
-                    <ThemedText type="secondarySubtitle">Stock: {props.quantity}</ThemedText>
+                    <ThemedText type="default">Stock: {props.quantity}</ThemedText>
                     <View>
                         <ThemedSwitch label="Restock Needed? " value={props.restock} onChangeSwitch={props.onChange}/>
                     </View>
@@ -42,18 +42,24 @@ const styles = StyleSheet.create({
         padding: 20,
         fontSize: 24,
         color: "#000000",
-        borderWidth: 2,
-        gap: 5
+        gap: 5,
+        shadowColor: "#000",
+        shadowOpacity: 0.06,
+        shadowRadius: 10,
+        elevation: 2
     },
 
     restockTile: {
-        backgroundColor: "#1433487f",
+        backgroundColor: "#f9d8bf",
         borderRadius: 16,
         padding: 20,
         fontSize: 24,
         color: "#000000",
-        borderWidth: 2,
-        gap: 5
+        gap: 5,
+        shadowColor: "#000",
+        shadowOpacity: 0.06,
+        shadowRadius: 10,
+        elevation: 2
     },
 
     subheading: {
