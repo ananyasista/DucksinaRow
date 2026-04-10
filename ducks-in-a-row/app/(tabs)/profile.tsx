@@ -17,6 +17,7 @@ import { me, ProfileResponse } from "../../api/auth";
 import { getLivingPreferences } from "../../api/preferences";
 import { getHouseholdRoommates, Roommate } from "../../api/household";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { ThemedText } from "@/components/themed-text";
 
 export default function ProfileScreen() {
   const [profile, setProfile] = useState<ProfileResponse | null>(null);
@@ -76,9 +77,9 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={{ flex: 1}}>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.h1}>
+        <ThemedText type="title" >
           Hello, {profile.first_name || profile.username || "Roommate"}!
-        </Text>
+        </ThemedText>
 
         {loading ? (
           <ActivityIndicator style={{ marginTop: 12 }} />
