@@ -92,8 +92,7 @@ export default function ProfileEdit() {
 
     try {
       setSaving(true);
-      
-
+    
       const payload: ProfileInfo = {
         email: profile.email,
         first_name: profile.first_name,
@@ -104,7 +103,7 @@ export default function ProfileEdit() {
 
     // Living Preference Survey
     if (mode === "edit") {
-        router.replace("/profile");
+        router.back();
     } else {
         router.replace("/(tabs)");
     }

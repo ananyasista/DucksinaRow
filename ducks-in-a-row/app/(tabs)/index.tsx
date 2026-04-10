@@ -468,6 +468,8 @@ const styles = StyleSheet.create({
   },
   
   rowCenter: {
+    paddingLeft: 20,
+    paddingRight: 20,
     marginTop: 30,
     width: '100%',
     display: "flex",

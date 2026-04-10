@@ -103,7 +103,7 @@ export default function LivingPreferencesScreen() {
 
     // Living Preference Survey
     if (mode === "edit") {
-        router.replace("/profile");
+        router.back();
     } else {
         router.replace("/(tabs)");
     }
