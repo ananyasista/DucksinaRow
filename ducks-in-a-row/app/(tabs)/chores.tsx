@@ -248,6 +248,7 @@ export default function ChoreScreen() {
                         if (Object.keys(choreAssignmentPatch).length > 0) {
                           await choreAPI.updateAssignment(chore.id, choreAssignmentPatch);
                         }
+                        await applyFilterChanges();
                       } catch (err: any) {
                         console.log("ERROR RESPONSE:", err.response?.data);
                         console.log("STATUS:", err.response?.status);

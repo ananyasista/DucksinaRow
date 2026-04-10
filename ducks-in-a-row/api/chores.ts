@@ -190,9 +190,9 @@ export const buildChorePatch = (
   if (original.chore.details !== current.details) chorePatch.details = current.details;
   if (original.chore.location !== current.location) chorePatch.location = current.location;
   if (original.chore.is_rotating !== current.isRotating) chorePatch.is_rotating = current.isRotating;
-  if (original.chore.repeat_unit !== current.repeatUnit) chorePatch.repeat_unit = current.repeatUnit;
+  if (original.chore.repeat_unit !== current.repeatUnit) chorePatch.repeat_unit = current.repeatUnit.toLowerCase();
   if (original.chore.repeat_value !== current.repeatValue) chorePatch.repeat_value = current.repeatValue;
-  if (original.chore.pass_to_next_unit !== current.passToNextUnit) chorePatch.pass_to_next_unit = current.passToNextUnit;
+  if (original.chore.pass_to_next_unit !== current.passToNextUnit) chorePatch.pass_to_next_unit = current.passToNextUnit.toLowerCase();
   if (original.chore.pass_to_next_value !== current.passToNextValue) chorePatch.pass_to_next_value = current.passToNextValue;
 
   // --- Assignment-level diffs ---
@@ -241,7 +241,7 @@ export const updateAssignment = async (assignmentId: string, data: Partial<Chore
 
 export type ChoreCreateInput = Omit<
   Chore,
-  "id" | "latest_assignment" | "all_assignments"
+  "id" | "latest_assignment" | "all_assignments" | "completed_date"
 > & {
   due_date?: string | Date;
   all_day?: boolean;
@@ -261,7 +261,10 @@ export const createChore = async (data: ChoreCreateInput) => {
 
   const payload = {
     ...data,
+    completed: false,
     due_date: formattedDueDate,
+    repeat_unit: data.repeat_unit.toLowerCase(),
+    pass_to_next_unit: data.pass_to_next_unit?.toLowerCase() ?? null,
     roommates_involved_ids: data.roommates_involved?.map(r => r.id) ?? [],
   };
 
