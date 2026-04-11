@@ -74,6 +74,9 @@ export default function LivingPreferencesScreen() {
 
     return "";
   };
+  const handleBack = () => {
+    router.back();
+};
 
   const handleSave = async () => {
     const err = validate();
@@ -123,10 +126,19 @@ export default function LivingPreferencesScreen() {
     <SafeAreaView>
     <ScrollView contentContainerStyle={styles.container}>
       
+    <View style={styles.topRow}>
       {/* Back Button */}
-      <Pressable style={styles.backButton} onPress={() => router.back()}>
+      <Pressable onPress={handleBack}>
         <ThemedText style={styles.backText}>← Back</ThemedText>
       </Pressable>
+
+      {/* Skip Button (ONLY for create mode) */}
+      {mode !== "edit" && (
+        <Pressable onPress={() => router.replace("/(tabs)")}>
+          <ThemedText style={styles.skipText}>Skip</ThemedText>
+        </Pressable>
+      )}
+    </View>
 
       <ThemedText type='title'>Living Preferences Survey</ThemedText>
       <ThemedText style={styles.subtitle}>
@@ -408,5 +420,17 @@ const styles = StyleSheet.create({
     color: PRIMARY,
     fontWeight: "700",
     fontSize: 14,
+  },
+  topRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+
+  skipText: {
+    color: "#999",
+    fontWeight: "700",
+    fontSize: 15,
   },
 });
