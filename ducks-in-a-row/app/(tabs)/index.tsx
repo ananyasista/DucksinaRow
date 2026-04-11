@@ -63,6 +63,7 @@ export default function HomeScreen() {
   const [choreList, setChoreList] = useState<ChoreAssignment[]>([]);
   const [myEvents, setMyEvents] = useState<CalendarEvent[]>([]);
   const [upcomingEvents, setUpcomingEvents] = useState<HomeCalendarEvent[]>([]);
+  const [loading, setLoading] = useState(true);
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [eventDetails, setEventDetails] = useState(false);
   const [currEvent, setCurrEvent] = useState<EventDetails>();
@@ -217,9 +218,35 @@ export default function HomeScreen() {
       );
 
   useEffect(() => {
-    loadHomeData();
-    onScreenLoad();
-    loadUpcomingWeekEvents();
+    const loadAll = async () => {
+      const MIN_LOADING_TIME = 1500; // 1.5 seconds
+
+      try {
+        setLoading(true);
+
+        const startTime = Date.now();
+
+        await Promise.all([
+          loadHomeData(),
+          onScreenLoad(),
+          loadUpcomingWeekEvents(),
+        ]);
+
+        const elapsed = Date.now() - startTime;
+        const remaining = MIN_LOADING_TIME - elapsed;
+
+        if (remaining > 0) {
+          await new Promise((res) => setTimeout(res, remaining));
+        }
+
+      } catch (e) {
+        console.log(e);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadAll();
   }, []);
 
   useEffect(() => {
@@ -464,6 +491,17 @@ export default function HomeScreen() {
             updateEvents={() => updateEvents()}
           />
         )}
+
+            {loading && (
+      <View style={styles.loadingOverlay}>
+        <Image
+          source={require('@/assets/images/loadingDucks.gif')}
+          style={styles.loadingGif}
+          resizeMode="contain"
+        />
+        <Text style={styles.loadingText}>Loading your home...</Text>
+      </View>
+    )}
       </View>
       
     </SafeAreaView>
@@ -692,5 +730,28 @@ const styles = StyleSheet.create({
     fontFamily: FONT.heading,
     fontSize: 13,
     fontWeight: '800',
+  },
+    loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'white',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 999,
+  },
+
+  loadingGif: {
+    width: 200,
+    height: 200,
+  },
+
+  loadingText: {
+    marginTop: -60,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#666',
   },
 });
