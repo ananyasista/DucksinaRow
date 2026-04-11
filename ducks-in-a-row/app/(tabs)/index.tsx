@@ -1,10 +1,11 @@
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image, ImageBackground } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, ImageBackground } from 'react-native';
 import type { ICalendarEventBase } from 'react-native-big-calendar';
 import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
+import { Image } from 'expo-image';
 
 import { getHouseholdName } from '@/api/household';
 import { updateAssignment, getChoreAssignments, updateChore, buildChorePatch, ChoreAssignment } from '@/api/chores';
