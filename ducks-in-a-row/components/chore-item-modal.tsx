@@ -122,6 +122,7 @@ export default function ChoreItemModal(props: ModalProps) {
                 choreAssignmentPatch: choreAssignmentPatch,
             });
         }   
+        resetChore();
         props.onClose();
     };
     
@@ -260,6 +261,7 @@ export default function ChoreItemModal(props: ModalProps) {
                                                 onChange={(event, selectedDate) => {
                                                     if (selectedDate) setDueDate(selectedDate);
                                                 }}
+                                                minuteInterval={5}
                                             />
                                         )}
                                         
@@ -351,6 +353,7 @@ export default function ChoreItemModal(props: ModalProps) {
                                                 setItems={setRepeatInt}
                                                 style={styles.input}
                                                 dropDownContainerStyle={styles.dropdownMenu}
+                                                listMode='SCROLLVIEW'
 
                                             />
                                         </View>
