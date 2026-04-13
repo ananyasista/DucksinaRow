@@ -50,7 +50,7 @@ export default function ChoreTile(props: ChoreTileProps){
 
     return (
         <TouchableOpacity onPress={props.onPress}>
-            <View style={[styles.tile, props.completed && styles.restockTile]}>
+            <View style={[styles.tile, new Date() > props.due_date && !props.completed && styles.restockTile]}>
                 <View style={styles.tileContainer}>
                     {/* LEFT: CHECKBOX */}
                     <View style={styles.checkboxContainer}>
@@ -76,7 +76,6 @@ export default function ChoreTile(props: ChoreTileProps){
                                         {(props.assignee?.first_name ?? "U").charAt(0)}
                                     </ThemedText>
                                 </View>
-
                                 <ThemedText numberOfLines={1} type="default" style={styles.assigneeText}>
                                     {props.assignee?.first_name ?? "Unassigned"}
                                 </ThemedText>
@@ -167,6 +166,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
+        flexWrap: 'wrap'
     },
 
     choreUserRow: {
