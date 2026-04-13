@@ -112,7 +112,6 @@ export default function LoginScreen() {
 
         <View style={styles.dividerRow}>
           <View style={styles.dividerLine} />
-          <ThemedText style={styles.dividerText}>Or sign in with</ThemedText>
           <View style={styles.dividerLine} />
         </View>
 
