@@ -112,7 +112,6 @@ export default function LoginScreen() {
 
         <View style={styles.dividerRow}>
           <View style={styles.dividerLine} />
-          <View style={styles.dividerLine} />
         </View>
 
         <View style={styles.bottomRow}>
