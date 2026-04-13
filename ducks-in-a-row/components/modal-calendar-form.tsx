@@ -15,6 +15,7 @@ import DateTimePicker, { DateTimePickerEvent, Event } from '@react-native-commun
 import RNDateTimePicker from '@react-native-community/datetimepicker';
 import { IconSymbol } from './ui/icon-symbol';
 import {CalendarEvent as APICalendarEvent, createEvent, updateEvent, CalendarEventCreateInput} from '@/api/calendar';
+import { useFocusEffect } from 'expo-router';
 
 type ModalProps = PropsWithChildren<{
     formTitle:string;
@@ -34,6 +35,8 @@ export default function ModalCalendarForm({edit = false,event = null, ...props}:
     const [eventTitleError, setEventTitleError] = useState(false);
     const [startDateError, setStartDateError] = useState(false);
     const [endDateBeforeStartError, setEndDateBeforeStartError] = useState(false);
+    const [endDateTooCloseError, setEndDateTooCloseError] = useState(false);
+    const [endAllDayError, setEndAllDayError] = useState(false);
     const [endDateError, setEndDateError] = useState(false);
     const [eventTitle, setEventTitle] = useState(event?.title);
     const [eventDescription, setEventDescription] = useState(event?.details);
@@ -41,9 +44,15 @@ export default function ModalCalendarForm({edit = false,event = null, ...props}:
     const [allDay, setAllDay] = useState(event?.all_day ?? false);
     const [needsApproval, setNeedsApproval] = useState(event?.requires_approval ?? false);
     const [showRoommateSwitch] = useState(event === null);
-    const onChangeStart = (event:DateTimePickerEvent, selectedDate?:Date) => {
-      const currentDate = selectedDate ? selectedDate : new Date(todayInMinutes());
-      setStartDate(currentDate);
+    
+    const onChangeStart = (event: DateTimePickerEvent, selectedDate?: Date) => {
+        const newStart = selectedDate ?? new Date(todayInMinutes());
+
+        setStartDate(newStart);
+
+        const newEnd = new Date(newStart);
+        newEnd.setHours(newEnd.getHours() + 1);
+        setEndDate(newEnd);
     };
     const onChangeEnd = (event:DateTimePickerEvent, selectedDate?:Date) => {
       const currentDate = selectedDate ? selectedDate : new Date(todayInMinutes()+ 3600);
@@ -51,23 +60,27 @@ export default function ModalCalendarForm({edit = false,event = null, ...props}:
     }
     
     const showMode = (currentMode: any) => {
-      setShowStart(true);
-      if(event?.start_date)
-      {
-        setStartDate(new Date(event.start_date));
-      } else {
-        setStartDate(new Date());
-      }
-      setShowEnd(true);
-      if(event?.end_date)
-      {
-        setEndDate(new Date(event.end_date));
-      } else {
-        setEndDate(new Date());
-      }
-      setMode(currentMode);
-      endDate.setHours(endDate.getHours()+1);
-    };
+        setShowStart(true);
+
+        let start = new Date();
+        let end = new Date(start);
+
+        if (event?.start_date) {
+            start = new Date(event.start_date);
+        }
+
+        if (event?.end_date) {
+            end = new Date(event.end_date);
+        } else {
+            end.setHours(start.getHours() + 1);
+        }
+
+        setStartDate(start);
+        setEndDate(end);
+
+        setShowEnd(true);
+        setMode(currentMode);
+        };
 
     const close = async () => {
         setAddVisible(false);
@@ -87,7 +100,7 @@ export default function ModalCalendarForm({edit = false,event = null, ...props}:
         var errors = setErrors();
         if(!errors)
         {
-            return; //Errors -> not ready to save;
+            return false; //Errors -> not ready to save;
         }
         try {
             console.log("Saving... needs approval: " + needsApproval);
@@ -130,39 +143,58 @@ export default function ModalCalendarForm({edit = false,event = null, ...props}:
     };
     
     function setErrors() {
-        var error = false
-        if(eventTitle === "")
-        {
+        let error = false;
+
+        setEventTitleError(false);
+        setEndDateBeforeStartError(false);
+        setEndDateTooCloseError(false);
+        setEndAllDayError(false);
+
+        if (!eventTitle || eventTitle.trim() === "") {
             setEventTitleError(true);
             error = true;
         }
-        if(startDate > endDate)
-        {
+
+        if (startDate >= endDate) {
             setEndDateBeforeStartError(true);
+            error = true;
+        }
+
+        const diffMs = endDate.getTime() - startDate.getTime();
+        const diffMinutes = diffMs / (1000 * 60);
+
+        if (!allDay && diffMinutes < 29) {
+            setEndDateTooCloseError(true);
+            error = true;
+        }
+        if(allDay && startDate.getUTCDate() === endDate.getUTCDate())
+        {
+            setEndAllDayError(true);
             error = true;
         }
         return !error;
     }
+
     function open() {
-    setEventTitleError(false);
-    setStartDateError(false);
-    setEndDateError(false);
-    setEndDateBeforeStartError(false);
+        setEventTitleError(false);
+        setStartDateError(false);
+        setEndDateError(false);
+        setEndDateBeforeStartError(false);
 
-    setEventTitle("");
-    setEventDescription("");
-    setEventLocation("");
-    setAllDay(false);
-    setNeedsApproval(false);
+        setEventTitle("");
+        setEventDescription("");
+        setEventLocation("");
+        setAllDay(false);
+        setNeedsApproval(false);
 
-    const now = new Date();
-    const end = new Date(now);
-    end.setHours(end.getHours() + 1);
+        const now = new Date();
+        const end = new Date(now);
+        end.setHours(end.getHours() + 1);
 
-    setStartDate(now);
-    setEndDate(end);
+        setStartDate(now);
+        setEndDate(end);
 
-    setAddVisible(true);
+        setAddVisible(true);
     }
   return (
     <View >
@@ -209,6 +241,16 @@ export default function ModalCalendarForm({edit = false,event = null, ...props}:
                 <View onLayout={showDatepicker}>
                 {startDateError && (<ThemedText type='errorText'>Start date is required</ThemedText>)}
                 {endDateBeforeStartError && (<ThemedText type='errorText'>End date must be AFTER start date</ThemedText>)}
+                {endDateTooCloseError && (
+                    <ThemedText type='errorText'>
+                        End time must be at least 30 minutes after start time
+                    </ThemedText>
+                )}
+                {endAllDayError && (
+                    <ThemedText type='errorText'>
+                        End date must be at least next day
+                    </ThemedText>
+                )}
 
                 <ThemedText type='boldText'>Start Date:</ThemedText>
 
