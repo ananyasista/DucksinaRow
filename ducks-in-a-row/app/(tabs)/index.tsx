@@ -540,9 +540,10 @@ const styles = StyleSheet.create({
   },
   heroLogo: {
     alignItems:"center", 
-    width: 200,
-    height: 96,
+    width: 120,
+    height: 80,
     marginBottom: -10,
+    marginTop:-50,
   },
   contentCard: {
     flex: 1,
@@ -569,7 +570,7 @@ const styles = StyleSheet.create({
   welcomeText: {
     fontFamily: FONT.heading,
     fontSize: 30,
-    lineHeight: 36,
+    lineHeight: 20,
     fontWeight: '800',
     color: COLORS.text,
     letterSpacing: -0.8,
