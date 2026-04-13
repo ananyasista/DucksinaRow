@@ -555,7 +555,10 @@ export default function CalendarPage () {
                 myEvents.map((event) => {
                     if(!event.requires_approval)
                     {
+                      if(event.end_date && new Date(event.end_date) > new Date())
+                      {
                       return <EventTile key={event.id} event={event} owner={true} updateEvents={updateEvents}/>
+                      }
                     }
                 })
               }
