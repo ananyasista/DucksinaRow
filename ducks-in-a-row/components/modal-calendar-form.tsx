@@ -35,7 +35,6 @@ export default function ModalCalendarForm({edit = false,event = null, ...props}:
     const [eventTitleError, setEventTitleError] = useState(false);
     const [startDateError, setStartDateError] = useState(false);
     const [endDateBeforeStartError, setEndDateBeforeStartError] = useState(false);
-    const [endDateTooCloseError, setEndDateTooCloseError] = useState(false);
     const [endAllDayError, setEndAllDayError] = useState(false);
     const [endDateError, setEndDateError] = useState(false);
     const [eventTitle, setEventTitle] = useState(event?.title);
@@ -147,7 +146,6 @@ export default function ModalCalendarForm({edit = false,event = null, ...props}:
 
         setEventTitleError(false);
         setEndDateBeforeStartError(false);
-        setEndDateTooCloseError(false);
         setEndAllDayError(false);
 
         if (!eventTitle || eventTitle.trim() === "") {
@@ -163,10 +161,6 @@ export default function ModalCalendarForm({edit = false,event = null, ...props}:
         const diffMs = endDate.getTime() - startDate.getTime();
         const diffMinutes = diffMs / (1000 * 60);
 
-        if (!allDay && diffMinutes < 29) {
-            setEndDateTooCloseError(true);
-            error = true;
-        }
         if(allDay && startDate.getUTCDate() === endDate.getUTCDate())
         {
             setEndAllDayError(true);
@@ -241,11 +235,6 @@ export default function ModalCalendarForm({edit = false,event = null, ...props}:
                 <View onLayout={showDatepicker}>
                 {startDateError && (<ThemedText type='errorText'>Start date is required</ThemedText>)}
                 {endDateBeforeStartError && (<ThemedText type='errorText'>End date must be AFTER start date</ThemedText>)}
-                {endDateTooCloseError && (
-                    <ThemedText type='errorText'>
-                        End time must be at least 30 minutes after start time
-                    </ThemedText>
-                )}
                 {endAllDayError && (
                     <ThemedText type='errorText'>
                         End date must be at least next day
@@ -265,6 +254,7 @@ export default function ModalCalendarForm({edit = false,event = null, ...props}:
                                 display='default'
                                 onChange={onChangeStart}
                                 themeVariant='light'
+                                minuteInterval={30}
                             />
                         </View>
                         {!allDay &&
@@ -277,6 +267,8 @@ export default function ModalCalendarForm({edit = false,event = null, ...props}:
                                 is24Hour={true}
                                 onChange={onChangeStart}
                                 themeVariant='light'
+                                minuteInterval={30}
+
                             />
                         </View>
                         } 
@@ -294,6 +286,7 @@ export default function ModalCalendarForm({edit = false,event = null, ...props}:
                                 mode={'date'}
                                 is24Hour={true}
                                 onChange={onChangeEnd}
+                                minuteInterval={30}
                                 themeVariant='light'
                             />
                         </View>
@@ -307,6 +300,8 @@ export default function ModalCalendarForm({edit = false,event = null, ...props}:
                                 is24Hour={true}
                                 onChange={onChangeEnd}
                                 themeVariant='light'
+                                minuteInterval={30}
+
                             />
                         </View>
                         }
