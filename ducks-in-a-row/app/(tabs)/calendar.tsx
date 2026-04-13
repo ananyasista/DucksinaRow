@@ -517,8 +517,8 @@ export default function CalendarPage () {
               eventCellTextColor="#fff"
               allDayEventCellTextColor="#fff"
               mode={currentMode}
-              onPressCell={(date: Date) => changeDateMode(date)}
-              onPressDateHeader={(date: Date) => changeDateMode(date)}
+              // onPressCell={(date: Date) => changeDateMode(date)}
+              // onPressDateHeader={(date: Date) => changeDateMode(date)}
               onSwipeEnd={(date: Date) => setCurrentDate(date)}
               theme={theme.calendar}
               verticalScrollEnabled={true}
