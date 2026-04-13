@@ -21,6 +21,7 @@ import {
 import EventModal from '@/components/modal-event';
 import { getHouseholdRoommates, Roommate } from '@/api/household';
 import { me, ProfileResponse } from '@/api/auth';
+import { useCalendarSocket } from '@/hooks/use-calendar-socket';
 
 
 export interface CalendarEvent extends ICalendarEventBase {
@@ -46,20 +47,43 @@ export default function CalendarPage () {
 
     const [APIEvent, setAPIEvent] = useState<APICalendarEvent|null>(null);
     const [detailsModal, setDetailsModal] = useState(false);
-    const [pendingEvent, setPendingEvent] = useState<APIEventDetails|null>(null); 
+    const [pendingEvent, setPendingEvent] = useState<APIEventDetails|null>(null);
 
     const [openDropdown, setOpenDropdown] = useState(false);
-    const menuRef = useRef<View>(null);    
+    const menuRef = useRef<View>(null);
     const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 });
-    
+
     const [isOwner, setIsOwner] = useState(false);
     const [roommates, setRoommates] = useState<Roommate[]>([]);
     const [filtersByRoommate, setFiltersByRoommate] = useState<string[]>([]);
     const [profile, setProfile] = useState<ProfileResponse>();
+
+    // Use socket to get real-time calendar updates
+    const { events: socketEvents } = useCalendarSocket();
+
+    // When socket events update, merge them into fullDetailEvent
     useEffect(() => {
-      const height = getMaxAllDayEventsPerDay(events, currentDate, currentMode);
-      setHeaderHeight(height);
-    }, [events, currentDate, currentMode]);
+        if (socketEvents.length > 0) {
+            setFullDetailEvents((prev) => {
+                const eventMap = new Map(prev.map(e => [e.id, e]));
+                socketEvents.forEach(e => eventMap.set(e.id, e));
+                return Array.from(eventMap.values());
+            });
+        }
+    }, [socketEvents]);
+
+    // Update calendar display when fullDetailEvent changes (from API or socket)
+    useEffect(() => {
+        const calenEvents: CalendarEvent[] = fullDetailEvent.map((event: APICalendarEvent) =>
+            APICalEventToCalEvent(event)
+        );
+        const upcoming = fullDetailEvent.filter((event) =>
+            isTodayOrFuture(event.start_date)
+        );
+
+        setEvents(calenEvents);
+        setUpcomingEvents(upcoming);
+    }, [fullDetailEvent]);
 
     function getMaxAllDayEventsPerDay(
       events: CalendarEvent[],
@@ -619,7 +643,6 @@ export default function CalendarPage () {
             onClose={() => closeDetailModal()} 
             updateEvents={updateEvents}/>
         )}
-
         
     </SafeAreaView>
   )

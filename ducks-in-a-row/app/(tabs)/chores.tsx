@@ -404,22 +404,22 @@ const styles = StyleSheet.create({
   },
 
   addButton: {
-        backgroundColor: '#79997E',
-        width: 50,
-        height: 50,
-        borderRadius: 30,
-        justifyContent: 'center',
-        alignItems: 'center',
-        position: 'absolute',
-        bottom: 40,
-        right: 30,
-        zIndex: 100,
-        shadowColor: '#000',
-        shadowOffset: {width: 0, height: 2},
-        shadowOpacity: 0.3,
-        shadowRadius: 3,
-        elevation: 5
-    },
+    backgroundColor: '#79997E',
+    width: 50,
+    height: 50,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'absolute',
+    bottom: 40,
+    right: 30,
+    zIndex: 100,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5
+  },
   
   input: {
     borderWidth: 2,

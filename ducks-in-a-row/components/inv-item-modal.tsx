@@ -56,6 +56,14 @@ export default function InvItemModal(props: ModalProps) {
         }
     }, [props.item]);
 
+    const resetItem = () => {
+        setItemName('')
+        setItemDetails('')
+        setItemLocation(null)
+        setQuantity(1)
+        props.onClose()
+    }
+
     return (
         <View>
             <Modal
@@ -71,17 +79,13 @@ export default function InvItemModal(props: ModalProps) {
                         <View style={styles.header}>
                             <TouchableOpacity style={styles.cancelButton} 
                                 onPress={() => {
-                                    setItemName('')
-                                    setItemDetails('')
-                                    setItemLocation(null)
-                                    setQuantity(1)
-                                    props.onClose()
+                                    resetItem()
                                 }}
                             >
                                 <ThemedText type="subtitle" style={styles.cancelText}>Cancel</ThemedText>
                             </TouchableOpacity>
                             <ThemedText type='subtitle'>{props.title}</ThemedText>
-                            <TouchableOpacity style={styles.cancelButton} onPress={handleSave}>
+                            <TouchableOpacity style={styles.cancelButton} onPress={() => {handleSave(); resetItem()}}>
                                 <ThemedText type="subtitle" style={styles.cancelText}>Save</ThemedText>
                             </TouchableOpacity>
                         </View>
