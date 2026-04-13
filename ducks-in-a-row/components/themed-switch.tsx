@@ -28,8 +28,8 @@ export function ThemedSwitch({label="", onChangeSwitch, value=false, editable=tr
     <View style={styles.toggleRow}>
         <ThemedText type={labelType}>{label}</ThemedText>
         <Switch
-                trackColor={{false: '#f4f4f3', true: '#FAAE43'}}
-                thumbColor={isEnabled ? '#f4f4f3': '#FAAE43'}
+                trackColor={{false: '#bcbcbb', true: '#EC8534'}}
+                thumbColor={!isEnabled ? '#f4f4f3': '#f4f4f3'}
                 ios_backgroundColor="#f4f4f3"
                 onValueChange={toggleSwitch}
                 value={isEnabled}

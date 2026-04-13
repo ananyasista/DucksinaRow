@@ -37,9 +37,11 @@ type ModalProps = PropsWithChildren<{
 export default function ChoreFilterModal(props: ModalProps) {
     const [visible, setVisible] = useState(false);
     const [dateVisible, setDateVisible] = useState(false);
+    const [minEndDate, setMinEndDate] = useState(new Date());
     
     const onChangeStartDate = (event: DateTimePickerEvent, selectedDate?: Date) => {
         const currentDate = selectedDate ? selectedDate : new Date();
+        setMinEndDate(currentDate);
         props.setStartDateFilter(currentDate);
     };
 
@@ -56,7 +58,7 @@ export default function ChoreFilterModal(props: ModalProps) {
         props.setStartDateFilter(undefined);
         props.setEndDateFilter(undefined);
         props.onClear?.();
-
+        setMinEndDate(new Date());
         setVisible(false);
     }
 
@@ -64,11 +66,12 @@ export default function ChoreFilterModal(props: ModalProps) {
         if(dateVisible){
             props.setStartDateFilter(undefined);
             props.setEndDateFilter(undefined);
+            
         } else {
             props.setStartDateFilter(new Date());
             props.setEndDateFilter(new Date());
         }
-
+        setMinEndDate(new Date());
         setDateVisible(!dateVisible);
     }
 
@@ -154,6 +157,7 @@ export default function ChoreFilterModal(props: ModalProps) {
                                         mode={'date'}
                                         display = 'default'
                                         themeVariant='light'
+                                        
                                     />
                                 </View>
                             </View>
@@ -169,6 +173,7 @@ export default function ChoreFilterModal(props: ModalProps) {
                                         mode={'date'}
                                         display = 'default'
                                         themeVariant='light'
+                                        minimumDate={minEndDate}
                                     />
                                 </View>
                             </View>
