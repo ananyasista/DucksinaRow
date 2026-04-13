@@ -120,7 +120,7 @@ export default function InventoryScreen() {
   }
  
   return (
-    <SafeAreaView>
+    <SafeAreaView style={{flex: 1}}>
       <ScrollView contentContainerStyle={{paddingBottom: 40}}>
         <View style={styles.fullLayout}>
           <ThemedText type="title">Items</ThemedText>
@@ -246,7 +246,7 @@ export default function InventoryScreen() {
             <TouchableOpacity onPress={() => setAddItemVisible(true)}>
               <Octicons name='plus' size = {30} color='#fff'/>
             </TouchableOpacity>
-          </View>
+        </View>
     </SafeAreaView>
   );
 }

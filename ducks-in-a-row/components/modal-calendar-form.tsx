@@ -205,7 +205,7 @@ export default function ModalCalendarForm({edit = false,event = null, ...props}:
             allowSwipeDismissal = {true}
             onRequestClose = {() => close()} 
         >
-                                    <View style={{height: 20}}></View>
+            <View style={{height: 20}}></View>
 
             <View style={modalTheme.header}>
                 <TouchableOpacity style={modalTheme.cancelSaveButton} onPress={() => close()}>
@@ -222,107 +222,104 @@ export default function ModalCalendarForm({edit = false,event = null, ...props}:
                 keyboardVerticalOffset={80}
             >
 
-            <ScrollView >
+            <ScrollView>
                 
-            <View style= {{flex: 1, padding: 16}}>
-                {eventTitleError && (<ThemedText type='errorText'>Event title is required</ThemedText>)}
-                <ThemedText type="boldText" >Event Title:</ThemedText>
-                <ThemedTextInput onChangeText={setEventTitle}placeholder="Item Name" defaultValue={event?.title}/>
-                <ThemedText type="boldText">Description:</ThemedText>
-                <ThemedTextInput onChangeText={setEventDescription} size="large" multiline={true} placeholder="Add Details" defaultValue={event?.details}/>
-                <ThemedSwitch onChangeSwitch={setAllDay} label="All-Day" value={event?.all_day ?? false} />
-                
-                <View onLayout={showDatepicker}>
-                {startDateError && (<ThemedText type='errorText'>Start date is required</ThemedText>)}
-                {endDateBeforeStartError && (<ThemedText type='errorText'>End date must be AFTER start date</ThemedText>)}
-                {endAllDayError && (
-                    <ThemedText type='errorText'>
-                        End date must be at least next day
-                    </ThemedText>
-                )}
-
-                <ThemedText type='boldText'>Start Date:</ThemedText>
-
-                {showStart && (
-                    <View style={modalTheme.rowSpace}>
-                        <View style={modalTheme.rowStart}>
-                            <IconSymbol size={20} name="calendar" color='black'/>
-                            <DateTimePicker
-                                testID="startDate"
-                                value={startDate}
-                                mode={'date'}
-                                display='default'
-                                onChange={onChangeStart}
-                                themeVariant='light'
-                                minuteInterval={30}
-                            />
-                        </View>
-                        {!allDay &&
-                        <View style={modalTheme.rowStart}>
-                            <IconSymbol size={20} name="clock" color='black'/>
-                            <DateTimePicker
-                                testID="startTime"
-                                value={startDate}
-                                mode={'time'}
-                                is24Hour={true}
-                                onChange={onChangeStart}
-                                themeVariant='light'
-                                minuteInterval={30}
-
-                            />
-                        </View>
-                        } 
-                    </View>
-                )}
-                {endDateError && (<ThemedText type='errorText'>End date is required</ThemedText>)}
-                <ThemedText type='boldText'>End Date:</ThemedText>
-                    {showEnd && (
-                    <View style={modalTheme.rowSpace}>
-                        <View style={modalTheme.rowStart}>
-                            <IconSymbol size={20} name="calendar" color='black'/>
-                            <DateTimePicker
-                                testID="endDate"
-                                value={endDate}
-                                mode={'date'}
-                                is24Hour={true}
-                                onChange={onChangeEnd}
-                                minuteInterval={30}
-                                themeVariant='light'
-                            />
-                        </View>
-                        {!allDay &&
-                        <View style={modalTheme.rowStart}>
-                            <IconSymbol size={20} name="clock" color='black'/>
-                            <DateTimePicker
-                                testID="endTime"
-                                value={endDate}
-                                mode={'time'}
-                                is24Hour={true}
-                                onChange={onChangeEnd}
-                                themeVariant='light'
-                                minuteInterval={30}
-
-                            />
-                        </View>
-                        }
-                    </View>
-                )}
-                </View>
-                <ThemedText type="boldText">Location:</ThemedText>
-                <ThemedTextInput onChangeText={setEventLocation} placeholder='Living Room'/>
-                <View>
-                    <ThemedSwitch onChangeSwitch={setNeedsApproval} label="Needs Roommates Approval?" value={needsApproval} editable = {showRoommateSwitch}/>
-                    <ThemedText type='text'>Field not editable once event is created</ThemedText>
-                </View>
-                
-            </View>
-            <></><></><></>
-            </ScrollView>
-                        </KeyboardAvoidingView>
-
-        </Modal>
+                <View style= {{flex: 1, padding: 16}}>
+                    {eventTitleError && (<ThemedText type='errorText'>Event title is required</ThemedText>)}
+                    <ThemedText type="boldText" >Event Title:</ThemedText>
+                    <ThemedTextInput onChangeText={setEventTitle}placeholder="Item Name" defaultValue={event?.title}/>
+                    <ThemedText type="boldText">Description:</ThemedText>
+                    <ThemedTextInput onChangeText={setEventDescription} size="large" multiline={true} placeholder="Add Details" defaultValue={event?.details}/>
+                    <ThemedSwitch onChangeSwitch={setAllDay} label="All-Day" value={event?.all_day ?? false} />
                     
+                    <View onLayout={showDatepicker}>
+                    {startDateError && (<ThemedText type='errorText'>Start date is required</ThemedText>)}
+                    {endDateBeforeStartError && (<ThemedText type='errorText'>End date must be AFTER start date</ThemedText>)}
+                    {endAllDayError && (
+                        <ThemedText type='errorText'>
+                            End date must be at least next day
+                        </ThemedText>
+                    )}
 
+                    <ThemedText type='boldText'>Start Date:</ThemedText>
+
+                    {showStart && (
+                        <View style={modalTheme.rowSpace}>
+                            <View style={modalTheme.rowStart}>
+                                <IconSymbol size={20} name="calendar" color='black'/>
+                                <DateTimePicker
+                                    testID="startDate"
+                                    value={startDate}
+                                    mode={'date'}
+                                    display='default'
+                                    onChange={onChangeStart}
+                                    themeVariant='light'
+                                    minuteInterval={30}
+                                />
+                            </View>
+                            {!allDay &&
+                            <View style={modalTheme.rowStart}>
+                                <IconSymbol size={20} name="clock" color='black'/>
+                                <DateTimePicker
+                                    testID="startTime"
+                                    value={startDate}
+                                    mode={'time'}
+                                    is24Hour={true}
+                                    onChange={onChangeStart}
+                                    themeVariant='light'
+                                    minuteInterval={30}
+
+                                />
+                            </View>
+                            } 
+                        </View>
+                    )}
+                    {endDateError && (<ThemedText type='errorText'>End date is required</ThemedText>)}
+                    <ThemedText type='boldText'>End Date:</ThemedText>
+                        {showEnd && (
+                        <View style={modalTheme.rowSpace}>
+                            <View style={modalTheme.rowStart}>
+                                <IconSymbol size={20} name="calendar" color='black'/>
+                                <DateTimePicker
+                                    testID="endDate"
+                                    value={endDate}
+                                    mode={'date'}
+                                    is24Hour={true}
+                                    onChange={onChangeEnd}
+                                    minuteInterval={30}
+                                    themeVariant='light'
+                                />
+                            </View>
+                            {!allDay &&
+                            <View style={modalTheme.rowStart}>
+                                <IconSymbol size={20} name="clock" color='black'/>
+                                <DateTimePicker
+                                    testID="endTime"
+                                    value={endDate}
+                                    mode={'time'}
+                                    is24Hour={true}
+                                    onChange={onChangeEnd}
+                                    themeVariant='light'
+                                    minuteInterval={30}
+
+                                />
+                            </View>
+                            }
+                        </View>
+                    )}
+                    </View>
+                    <ThemedText type="boldText">Location:</ThemedText>
+                    <ThemedTextInput onChangeText={setEventLocation} placeholder='Living Room'/>
+                    <View>
+                        <ThemedSwitch onChangeSwitch={setNeedsApproval} label="Needs Roommates Approval?" value={needsApproval} editable = {showRoommateSwitch}/>
+                        <ThemedText type='text'>Field not editable once event is created</ThemedText>
+                    </View>
+                    
+                </View>
+                <></><></><></>
+            </ScrollView>
+            </KeyboardAvoidingView>
+        </Modal>
     </View>
   )
 }
@@ -359,8 +356,14 @@ const modalTheme = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         position: 'absolute',
-        bottom: 40,
+        bottom: 6,
         right: 30,
+        zIndex: 100,
+        shadowColor: '#000',
+        shadowOffset: {width: 0, height: 2},
+        shadowOpacity: 0.3,
+        shadowRadius: 3,
+        elevation: 5
     },
     cancelSaveButton: {
         backgroundColor: '#fff',
