@@ -474,10 +474,40 @@ export default function CalendarPage () {
                 return (
                   <TouchableOpacity
                     key={roommate.id}
-                    style={isSelected ? calendarTheme.filter : calendarTheme.filterSelected}
+                    // style={isSelected ? calendarTheme.filter : calendarTheme.filterSelected}
+                    style={
+                      isSelected
+                        ? [
+                            calendarTheme.filter,
+                            {
+                              backgroundColor: roommate.display_color ?? "#EC8534", // fallback
+                            },
+                          ]
+                        : [calendarTheme.filterSelected,
+                          {
+                              borderColor: roommate.display_color ?? "#EC8534", // fallback
+                            },
+                        ]
+                      }
                     onPress={() => filterBy(roommate.id)}
                   >
-                    <Text style={isSelected ? calendarTheme.filterText : calendarTheme.filterTextSelected}>
+                    <Text 
+                    // style={isSelected ? calendarTheme.filterText : calendarTheme.filterTextSelected}
+                    style={
+                      isSelected
+                        ? [
+                            calendarTheme.filterText,
+                            {
+                              borderColor: roommate.display_color ?? "#EC8534", // fallback
+                            }
+                          ]
+                        : [calendarTheme.filterTextSelected, 
+                            {
+                              color: roommate.display_color ?? "#EC8534", // fallback
+                            },
+
+                        ]
+                      }>
                       {roommate.first_name}
                     </Text>
                   </TouchableOpacity>
