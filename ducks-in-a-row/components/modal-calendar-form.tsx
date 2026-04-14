@@ -15,6 +15,7 @@ import DateTimePicker, { DateTimePickerEvent, Event } from '@react-native-commun
 import RNDateTimePicker from '@react-native-community/datetimepicker';
 import { IconSymbol } from './ui/icon-symbol';
 import {CalendarEvent as APICalendarEvent, createEvent, updateEvent, CalendarEventCreateInput} from '@/api/calendar';
+import { useFocusEffect } from 'expo-router';
 
 type ModalProps = PropsWithChildren<{
     formTitle:string;
@@ -34,6 +35,7 @@ export default function ModalCalendarForm({edit = false,event = null, ...props}:
     const [eventTitleError, setEventTitleError] = useState(false);
     const [startDateError, setStartDateError] = useState(false);
     const [endDateBeforeStartError, setEndDateBeforeStartError] = useState(false);
+    const [endAllDayError, setEndAllDayError] = useState(false);
     const [endDateError, setEndDateError] = useState(false);
     const [eventTitle, setEventTitle] = useState(event?.title);
     const [eventDescription, setEventDescription] = useState(event?.details);
@@ -41,9 +43,15 @@ export default function ModalCalendarForm({edit = false,event = null, ...props}:
     const [allDay, setAllDay] = useState(event?.all_day ?? false);
     const [needsApproval, setNeedsApproval] = useState(event?.requires_approval ?? false);
     const [showRoommateSwitch] = useState(event === null);
-    const onChangeStart = (event:DateTimePickerEvent, selectedDate?:Date) => {
-      const currentDate = selectedDate ? selectedDate : new Date(todayInMinutes());
-      setStartDate(currentDate);
+    
+    const onChangeStart = (event: DateTimePickerEvent, selectedDate?: Date) => {
+        const newStart = selectedDate ?? new Date(todayInMinutes());
+
+        setStartDate(newStart);
+
+        const newEnd = new Date(newStart);
+        newEnd.setHours(newEnd.getHours() + 1);
+        setEndDate(newEnd);
     };
     const onChangeEnd = (event:DateTimePickerEvent, selectedDate?:Date) => {
       const currentDate = selectedDate ? selectedDate : new Date(todayInMinutes()+ 3600);
@@ -51,23 +59,27 @@ export default function ModalCalendarForm({edit = false,event = null, ...props}:
     }
     
     const showMode = (currentMode: any) => {
-      setShowStart(true);
-      if(event?.start_date)
-      {
-        setStartDate(new Date(event.start_date));
-      } else {
-        setStartDate(new Date());
-      }
-      setShowEnd(true);
-      if(event?.end_date)
-      {
-        setEndDate(new Date(event.end_date));
-      } else {
-        setEndDate(new Date());
-      }
-      setMode(currentMode);
-      endDate.setHours(endDate.getHours()+1);
-    };
+        setShowStart(true);
+
+        let start = new Date();
+        let end = new Date(start);
+
+        if (event?.start_date) {
+            start = new Date(event.start_date);
+        }
+
+        if (event?.end_date) {
+            end = new Date(event.end_date);
+        } else {
+            end.setHours(start.getHours() + 1);
+        }
+
+        setStartDate(start);
+        setEndDate(end);
+
+        setShowEnd(true);
+        setMode(currentMode);
+        };
 
     const close = async () => {
         setAddVisible(false);
@@ -87,7 +99,7 @@ export default function ModalCalendarForm({edit = false,event = null, ...props}:
         var errors = setErrors();
         if(!errors)
         {
-            return; //Errors -> not ready to save;
+            return false; //Errors -> not ready to save;
         }
         try {
             console.log("Saving... needs approval: " + needsApproval);
@@ -130,39 +142,53 @@ export default function ModalCalendarForm({edit = false,event = null, ...props}:
     };
     
     function setErrors() {
-        var error = false
-        if(eventTitle === "")
-        {
+        let error = false;
+
+        setEventTitleError(false);
+        setEndDateBeforeStartError(false);
+        setEndAllDayError(false);
+
+        if (!eventTitle || eventTitle.trim() === "") {
             setEventTitleError(true);
             error = true;
         }
-        if(startDate > endDate)
-        {
+
+        if (startDate >= endDate) {
             setEndDateBeforeStartError(true);
+            error = true;
+        }
+
+        const diffMs = endDate.getTime() - startDate.getTime();
+        const diffMinutes = diffMs / (1000 * 60);
+
+        if(allDay && startDate.getUTCDate() === endDate.getUTCDate())
+        {
+            setEndAllDayError(true);
             error = true;
         }
         return !error;
     }
+
     function open() {
-    setEventTitleError(false);
-    setStartDateError(false);
-    setEndDateError(false);
-    setEndDateBeforeStartError(false);
+        setEventTitleError(false);
+        setStartDateError(false);
+        setEndDateError(false);
+        setEndDateBeforeStartError(false);
 
-    setEventTitle("");
-    setEventDescription("");
-    setEventLocation("");
-    setAllDay(false);
-    setNeedsApproval(false);
+        setEventTitle("");
+        setEventDescription("");
+        setEventLocation("");
+        setAllDay(false);
+        setNeedsApproval(false);
 
-    const now = new Date();
-    const end = new Date(now);
-    end.setHours(end.getHours() + 1);
+        const now = new Date();
+        const end = new Date(now);
+        end.setHours(end.getHours() + 1);
 
-    setStartDate(now);
-    setEndDate(end);
+        setStartDate(now);
+        setEndDate(end);
 
-    setAddVisible(true);
+        setAddVisible(true);
     }
   return (
     <View >
@@ -179,7 +205,7 @@ export default function ModalCalendarForm({edit = false,event = null, ...props}:
             allowSwipeDismissal = {true}
             onRequestClose = {() => close()} 
         >
-                                    <View style={{height: 20}}></View>
+            <View style={{height: 20}}></View>
 
             <View style={modalTheme.header}>
                 <TouchableOpacity style={modalTheme.cancelSaveButton} onPress={() => close()}>
@@ -196,96 +222,104 @@ export default function ModalCalendarForm({edit = false,event = null, ...props}:
                 keyboardVerticalOffset={80}
             >
 
-            <ScrollView >
+            <ScrollView>
                 
-            <View style= {{flex: 1, padding: 16}}>
-                {eventTitleError && (<ThemedText type='errorText'>Event title is required</ThemedText>)}
-                <ThemedText type="boldText" >Event Title:</ThemedText>
-                <ThemedTextInput onChangeText={setEventTitle}placeholder="Item Name" defaultValue={event?.title}/>
-                <ThemedText type="boldText">Description:</ThemedText>
-                <ThemedTextInput onChangeText={setEventDescription} size="large" multiline={true} placeholder="Add Details" defaultValue={event?.details}/>
-                <ThemedSwitch onChangeSwitch={setAllDay} label="All-Day" value={event?.all_day ?? false} />
-                
-                <View onLayout={showDatepicker}>
-                {startDateError && (<ThemedText type='errorText'>Start date is required</ThemedText>)}
-                {endDateBeforeStartError && (<ThemedText type='errorText'>End date must be AFTER start date</ThemedText>)}
-
-                <ThemedText type='boldText'>Start Date:</ThemedText>
-
-                {showStart && (
-                    <View style={modalTheme.rowSpace}>
-                        <View style={modalTheme.rowStart}>
-                            <IconSymbol size={20} name="calendar" color='black'/>
-                            <DateTimePicker
-                                testID="startDate"
-                                value={startDate}
-                                mode={'date'}
-                                display='default'
-                                onChange={onChangeStart}
-                                themeVariant='light'
-                            />
-                        </View>
-                        {!allDay &&
-                        <View style={modalTheme.rowStart}>
-                            <IconSymbol size={20} name="clock" color='black'/>
-                            <DateTimePicker
-                                testID="startTime"
-                                value={startDate}
-                                mode={'time'}
-                                is24Hour={true}
-                                onChange={onChangeStart}
-                                themeVariant='light'
-                            />
-                        </View>
-                        } 
-                    </View>
-                )}
-                {endDateError && (<ThemedText type='errorText'>End date is required</ThemedText>)}
-                <ThemedText type='boldText'>End Date:</ThemedText>
-                    {showEnd && (
-                    <View style={modalTheme.rowSpace}>
-                        <View style={modalTheme.rowStart}>
-                            <IconSymbol size={20} name="calendar" color='black'/>
-                            <DateTimePicker
-                                testID="endDate"
-                                value={endDate}
-                                mode={'date'}
-                                is24Hour={true}
-                                onChange={onChangeEnd}
-                                themeVariant='light'
-                            />
-                        </View>
-                        {!allDay &&
-                        <View style={modalTheme.rowStart}>
-                            <IconSymbol size={20} name="clock" color='black'/>
-                            <DateTimePicker
-                                testID="endTime"
-                                value={endDate}
-                                mode={'time'}
-                                is24Hour={true}
-                                onChange={onChangeEnd}
-                                themeVariant='light'
-                            />
-                        </View>
-                        }
-                    </View>
-                )}
-                </View>
-                <ThemedText type="boldText">Location:</ThemedText>
-                <ThemedTextInput onChangeText={setEventLocation} placeholder='Living Room'/>
-                <View>
-                    <ThemedSwitch onChangeSwitch={setNeedsApproval} label="Needs Roommates Approval?" value={needsApproval} editable = {showRoommateSwitch}/>
-                    <ThemedText type='text'>Field not editable once event is created</ThemedText>
-                </View>
-                
-            </View>
-            <></><></><></>
-            </ScrollView>
-                        </KeyboardAvoidingView>
-
-        </Modal>
+                <View style= {{flex: 1, padding: 16}}>
+                    {eventTitleError && (<ThemedText type='errorText'>Event title is required</ThemedText>)}
+                    <ThemedText type="boldText" >Event Title:</ThemedText>
+                    <ThemedTextInput onChangeText={setEventTitle}placeholder="Item Name" defaultValue={event?.title}/>
+                    <ThemedText type="boldText">Description:</ThemedText>
+                    <ThemedTextInput onChangeText={setEventDescription} size="large" multiline={true} placeholder="Add Details" defaultValue={event?.details}/>
+                    <ThemedSwitch onChangeSwitch={setAllDay} label="All-Day" value={event?.all_day ?? false} />
                     
+                    <View onLayout={showDatepicker}>
+                    {startDateError && (<ThemedText type='errorText'>Start date is required</ThemedText>)}
+                    {endDateBeforeStartError && (<ThemedText type='errorText'>End date must be AFTER start date</ThemedText>)}
+                    {endAllDayError && (
+                        <ThemedText type='errorText'>
+                            End date must be at least next day
+                        </ThemedText>
+                    )}
 
+                    <ThemedText type='boldText'>Start Date:</ThemedText>
+
+                    {showStart && (
+                        <View style={modalTheme.rowSpace}>
+                            <View style={modalTheme.rowStart}>
+                                <IconSymbol size={20} name="calendar" color='black'/>
+                                <DateTimePicker
+                                    testID="startDate"
+                                    value={startDate}
+                                    mode={'date'}
+                                    display='default'
+                                    onChange={onChangeStart}
+                                    themeVariant='light'
+                                    minuteInterval={30}
+                                />
+                            </View>
+                            {!allDay &&
+                            <View style={modalTheme.rowStart}>
+                                <IconSymbol size={20} name="clock" color='black'/>
+                                <DateTimePicker
+                                    testID="startTime"
+                                    value={startDate}
+                                    mode={'time'}
+                                    is24Hour={true}
+                                    onChange={onChangeStart}
+                                    themeVariant='light'
+                                    minuteInterval={30}
+
+                                />
+                            </View>
+                            } 
+                        </View>
+                    )}
+                    {endDateError && (<ThemedText type='errorText'>End date is required</ThemedText>)}
+                    <ThemedText type='boldText'>End Date:</ThemedText>
+                        {showEnd && (
+                        <View style={modalTheme.rowSpace}>
+                            <View style={modalTheme.rowStart}>
+                                <IconSymbol size={20} name="calendar" color='black'/>
+                                <DateTimePicker
+                                    testID="endDate"
+                                    value={endDate}
+                                    mode={'date'}
+                                    is24Hour={true}
+                                    onChange={onChangeEnd}
+                                    minuteInterval={30}
+                                    themeVariant='light'
+                                />
+                            </View>
+                            {!allDay &&
+                            <View style={modalTheme.rowStart}>
+                                <IconSymbol size={20} name="clock" color='black'/>
+                                <DateTimePicker
+                                    testID="endTime"
+                                    value={endDate}
+                                    mode={'time'}
+                                    is24Hour={true}
+                                    onChange={onChangeEnd}
+                                    themeVariant='light'
+                                    minuteInterval={30}
+
+                                />
+                            </View>
+                            }
+                        </View>
+                    )}
+                    </View>
+                    <ThemedText type="boldText">Location:</ThemedText>
+                    <ThemedTextInput onChangeText={setEventLocation} placeholder='Living Room'/>
+                    <View>
+                        <ThemedSwitch onChangeSwitch={setNeedsApproval} label="Needs Roommates Approval?" value={needsApproval} editable = {showRoommateSwitch}/>
+                        <ThemedText type='text'>Field not editable once event is created</ThemedText>
+                    </View>
+                    
+                </View>
+                <></><></><></>
+            </ScrollView>
+            </KeyboardAvoidingView>
+        </Modal>
     </View>
   )
 }
@@ -322,8 +356,14 @@ const modalTheme = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         position: 'absolute',
-        bottom: 40,
+        bottom: 6,
         right: 30,
+        zIndex: 100,
+        shadowColor: '#000',
+        shadowOffset: {width: 0, height: 2},
+        shadowOpacity: 0.3,
+        shadowRadius: 3,
+        elevation: 5
     },
     cancelSaveButton: {
         backgroundColor: '#fff',

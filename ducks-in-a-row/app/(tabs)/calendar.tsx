@@ -21,6 +21,7 @@ import {
 import EventModal from '@/components/modal-event';
 import { getHouseholdRoommates, Roommate } from '@/api/household';
 import { me, ProfileResponse } from '@/api/auth';
+import { useCalendarSocket } from '@/hooks/use-calendar-socket';
 
 
 export interface CalendarEvent extends ICalendarEventBase {
@@ -46,37 +47,59 @@ export default function CalendarPage () {
 
     const [APIEvent, setAPIEvent] = useState<APICalendarEvent|null>(null);
     const [detailsModal, setDetailsModal] = useState(false);
-    const [pendingEvent, setPendingEvent] = useState<APIEventDetails|null>(null); 
+    const [pendingEvent, setPendingEvent] = useState<APIEventDetails|null>(null);
 
     const [openDropdown, setOpenDropdown] = useState(false);
-    const menuRef = useRef<View>(null);    
+    const menuRef = useRef<View>(null);
     const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 });
-    
+
     const [isOwner, setIsOwner] = useState(false);
     const [roommates, setRoommates] = useState<Roommate[]>([]);
     const [filtersByRoommate, setFiltersByRoommate] = useState<string[]>([]);
     const [profile, setProfile] = useState<ProfileResponse>();
+
+    // Use socket to get real-time calendar updates
+    const { events: socketEvents } = useCalendarSocket();
+
+    // When socket events update, merge them into fullDetailEvent
     useEffect(() => {
-      const height = getMaxAllDayEventsPerDay(events, currentDate, currentMode);
-      setHeaderHeight(height);
-    }, [events, currentDate, currentMode]);
+        if (socketEvents.length > 0) {
+            setFullDetailEvents((prev) => {
+                const eventMap = new Map(prev.map(e => [e.id, e]));
+                socketEvents.forEach(e => eventMap.set(e.id, e));
+                return Array.from(eventMap.values());
+            });
+        }
+    }, [socketEvents]);
+
+    // Update calendar display when fullDetailEvent changes (from API or socket)
+    useEffect(() => {
+        const calenEvents: CalendarEvent[] = fullDetailEvent.map((event: APICalendarEvent) =>
+            APICalEventToCalEvent(event)
+        );
+        const upcoming = fullDetailEvent.filter((event) =>
+            isTodayOrFuture(event.start_date)
+        );
+
+        setEvents(calenEvents);
+        setUpcomingEvents(upcoming);
+    }, [fullDetailEvent]);
+
     function getMaxAllDayEventsPerDay(
       events: CalendarEvent[],
       currentDate: Date,
       currentMode: Mode
     ): number {
-      // Month view default
       if (currentMode === 'month') return 40;
 
       let visibleDates: Date[] = [];
 
       const start = new Date(currentDate);
-      const end = new Date(currentDate);
-
       switch (currentMode) {
         case 'day':
-          visibleDates = [currentDate];
+          visibleDates = [new Date(currentDate)];
           break;
+
         case '3days':
           for (let i = 0; i < 3; i++) {
             const date = new Date(currentDate);
@@ -84,40 +107,85 @@ export default function CalendarPage () {
             visibleDates.push(date);
           }
           break;
+
         case 'week':
-          const dayOfWeek = start.getDay(); // Sunday = 0
-          start.setDate(start.getDate() - dayOfWeek); // start of week
+          const dayOfWeek = start.getDay();
+          start.setDate(start.getDate() - dayOfWeek);
+
           for (let i = 0; i < 7; i++) {
             const date = new Date(start);
             date.setDate(start.getDate() + i);
             visibleDates.push(date);
           }
           break;
+
         default:
-          visibleDates = [currentDate];
+          visibleDates = [new Date(currentDate)];
       }
 
-      // Count all-day events per date
-      const allDayCounts = visibleDates.map((date) => {
-        return events.filter((event) => {
-          const startDate = new Date(event.start);
-          const endDate = new Date(event.end);
-          // check if the event spans this date
-          return (
-            event.title &&
-            startDate.setHours(0, 0, 0, 0) <= date.setHours(0, 0, 0, 0) &&
-            endDate.setHours(0, 0, 0, 0) >= date.setHours(0, 0, 0, 0)
-          );
-        }).length;
+      const allDayHeights = visibleDates.map((date) => {
+        const dayStart = new Date(date);
+        dayStart.setHours(0, 0, 0, 0);
+
+        const dayEnd = new Date(date);
+        dayEnd.setHours(23, 59, 59, 999);
+
+        const eventsForDay = events.filter((event) => {
+          if (!isAllDayEvent(event)) return false;
+
+          const start = new Date(event.start);
+          const end = new Date(event.end);
+
+          return start <= dayEnd && end >= dayStart;
+        });
+
+        // 🔥 Sum heights instead of counting
+        return Math.max(75, eventsForDay.reduce((total, event) => {
+          return total + getTitleHeight(event.title || "", currentMode);
+        }, 0));
       });
 
-      const maxAllDay = Math.max(...allDayCounts, 1); // minimum 1 row
+      // const maxAllDay = Math.max(...allDayCounts, 0);
 
-      // compute height: e.g., 20px per all-day event row + padding
-      console.log(maxAllDay);
-      const rowHeight =maxAllDay * 25 + 50; // cap at 200px
+      // 🔧 Tune these numbers for UI feel
+      const rowHeight = 60;
+      const padding = 60;
+      
+     const maxHeight = Math.max(...allDayHeights, 20);
 
-      return rowHeight;
+      // add padding for UI breathing room
+      return Math.max(maxHeight + 20, 60);
+    }
+    function isAllDayEvent(event: CalendarEvent): boolean {
+      const start = new Date(event.start);
+      const end = new Date(event.end);
+
+      const isSameDay =
+        start.getFullYear() === end.getFullYear() &&
+        start.getMonth() === end.getMonth() &&
+        start.getDate() === end.getDate();
+
+      const startsAtMidnight =
+        start.getHours() === 0 &&
+        start.getMinutes() === 0;
+
+      const endsAtEndOfDay =
+        end.getHours() === 23 &&
+        end.getMinutes() >= 59;
+
+      const spansMultipleDays = !isSameDay;
+      return spansMultipleDays || (startsAtMidnight && endsAtEndOfDay);
+    }
+    function getTitleHeight(title: string, mode: Mode): number {
+      if (!title) return 20;
+
+      const charsPerLine = 7;
+      const lines = Math.ceil(title.length / charsPerLine);
+
+      // 🔥 dynamic height per line
+      const pxPerLine = mode === 'day' ? 35 : 35;
+      const buffer = lines === 1 ? 15 : 0;
+      return  lines * pxPerLine + buffer;
     }
     const [key, setKey] = useState(0);
 
@@ -430,10 +498,40 @@ export default function CalendarPage () {
                 return (
                   <TouchableOpacity
                     key={roommate.id}
-                    style={isSelected ? calendarTheme.filter : calendarTheme.filterSelected}
+                    // style={isSelected ? calendarTheme.filter : calendarTheme.filterSelected}
+                    style={
+                      isSelected
+                        ? [
+                            calendarTheme.filter,
+                            {
+                              backgroundColor: roommate.display_color ?? "#EC8534", // fallback
+                            },
+                          ]
+                        : [calendarTheme.filterSelected,
+                          {
+                              borderColor: roommate.display_color ?? "#EC8534", // fallback
+                            },
+                        ]
+                      }
                     onPress={() => filterBy(roommate.id)}
                   >
-                    <Text style={isSelected ? calendarTheme.filterText : calendarTheme.filterTextSelected}>
+                    <Text 
+                    // style={isSelected ? calendarTheme.filterText : calendarTheme.filterTextSelected}
+                    style={
+                      isSelected
+                        ? [
+                            calendarTheme.filterText,
+                            {
+                              borderColor: roommate.display_color ?? "#EC8534", // fallback
+                            }
+                          ]
+                        : [calendarTheme.filterTextSelected, 
+                            {
+                              color: roommate.display_color ?? "#EC8534", // fallback
+                            },
+
+                        ]
+                      }>
                       {roommate.first_name}
                     </Text>
                   </TouchableOpacity>
@@ -473,8 +571,8 @@ export default function CalendarPage () {
               eventCellTextColor="#fff"
               allDayEventCellTextColor="#fff"
               mode={currentMode}
-              onPressCell={(date: Date) => changeDateMode(date)}
-              onPressDateHeader={(date: Date) => changeDateMode(date)}
+              // onPressCell={(date: Date) => changeDateMode(date)}
+              // onPressDateHeader={(date: Date) => changeDateMode(date)}
               onSwipeEnd={(date: Date) => setCurrentDate(date)}
               theme={theme.calendar}
               verticalScrollEnabled={true}
@@ -511,7 +609,10 @@ export default function CalendarPage () {
                 myEvents.map((event) => {
                     if(!event.requires_approval)
                     {
+                      if(event.end_date && new Date(event.end_date) > new Date())
+                      {
                       return <EventTile key={event.id} event={event} owner={true} updateEvents={updateEvents}/>
+                      }
                     }
                 })
               }
@@ -572,7 +673,6 @@ export default function CalendarPage () {
             onClose={() => closeDetailModal()} 
             updateEvents={updateEvents}/>
         )}
-
         
     </SafeAreaView>
   )

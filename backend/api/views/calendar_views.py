@@ -175,12 +175,8 @@ class CalendarEventViewSet(viewsets.ViewSet):
     # Get all events for the current user's household > "My Events" section
     @action(detail=False, methods=["get"], url_path="my-events")
     def my_events(self, request):
-        today = timezone.localdate()
-
         events = self.get_queryset().filter(
             event_owner=request.user
-        ).filter(
-            start_date__date__gte=today
         ).order_by("start_date")
 
         serializer = CalendarEventListSerializer(events, many=True)

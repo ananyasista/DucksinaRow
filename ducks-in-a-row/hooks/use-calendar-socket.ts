@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
+import { CalendarEvent } from "../api/calendar"
 
-export const useCalendarSocket = (onCalendarUpdate: () => void) => {
+export const useCalendarSocket = () => {
+    const [events, setEvents] = useState<CalendarEvent[]>([]);
     const [isConnected, setIsConnected] = useState(false);
 
     useEffect(() => {
         // UPDATE WITH YOUR COMPUTER'S LOCAL IP ADDRESS to RUN PROPERLY
-        const socket = new WebSocket("ws://10.138.209.82:8000/ws/household/");
+        const socket = new WebSocket("ws://10.136.137.153:8000/ws/household/");
 
         socket.onopen = () => {
             console.log("Connected to calendar WebSocket");
@@ -16,9 +18,19 @@ export const useCalendarSocket = (onCalendarUpdate: () => void) => {
             const data = JSON.parse(event.data);
 
             if (data.type === "calendar_updated") {
-                console.log("Calendar update received:", data.payload);
-                // Trigger the refresh function passed in
-                onCalendarUpdate();
+                const updatedEvent: CalendarEvent = data.payload;
+
+                setEvents((prev) => {
+                    const index = prev.findIndex((e) => e.id === updatedEvent.id);
+
+                    if (index > -1) {
+                        const copy = [...prev];
+                        copy[index] = updatedEvent; // merge update
+                        return copy;
+                    } else {
+                        return [...prev, updatedEvent]; // new event
+                    }
+                });
             }
         };
 
@@ -29,7 +41,7 @@ export const useCalendarSocket = (onCalendarUpdate: () => void) => {
         };
 
         return () => socket.close();
-    }, [onCalendarUpdate]);
+    }, []);
 
-    return { isConnected };
+    return { events, setEvents, isConnected };
 };
